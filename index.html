@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GSC SQL Query Builder</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #1e1e1e;
+      color: #e0e0e0;
+      padding: 2rem;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1rem;
+    }
+    select, button, input, textarea {
+      background: #2d2d2d;
+      color: #ffffff;
+      border: 1px solid #444;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      width: 100%;
+    }
+    button {
+      background: #3a3a3a;
+      cursor: pointer;
+    }
+    pre {
+      background: #333;
+      color: #fff;
+      padding: 1rem;
+      overflow-x: auto;
+      height: 220px;
+      white-space: pre-wrap;
+    }
+    .custom-date-inputs {
+      display: none;
+      margin-top: 1rem;
+    }
+    .custom-date-inputs input {
+      width: 48%;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <h1>GSC SQL Query Builder</h1>
+
+  <label for="dateRange">Date Range</label>
+  <select id="dateRange" onchange="toggleCustomDateInputs()">
+    <option value="Yesterday">Yesterday</option>
+    <option value="Last Week">Last Week</option>
+    <option value="Last month">Last month</option>
+    <option value="Month to yesterday">Month to yesterday</option>
+    <option value="Last 7 days">Last 7 days</option>
+    <option value="Last 14 days">Last 14 days</option>
+    <option value="Last 30 days">Last 30 days</option>
+    <option value="Year to yesterday">Year to yesterday</option>
+    <option value="Last year">Last year</option>
+    <option value="Custom date range">Custom date range</option>
+  </select>
+
+  <div class="custom-date-inputs" id="customDateInputs">
+    <label for="startDate">Start Date</label>
+    <input type="date" id="startDate">
+    <label for="endDate">End Date</label>
+    <input type="date" id="endDate">
+  </div>
+
+  <label for="metrics">Metrics</label>
+  <select id="metrics" multiple>
+    <option value="Impressions">Impressions</option>
+    <option value="Clicks">Clicks</option>
+    <option value="CTR">CTR</option>
+    <option value="Position">Position</option>
+  </select>
+
+  <label for="dimensions">Dimensions</label>
+  <select id="dimensions" multiple>
+    <option value="Query">Query</option>
+    <option value="Page">Page</option>
+    <option value="Country">Country</option>
+    <option value="Device">Device</option>
+  </select>
+
+  <label for="sqlInput">Filtered Table (Optional)</label>
+  <textarea id="sqlInput" placeholder="Paste filtered data (tab-separated: query, clicks, impressions, ctr, position)"></textarea>
+
+  <button onclick="generateSQL()">Generate SQL</button>
+
+  <h2>Generated SQL</h2>
+  <pre id="sqlOutput"></pre>
+
+  <script>
+    function toggleCustomDateInputs() {
+      const dateRange = document.getElementById('dateRange').value;
+      const customInputs = document.getElementById('customDateInputs');
+      customInputs.style.display = dateRange === 'Custom date range' ? 'block' : 'none';
+    }
+
+    function getDateRangeClause(range) {
+      switch (range) {
+        case 'Yesterday':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)';
+        case 'Last Week':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)';
+        case 'Last month':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)';
+        case 'Month to yesterday':
+          return 'DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), MONTH) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)';
+        case 'Last 7 days':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY) AND CURRENT_DATE()';
+        case 'Last 14 days':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 13 DAY) AND CURRENT_DATE()';
+        case 'Last 30 days':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 29 DAY) AND CURRENT_DATE()';
+        case 'Year to yesterday':
+          return 'DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), YEAR) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)';
+        case 'Last year':
+          return 'DATE_SUB(DATE_TRUNC(CURRENT_DATE(), YEAR), INTERVAL 1 YEAR) AND DATE_SUB(DATE_TRUNC(CURRENT_DATE(), YEAR), INTERVAL 1 DAY)';
+        case 'Custom date range':
+          const startDate = document.getElementById('startDate').value;
+          const endDate = document.getElementById('endDate').value;
+          if (startDate && endDate) {
+            return `DATE('${startDate}') AND DATE('${endDate}')`;
+          } else {
+            return 'DATE1 AND DATE2 -- replace with actual dates';
+          }
+        default:
+          return '... AND ...';
+      }
+    }
+
+    function generateSQL() {
+      const dateRange = document.getElementById('dateRange').value;
+      const dateClause = getDateRangeClause(dateRange);
+
+      const metrics = Array.from(document.getElementById('metrics').selectedOptions).map(opt => opt.value);
+      const metricStr = metrics.map(m => `  SUM(${m}) AS ${m.toLowerCase()}`).join(',\n');
+
+      const dimensions = Array.from(document.getElementById('dimensions').selectedOptions).map(opt => opt.value);
+      const dimStr = dimensions.map(d => `  ${d}`).join(',\n');
+
+      const selectClause = [dimStr, metricStr].filter(Boolean).join(',\n');
+      const groupByClause = dimensions.length ? `GROUP BY\n  ${dimensions.join(', ')}` : '';
+
+      const input = document.getElementById('sqlInput').value.trim();
+      const rows = input ? input.split(/\n|\r/).map(line => line.trim()).filter(Boolean) : [];
+      const values = rows.map(row => {
+        const cols = row.split(/\t|,/);
+        const [query, clicks, impressions, ctr, position] = cols.map(c => c.trim());
+        return `    STRUCT(\"${query.replace(/\"/g, '\\"')}\" AS query, ${clicks} AS clicks, ${impressions} AS impressions, ${parseFloat(ctr).toFixed(2)} AS ctr, ${parseFloat(position).toFixed(2)} AS position)`;
+      }).join(',\n');
+
+      const structBlock = rows.length ? `WITH gsc_data AS (\n  SELECT * FROM UNNEST([\n${values}\n  ])\n)\n` : '';
+
+      const sql = `${structBlock}SELECT\n${selectClause}\nFROM\n  \`searchconsole.searchdata_site_impression\`\nWHERE\n  data_date BETWEEN ${dateClause}\n${groupByClause}`;
+
+      document.getElementById('sqlOutput').textContent = sql;
+    }
+  </script>
+</body>
+</html>
