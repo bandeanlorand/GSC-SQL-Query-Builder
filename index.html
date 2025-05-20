@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GSC SQL Query Builder</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
     body {
       font-family: sans-serif;
@@ -79,16 +80,26 @@
     }
 
     /* Smooth dropdown open/close animation */
-    #metricsDropdown,#dimensionsDropdown {
+    #metricsDropdown,
+    #dimensionsDropdown,
+    #dateRangeDropdown {
       overflow: hidden;
       height: 0;
       width: 0;
       opacity: 0;
       transition:
-        width 0.3s ease,
-        height 0.3s ease 0.3s,
+        width 0.15s ease,
+        height 0.1s ease 0.1s,
         /* delayed height animation */
-        opacity 0.3s ease;
+        opacity 0.05s ease;
+    }
+
+    #dimensionsDropdown {
+      overflow-y: auto;
+    }
+
+    #selectedDimensions {
+      cursor: pointer;
     }
   </style>
 </head>
@@ -100,27 +111,55 @@
 
       <div>
         <label for="dateRange">Date Range</label>
-        <select id="dateRange" onchange="toggleCustomDateInputs()"
-          class="w-full bg-gray-800 border border-gray-600 p-2 rounded">
-          <option value="Yesterday">Yesterday</option>
-          <option value="Last Week">Last Week</option>
-          <option value="Last month">Last month</option>
-          <option value="Month to yesterday">Month to yesterday</option>
-          <option value="Last 7 days">Last 7 days</option>
-          <option value="Last 14 days">Last 14 days</option>
-          <option value="Last 30 days">Last 30 days</option>
-          <option value="Year to yesterday">Year to yesterday</option>
-          <option value="Last year">Last year</option>
-          <option value="Custom date range">Custom date range</option>
-        </select>
-
-        <div id="customDateInputs" class="hidden mt-2">
-          <label for="startDate">Start Date</label>
-          <input type="date" id="startDate">
-          <label for="endDate">End Date</label>
-          <input type="date" id="endDate">
+        <div id="dateRangeContainer" class="relative w-full">
+          <div id="selectedDateRange"
+            class="bg-gray-800 border border-gray-600 p-2 rounded h-[50px] flex items-center justify-between cursor-pointer">
+            <span id="dateRangeLabel">Select date range</span>
+            <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          <div id="dateRangeDropdown"
+            class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all mt-[8px]">
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Yesterday')">Yesterday</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last Week')">Last Week</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last month')">Last month</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Month to yesterday')">Month to
+              yesterday</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last 7 days')">Last 7 days</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last 14 days')">Last 14 days
+            </div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last 30 days')">Last 30 days
+            </div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Year to yesterday')">Year to
+              yesterday</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last year')">Last year</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Custom date range')">Custom date
+              range</div>
+          </div>
         </div>
 
+        <!-- Custom date inputs start -->
+        <!-- Hidden by default, shown when "Custom date range" is selected -->
+        <div id="customDateInputs" class="hidden mt-2">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="startDate">Start Date</label>
+              <input class="bg-gray-800 border border-gray-600 p-2 rounded h-[50px] w-full" type="date"
+                id="startDate" />
+            </div>
+            <div>
+              <label for="endDate">End Date</label>
+              <input class="bg-gray-800 border border-gray-600 p-2 rounded h-[50px] w-full" type="date" id="endDate" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom date inputs end -->
+
+
+        <!-- Metrics starts here -->
         <label for="metrics">Metrics</label>
         <div id="metricsContainer" class="relative w-full">
           <div id="selectedMetrics" class="flex flex-wrap gap-2 mb-2"></div>
@@ -132,22 +171,84 @@
             <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Position')">Position</div>
           </div>
         </div>
+        <!-- Metrics ends here -->
 
+        <!-- Dimensions starts here -->
         <label for="dimensions">Dimensions</label>
-<div id="dimensionsContainer" class="relative w-full">
-  <div id="selectedDimensions" class="flex flex-wrap gap-2 mb-2 w-full h-[50px] p-2 border border-gray-700 rounded bg-gray-800"></div>
-  <div id="dimensionsDropdown"
-    class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all">
-    <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Query')">Query</div>
-    <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Page')">Page</div>
-    <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Country')">Country</div>
-    <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Device')">Device</div>
-  </div>
-</div>
+        <div id="dimensionsContainer" class="relative w-full">
+          <div id="selectedDimensions"
+            class="flex flex-wrap gap-2 mb-2 w-full h-[50px] p-2 border border-gray-700 rounded bg-gray-800"></div>
+          <!-- <div id="dimensionsDropdown"
+            class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all">
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Query')">Query</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Page')">Page</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Country')">Country</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Device')">Device</div>
+          </div> -->
+          <div id="dimensionsDropdown"
+            class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all max-h-[400px] overflow-y-auto w-full">
 
-        <button onclick="generateSQL()">Generate SQL</button>
+          </div>
+          <div class="border-gray-700 rounded bg-gray-800 text-white p-4 rounded-md w-full max-w-4xl mx-auto">
+            <div class="flex justify-between items-center cursor-pointer" onclick="toggleFilters()">
+              <span class="font-bold">Filters</span>
+              <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+
+            <div id="filterSection" class="mt-4 space-y-4 hidden transition-all duration-300">
+              <div class="flex flex-wrap gap-2">
+                <!-- Field dropdown -->
+                <select class=" px-4 py-2 border-gray-700 rounded-[8px] bg-gray-800 text-white border ">
+                  <option>Select Field</option>
+                  <option>Query</option>
+                  <option>Page</option>
+                  <option>Country</option>
+                  <option>Device</option>
+                </select>
+
+                <!-- Condition dropdown -->
+                <select class=" px-4 py-2 border-gray-700 rounded-[8px] bg-gray-800 text-white border ">
+                  <option>EQUALS</option>
+                  <option>CONTAINS</option>
+                  <option>NOT EQUALS</option>
+                </select>
+
+                <!-- Value input -->
+                <input type="text" placeholder="Type value"
+                  class=" px-4 py-2 border-gray-700 rounded-[8px] bg-gray-800 text-white border  w-64" />
+              </div>
+
+              <div class="flex gap-2 mt-2">
+                <button
+                  class="bg-blue-500 hover:bg-blue-900 rounded-[8px] text-white px-4 py-1  text-lg font-bold">+</button>
+                <button
+                  class="bg-blue-500 hover:bg-blue-900 rounded-[8px] text-white px-4 py-1  text-lg font-bold">−</button>
+              </div>
+            </div>
+          </div>
+
+          <script>
+            function toggleFilters() {
+              const section = document.getElementById('filterSection');
+              const arrow = document.getElementById('filterArrow');
+              section.classList.toggle('hidden');
+              arrow.classList.toggle('rotate-180');
+            }
+          </script>
+
+        </div>
+        <!-- Dimensions ends here -->
+
+        <button type="submit" onclick="generateSQL()"
+          class="block w-auto mt-[24px]  m-auto bg-blue-800 text-white border-none px-10 py-2 text-center rounded-[8px] text-[1.25rem] leading-[2rem] ">Generate
+          SQL</button>
       </div>
     </div>
+
+
     <div>
       <h2 class="text-xl font-semibold mb-2">Generated SQL</h2>
       <pre id="sqlOutput"></pre>
@@ -156,7 +257,7 @@
 
   <script>
     function toggleCustomDateInputs() {
-      const dateRange = document.getElementById('dateRange').value;
+      // const dateRange = document.getElementById('dateRange').value;
       const customInputs = document.getElementById('customDateInputs');
       if (dateRange === 'Custom date range') {
         customInputs.classList.remove('hidden');
@@ -165,7 +266,10 @@
       }
     }
 
-    function getDateRangeClause(range) {
+    function getDateRangeClause() {
+
+      const range = selectedDateRange;
+
       switch (range) {
         case 'Yesterday':
           return 'DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)';
@@ -199,16 +303,11 @@
     }
 
     function generateSQL() {
-      const dateRange = document.getElementById('dateRange').value;
-      const dateClause = getDateRangeClause(dateRange);
+      const dateClause = getDateRangeClause();
 
-      // const metrics = Array.from(document.getElementById('metrics').selectedOptions).map(opt => opt.value);
       const metrics = Array.from(selectedMetrics);
-      
-
       const metricStr = metrics.map(m => `  SUM(${m}) AS ${m.toLowerCase()}`).join(',\n');
 
-      // const dimensions = Array.from(document.getElementById('dimensions').selectedOptions).map(opt => opt.value);
       const dimensions = Array.from(selectedDimensions);
       const dimStr = dimensions.map(d => `  ${d}`).join(',\n');
 
@@ -220,15 +319,45 @@
       document.getElementById('sqlOutput').textContent = sql;
     }
 
-  
+
+
 
     /* metrics multiselect script - starts here */
     const selectedMetrics = new Set();
-let isDropdownOpen = false;
+    let isDropdownOpen = false;
 
-const selectedDimensions = new Set();
-let isDimensionsDropdownOpen = false;
+    const selectedDimensions = new Set();
+    let isDimensionsDropdownOpen = false;
 
+    let selectedDateRange = '';
+    let isDateRangeDropdownOpen = false;
+
+    document.getElementById("selectedDateRange").addEventListener("click", () => {
+      const dropdown = document.getElementById("dateRangeDropdown");
+      if (isDateRangeDropdownOpen) {
+        closeDropdown(dropdown);
+      } else {
+        openDropdown(dropdown);
+      }
+      isDateRangeDropdownOpen = !isDateRangeDropdownOpen;
+    });
+
+    function selectDateRange(range) {
+      selectedDateRange = range;
+      document.getElementById("dateRangeLabel").textContent = range;
+      closeDropdown(document.getElementById("dateRangeDropdown"));
+      isDateRangeDropdownOpen = false;
+      toggleCustomDateInputs(range); // Show/hide custom fields
+    }
+
+    function toggleCustomDateInputs(range) {
+      const customInputs = document.getElementById('customDateInputs');
+      if (range === 'Custom date range') {
+        customInputs.classList.remove('hidden');
+      } else {
+        customInputs.classList.add('hidden');
+      }
+    }
 
     function selectMetric(metric) {
       if (selectedMetrics.has(metric)) return;
@@ -261,48 +390,118 @@ let isDimensionsDropdownOpen = false;
       }
     }
 
+    // Populate dimensions dropdown
+    const dimensionEntries = [
+      ["Query", "The user query. When is_anonymized_query is true, this will be a zero-length string."],
+      ["URL", "The fully-qualified URL where the user eventually lands when they click the search result or Discover story."],
+      ["Country", "Country from where the query was made, in ISO-3166-1-Alpha-3 format (for example, “USA”)."],
+      ["Search Type", "The type of search (web, image, video, or news)."],
+      ["Device", "The device type (desktop, tablet, or mobile)."],
+      ["Site URL", "URL of the property. For domain-level properties, this will be sc-domain:property-name. For URL-prefix properties, it will be the full URL of the property definition."],
+      ["Date", "The day on which the data in this row was generated (Pacific Time)."],
+      ["Month", "The month (YYYY-MM) of the data in this row."],
+      ["Year", "The year (YYYY) of the data in this row."],
+      ["Is Anonymized Query", "Rare queries (called anonymized queries) are marked with this bool. The query field will be null when it’s true to protect the privacy of users making the query."],
+      ["Is Anonymized Discover", "Whether the data row is under the Discover anonymization threshold. When under the threshold, some other fields (like URL and country) will be missing to protect user privacy."],
+      ["Is AMP Top Stories", "Whether the URL is an AMP Top Story."],
+      ["Is AMP Blue Link", "Whether the URL is an AMP Blue Link."],
+      ["Is Job Listing", "Whether the URL is a job listing."],
+      ["Is Job Details", "Whether the URL is a job details page."],
+      ["Is TPF QA", "Whether the URL is a top places for a query."],
+      ["Is TPF FAQ", "Whether the URL is a top places faq."],
+      ["Is TPF HowTo", "Whether the URL is a top places how-to."],
+      ["Is Weblite", "Whether the URL is a weblite."],
+      ["Is Action", "Whether the URL is an action."],
+      ["Is Events Listing", "Whether the URL is an events listing."],
+      ["Is Events Details", "Whether the URL is an events details page."],
+      ["Is Search Appearance Android App", "Whether the URL is a search appearance android app."],
+      ["Is AMP Story", "Whether the URL is an AMP story."],
+      ["Is AMP Image Result", "Whether the URL is an AMP image result."],
+      ["Is Video", "Whether the URL is a video."],
+      ["Is Organc Shopping", "Whether the URL is an organic shopping result."],
+      ["Is Review Snippet", "Whether the URL is a review snippet."],
+      ["Is Special Announcement", "Whether the URL is a special announcement."],
+      ["Is Recipe Feature", "Whether the URL is a recipe feature."],
+      ["Is Recipe Rich Snippet", "Whether the URL is a recipe rich snippet."],
+      ["Is Subscribed Content", "Whether the URL is subscribed content."],
+      ["Is Page Experience", "Whether the URL is a page experience."],
+      ["Is Practice Problems", "Whether the URL is a practice problem."],
+      ["Is Math Solvers", "Whether the URL is a math solver."],
+      ["Is Translated Result", "Whether the URL is a translated result."],
+      ["Is Product Snippets", "Whether the URL is a product snippet."],
+      ["Is Merchant Listings", "Whether the URL is a merchant listing."]
+    ];
+
+    const dimensionsDropdown = document.getElementById("dimensionsDropdown");
+    dimensionsDropdown.innerHTML = "";
+
+    dimensionEntries.forEach(([name, tooltip]) => {
+      const item = document.createElement("div");
+      item.className = "relative group cursor-pointer p-1 hover:bg-gray-700 flex items-center justify-between";
+      item.setAttribute("onclick", `selectDimension('${name}')`);
+
+      const span = document.createElement("span");
+      span.textContent = name;
+
+      const iconWrapper = document.createElement("div");
+      iconWrapper.className = "ml-2 relative group";
+
+      const icon = document.createElement("i");
+      icon.className = "fas fa-question-circle text-gray-400";
+
+      const tooltipDiv = document.createElement("div");
+      tooltipDiv.className = "absolute left-6 top-0 bg-gray-900 text-xs text-white p-2 rounded shadow-lg w-64 z-20 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300";
+      tooltipDiv.textContent = tooltip;
+
+      iconWrapper.appendChild(icon);
+      iconWrapper.appendChild(tooltipDiv);
+
+
+      item.appendChild(span);
+      item.appendChild(iconWrapper);
+      dimensionsDropdown.appendChild(item);
+    });
+    // dimensions dropdown items end
+
+
     function selectDimension(dimension) {
-  if (selectedDimensions.has(dimension)) return;
-  selectedDimensions.add(dimension);
+      if (selectedDimensions.has(dimension)) return;
+      selectedDimensions.add(dimension);
 
-  const dropdown = document.getElementById("dimensionsDropdown");
-  const items = dropdown.querySelectorAll("div");
-  items.forEach(item => {
-    if (item.textContent === dimension) item.style.display = "none";
-  });
+      const dropdownItems = document.querySelectorAll("#dimensionsDropdown > div");
+      dropdownItems.forEach(item => {
+        const label = item.querySelector("span");
+        if (label && label.textContent === dimension) {
+          item.style.display = "none";
+        }
+      });
 
-  const tag = document.createElement("div");
-  tag.className = "bg-gray-700 text-white px-2 py-1 rounded flex items-center space-x-2";
-  tag.innerHTML = `${dimension} <button onclick="removeDimension('${dimension}')" class="ml-2 text-red-400 font-bold">&times;</button>`;
-  tag.id = `tag-dimension-${dimension}`;
-  document.getElementById("selectedDimensions").appendChild(tag);
+      const tag = document.createElement("div");
+      tag.className = "bg-gray-700 text-white px-2 py-1 rounded flex items-center space-x-2";
+      tag.innerHTML = `${dimension} <button onclick="removeDimension('${dimension}')" class="ml-2 text-red-400 font-bold">&times;</button>`;
+      tag.id = `tag-dimension-${dimension}`;
+      document.getElementById("selectedDimensions").appendChild(tag);
 
-  closeDropdown(document.getElementById("dimensionsDropdown"));
-  isDimensionsDropdownOpen = false;
-}
+      closeDropdown(document.getElementById("dimensionsDropdown"));
+      isDimensionsDropdownOpen = false;
+    }
 
-function removeDimension(dimension) {
-  selectedDimensions.delete(dimension);
 
-  const dropdown = document.getElementById("dimensionsDropdown");
-  const items = dropdown.querySelectorAll("div");
-  items.forEach(item => {
-    if (item.textContent === dimension) item.style.display = "block";
-  });
+    function removeDimension(dimension) {
+      selectedDimensions.delete(dimension);
 
-  const tag = document.getElementById(`tag-dimension-${dimension}`);
-  if (tag) tag.remove();
-}
+      const dropdownItems = document.querySelectorAll("#dimensionsDropdown > div");
+      dropdownItems.forEach(item => {
+        const label = item.querySelector("span");
+        if (label && label.textContent === dimension) {
+          item.style.display = "flex";
+        }
+      });
 
-document.getElementById("selectedDimensions").addEventListener("click", () => {
-  const dropdown = document.getElementById("dimensionsDropdown");
-  if (isDimensionsDropdownOpen) {
-    closeDropdown(dropdown);
-  } else {
-    openDropdown(dropdown);
-  }
-  isDimensionsDropdownOpen = !isDimensionsDropdownOpen;
-});
+      const tag = document.getElementById(`tag-dimension-${dimension}`);
+      if (tag) tag.remove();
+    }
+
 
 
 
@@ -343,21 +542,28 @@ document.getElementById("selectedDimensions").addEventListener("click", () => {
 
     // Close metricsDropdown when clicking outside
     document.addEventListener("click", function (event) {
-  const metricsContainer = document.getElementById("metricsContainer");
-  const metricsDropdown = document.getElementById("metricsDropdown");
-  const dimensionsContainer = document.getElementById("dimensionsContainer");
-  const dimensionsDropdown = document.getElementById("dimensionsDropdown");
+      const dateRangeContainer = document.getElementById("dateRangeContainer");
+      const dateRangeDropdown = document.getElementById("dateRangeDropdown");
+      const metricsContainer = document.getElementById("metricsContainer");
+      const metricsDropdown = document.getElementById("metricsDropdown");
+      const dimensionsContainer = document.getElementById("dimensionsContainer");
+      const dimensionsDropdown = document.getElementById("dimensionsDropdown");
 
-  if (!metricsContainer.contains(event.target) && isDropdownOpen) {
-    closeDropdown(metricsDropdown);
-    isDropdownOpen = false;
-  }
+      if (!dateRangeContainer.contains(event.target) && isDateRangeDropdownOpen) {
+        closeDropdown(dateRangeDropdown);
+        isDateRangeDropdownOpen = false;
+      }
 
-  if (!dimensionsContainer.contains(event.target) && isDimensionsDropdownOpen) {
-    closeDropdown(dimensionsDropdown);
-    isDimensionsDropdownOpen = false;
-  }
-});
+      if (!metricsContainer.contains(event.target) && isDropdownOpen) {
+        closeDropdown(metricsDropdown);
+        isDropdownOpen = false;
+      }
+
+      if (!dimensionsContainer.contains(event.target) && isDimensionsDropdownOpen) {
+        closeDropdown(dimensionsDropdown);
+        isDimensionsDropdownOpen = false;
+      }
+    });
 
     function openDropdown(dropdown) {
       dropdown.classList.add("block");
@@ -376,7 +582,7 @@ document.getElementById("selectedDimensions").addEventListener("click", () => {
         // trigger height after 300ms
         setTimeout(() => {
           dropdown.style.height = dropdown.scrollHeight + "px";
-        }, 300);
+        }, 100);
       });
     }
 
@@ -396,8 +602,25 @@ document.getElementById("selectedDimensions").addEventListener("click", () => {
         dropdown.classList.remove("block");
       }, 600); // total transition time
     }
+    const selectedDimensionsEl = document.getElementById("selectedDimensions");
+    selectedDimensionsEl.addEventListener("click", () => {
+      const dropdown = document.getElementById("dimensionsDropdown");
+      if (isDimensionsDropdownOpen) {
+        closeDropdown(dropdown);
+      } else {
+        openDropdown(dropdown);
+      }
+      isDimensionsDropdownOpen = !isDimensionsDropdownOpen;
+    });
 
-
+    // toogle filters slide down starts here
+    function toggleFilters() {
+      const section = document.getElementById('filterSection');
+      const arrow = document.getElementById('filterArrow');
+      section.classList.toggle('hidden');
+      arrow.classList.toggle('rotate-180');
+    }
+    // toogle filters slide down ends here
   </script>
 
 </body>
