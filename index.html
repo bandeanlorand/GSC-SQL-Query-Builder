@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GSC SQL Query Builder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -11,12 +13,17 @@
       color: #e0e0e0;
       padding: 2rem;
     }
+
     label {
       font-weight: bold;
       display: block;
       margin-top: 1rem;
     }
-    select, button, input, textarea {
+
+    select,
+    button,
+    input,
+    textarea {
       background: #2d2d2d;
       color: #ffffff;
       border: 1px solid #444;
@@ -24,10 +31,12 @@
       margin: 0.5rem 0;
       width: 100%;
     }
+
     button {
       background: #3a3a3a;
       cursor: pointer;
     }
+
     pre {
       background: #333;
       color: #fff;
@@ -36,69 +45,124 @@
       height: 220px;
       white-space: pre-wrap;
     }
+
     .custom-date-inputs {
       display: none;
       margin-top: 1rem;
     }
+
     .custom-date-inputs input {
       width: 48%;
       display: inline-block;
     }
+
+    textarea {
+      resize: horizontal;
+    }
+
+    #selectedMetrics {
+
+      width: 100%;
+      height: 50px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #3a3a3a;
+      background-color: #1f2937;
+    }
+
+    select#dateRange {
+      height: 50px;
+      border-radius: 8px;
+      border: 1px solid #3a3a3a;
+      background-color: #1f2937;
+      padding: 8px 12px;
+    }
+
+    /* Smooth dropdown open/close animation */
+    #metricsDropdown,#dimensionsDropdown {
+      overflow: hidden;
+      height: 0;
+      width: 0;
+      opacity: 0;
+      transition:
+        width 0.3s ease,
+        height 0.3s ease 0.3s,
+        /* delayed height animation */
+        opacity 0.3s ease;
+    }
   </style>
 </head>
+
 <body>
-  <h1>GSC SQL Query Builder</h1>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
+    <div class="space-y-4">
+      <h1 class="text-2xl font-bold">GSC SQL Query Builder</h1>
 
-  <label for="dateRange">Date Range</label>
-  <select id="dateRange" onchange="toggleCustomDateInputs()">
-    <option value="Yesterday">Yesterday</option>
-    <option value="Last Week">Last Week</option>
-    <option value="Last month">Last month</option>
-    <option value="Month to yesterday">Month to yesterday</option>
-    <option value="Last 7 days">Last 7 days</option>
-    <option value="Last 14 days">Last 14 days</option>
-    <option value="Last 30 days">Last 30 days</option>
-    <option value="Year to yesterday">Year to yesterday</option>
-    <option value="Last year">Last year</option>
-    <option value="Custom date range">Custom date range</option>
-  </select>
+      <div>
+        <label for="dateRange">Date Range</label>
+        <select id="dateRange" onchange="toggleCustomDateInputs()"
+          class="w-full bg-gray-800 border border-gray-600 p-2 rounded">
+          <option value="Yesterday">Yesterday</option>
+          <option value="Last Week">Last Week</option>
+          <option value="Last month">Last month</option>
+          <option value="Month to yesterday">Month to yesterday</option>
+          <option value="Last 7 days">Last 7 days</option>
+          <option value="Last 14 days">Last 14 days</option>
+          <option value="Last 30 days">Last 30 days</option>
+          <option value="Year to yesterday">Year to yesterday</option>
+          <option value="Last year">Last year</option>
+          <option value="Custom date range">Custom date range</option>
+        </select>
 
-  <div class="custom-date-inputs" id="customDateInputs">
-    <label for="startDate">Start Date</label>
-    <input type="date" id="startDate">
-    <label for="endDate">End Date</label>
-    <input type="date" id="endDate">
+        <div id="customDateInputs" class="hidden mt-2">
+          <label for="startDate">Start Date</label>
+          <input type="date" id="startDate">
+          <label for="endDate">End Date</label>
+          <input type="date" id="endDate">
+        </div>
+
+        <label for="metrics">Metrics</label>
+        <div id="metricsContainer" class="relative w-full">
+          <div id="selectedMetrics" class="flex flex-wrap gap-2 mb-2"></div>
+          <div id="metricsDropdown" class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all">
+
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Impressions')">Impressions</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Clicks')">Clicks</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('CTR')">CTR</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Position')">Position</div>
+          </div>
+        </div>
+
+        <label for="dimensions">Dimensions</label>
+<div id="dimensionsContainer" class="relative w-full">
+  <div id="selectedDimensions" class="flex flex-wrap gap-2 mb-2 w-full h-[50px] p-2 border border-gray-700 rounded bg-gray-800"></div>
+  <div id="dimensionsDropdown"
+    class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all">
+    <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Query')">Query</div>
+    <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Page')">Page</div>
+    <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Country')">Country</div>
+    <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Device')">Device</div>
   </div>
+</div>
 
-  <label for="metrics">Metrics</label>
-  <select id="metrics" multiple>
-    <option value="Impressions">Impressions</option>
-    <option value="Clicks">Clicks</option>
-    <option value="CTR">CTR</option>
-    <option value="Position">Position</option>
-  </select>
-
-  <label for="dimensions">Dimensions</label>
-  <select id="dimensions" multiple>
-    <option value="Query">Query</option>
-    <option value="Page">Page</option>
-    <option value="Country">Country</option>
-    <option value="Device">Device</option>
-  </select>
-
-  <label for="sqlInput">Filtered Table (Optional)</label>
-  <textarea id="sqlInput" placeholder="Paste filtered data (tab-separated: query, clicks, impressions, ctr, position)"></textarea>
-
-  <button onclick="generateSQL()">Generate SQL</button>
-
-  <h2>Generated SQL</h2>
-  <pre id="sqlOutput"></pre>
+        <button onclick="generateSQL()">Generate SQL</button>
+      </div>
+    </div>
+    <div>
+      <h2 class="text-xl font-semibold mb-2">Generated SQL</h2>
+      <pre id="sqlOutput"></pre>
+    </div>
+  </div>
 
   <script>
     function toggleCustomDateInputs() {
       const dateRange = document.getElementById('dateRange').value;
       const customInputs = document.getElementById('customDateInputs');
-      customInputs.style.display = dateRange === 'Custom date range' ? 'block' : 'none';
+      if (dateRange === 'Custom date range') {
+        customInputs.classList.remove('hidden');
+      } else {
+        customInputs.classList.add('hidden');
+      }
     }
 
     function getDateRangeClause(range) {
@@ -138,29 +202,204 @@
       const dateRange = document.getElementById('dateRange').value;
       const dateClause = getDateRangeClause(dateRange);
 
-      const metrics = Array.from(document.getElementById('metrics').selectedOptions).map(opt => opt.value);
+      // const metrics = Array.from(document.getElementById('metrics').selectedOptions).map(opt => opt.value);
+      const metrics = Array.from(selectedMetrics);
+      
+
       const metricStr = metrics.map(m => `  SUM(${m}) AS ${m.toLowerCase()}`).join(',\n');
 
-      const dimensions = Array.from(document.getElementById('dimensions').selectedOptions).map(opt => opt.value);
+      // const dimensions = Array.from(document.getElementById('dimensions').selectedOptions).map(opt => opt.value);
+      const dimensions = Array.from(selectedDimensions);
       const dimStr = dimensions.map(d => `  ${d}`).join(',\n');
 
       const selectClause = [dimStr, metricStr].filter(Boolean).join(',\n');
       const groupByClause = dimensions.length ? `GROUP BY\n  ${dimensions.join(', ')}` : '';
 
-      const input = document.getElementById('sqlInput').value.trim();
-      const rows = input ? input.split(/\n|\r/).map(line => line.trim()).filter(Boolean) : [];
-      const values = rows.map(row => {
-        const cols = row.split(/\t|,/);
-        const [query, clicks, impressions, ctr, position] = cols.map(c => c.trim());
-        return `    STRUCT(\"${query.replace(/\"/g, '\\"')}\" AS query, ${clicks} AS clicks, ${impressions} AS impressions, ${parseFloat(ctr).toFixed(2)} AS ctr, ${parseFloat(position).toFixed(2)} AS position)`;
-      }).join(',\n');
-
-      const structBlock = rows.length ? `WITH gsc_data AS (\n  SELECT * FROM UNNEST([\n${values}\n  ])\n)\n` : '';
-
-      const sql = `${structBlock}SELECT\n${selectClause}\nFROM\n  \`searchconsole.searchdata_site_impression\`\nWHERE\n  data_date BETWEEN ${dateClause}\n${groupByClause}`;
+      const sql = `SELECT\n${selectClause}\nFROM\n  \`searchconsole.searchdata_site_impression\`\nWHERE\n  data_date BETWEEN ${dateClause}\n${groupByClause}`;
 
       document.getElementById('sqlOutput').textContent = sql;
     }
+
+  
+
+    /* metrics multiselect script - starts here */
+    const selectedMetrics = new Set();
+let isDropdownOpen = false;
+
+const selectedDimensions = new Set();
+let isDimensionsDropdownOpen = false;
+
+
+    function selectMetric(metric) {
+      if (selectedMetrics.has(metric)) return;
+      selectedMetrics.add(metric);
+
+      // Remove from dropdown
+      const dropdown = document.getElementById("metricsDropdown");
+      const items = dropdown.querySelectorAll("div");
+      items.forEach(item => {
+        if (item.textContent === metric) item.style.display = "none";
+      });
+
+      // Add tag
+      const tag = document.createElement("div");
+      tag.className = "bg-gray-700 text-white px-2 py-1 rounded flex items-center space-x-2";
+      tag.innerHTML = `${metric} <button onclick="removeMetric('${metric}')" class="ml-2 text-red-400 font-bold">&times;</button>`;
+      tag.id = `tag-${metric}`;
+      document.getElementById("selectedMetrics").appendChild(tag);
+
+      closeDropdown(document.getElementById("metricsDropdown"));
+      isDropdownOpen = false;
+
+      // Hide dropdown if all selected
+      const dropdownItems = document.querySelectorAll("#metricsDropdown > div");
+      const visibleItems = Array.from(dropdownItems).filter(item => item.style.display !== "none");
+      if (visibleItems.length === 0) {
+        dropdown.classList.add("hidden");
+      } else {
+        dropdown.classList.add("hidden"); // hide dropdown after selection even if not all selected
+      }
+    }
+
+    function selectDimension(dimension) {
+  if (selectedDimensions.has(dimension)) return;
+  selectedDimensions.add(dimension);
+
+  const dropdown = document.getElementById("dimensionsDropdown");
+  const items = dropdown.querySelectorAll("div");
+  items.forEach(item => {
+    if (item.textContent === dimension) item.style.display = "none";
+  });
+
+  const tag = document.createElement("div");
+  tag.className = "bg-gray-700 text-white px-2 py-1 rounded flex items-center space-x-2";
+  tag.innerHTML = `${dimension} <button onclick="removeDimension('${dimension}')" class="ml-2 text-red-400 font-bold">&times;</button>`;
+  tag.id = `tag-dimension-${dimension}`;
+  document.getElementById("selectedDimensions").appendChild(tag);
+
+  closeDropdown(document.getElementById("dimensionsDropdown"));
+  isDimensionsDropdownOpen = false;
+}
+
+function removeDimension(dimension) {
+  selectedDimensions.delete(dimension);
+
+  const dropdown = document.getElementById("dimensionsDropdown");
+  const items = dropdown.querySelectorAll("div");
+  items.forEach(item => {
+    if (item.textContent === dimension) item.style.display = "block";
+  });
+
+  const tag = document.getElementById(`tag-dimension-${dimension}`);
+  if (tag) tag.remove();
+}
+
+document.getElementById("selectedDimensions").addEventListener("click", () => {
+  const dropdown = document.getElementById("dimensionsDropdown");
+  if (isDimensionsDropdownOpen) {
+    closeDropdown(dropdown);
+  } else {
+    openDropdown(dropdown);
+  }
+  isDimensionsDropdownOpen = !isDimensionsDropdownOpen;
+});
+
+
+
+    function removeMetric(metric) {
+      selectedMetrics.delete(metric);
+
+      // Show again in dropdown
+      const dropdown = document.getElementById("metricsDropdown");
+      const items = dropdown.querySelectorAll("div");
+      items.forEach(item => {
+        if (item.textContent === metric) item.style.display = "block";
+      });
+
+      // Remove tag
+      const tag = document.getElementById(`tag-${metric}`);
+      if (tag) tag.remove();
+
+      // Show dropdown if there's at least one item visible
+      dropdown.classList.remove("hidden");
+
+    }
+    const selectedMetricsEl = document.getElementById("selectedMetrics");
+    const metricsDropdown = document.getElementById("metricsDropdown");
+
+    // let isDropdownOpen = false;
+
+    selectedMetricsEl.addEventListener("click", () => {
+      if (isDropdownOpen) {
+        closeDropdown(metricsDropdown);
+      } else {
+        openDropdown(metricsDropdown);
+      }
+      isDropdownOpen = !isDropdownOpen;
+    });
+
+
+    /* metrics multiselect script - ends here */
+
+    // Close metricsDropdown when clicking outside
+    document.addEventListener("click", function (event) {
+  const metricsContainer = document.getElementById("metricsContainer");
+  const metricsDropdown = document.getElementById("metricsDropdown");
+  const dimensionsContainer = document.getElementById("dimensionsContainer");
+  const dimensionsDropdown = document.getElementById("dimensionsDropdown");
+
+  if (!metricsContainer.contains(event.target) && isDropdownOpen) {
+    closeDropdown(metricsDropdown);
+    isDropdownOpen = false;
+  }
+
+  if (!dimensionsContainer.contains(event.target) && isDimensionsDropdownOpen) {
+    closeDropdown(dimensionsDropdown);
+    isDimensionsDropdownOpen = false;
+  }
+});
+
+    function openDropdown(dropdown) {
+      dropdown.classList.add("block");
+
+      // reset to base state before animation
+      dropdown.style.height = "0px";
+      dropdown.style.width = "0px";
+      dropdown.style.opacity = "0";
+
+      // allow frame to render initial state
+      requestAnimationFrame(() => {
+        // start width and opacity animations
+        dropdown.style.width = "100%";
+        dropdown.style.opacity = "1";
+
+        // trigger height after 300ms
+        setTimeout(() => {
+          dropdown.style.height = dropdown.scrollHeight + "px";
+        }, 300);
+      });
+    }
+
+
+    function closeDropdown(dropdown) {
+      // collapse height immediately
+      dropdown.style.height = "0px";
+
+      // collapse width after height transition ends (300ms delay for height + 300ms duration)
+      setTimeout(() => {
+        dropdown.style.width = "0px";
+        dropdown.style.opacity = "0";
+      }, 300);
+
+      // clean up display after full transition
+      setTimeout(() => {
+        dropdown.classList.remove("block");
+      }, 600); // total transition time
+    }
+
+
   </script>
+
 </body>
+
 </html>
