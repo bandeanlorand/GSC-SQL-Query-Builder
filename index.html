@@ -8,11 +8,32 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
+    html {
+      height: 100%;
+    }
+
     body {
       font-family: sans-serif;
-      background: #1e1e1e;
+      /* background: #445569; */
+      background: #05445E;
+      background: linear-gradient(128deg, rgba(5, 68, 94, 1) 0%, rgba(26, 96, 112, 1) 50%, rgba(13, 83, 112, 1) 100%);
       color: #e0e0e0;
-      padding: 2rem;
+
+      height: 100%;
+      font-family: "Roboto Mono", monospace;
+      font-optical-sizing: auto;
+
+      font-style: normal;
+    }
+
+    button {
+      outline: none;
+    }
+
+    header {
+      text-align: center;
+      background: #d3d8df;
+      color: #1f2937;
     }
 
     label {
@@ -31,6 +52,7 @@
       padding: 0.5rem;
       margin: 0.5rem 0;
       width: 100%;
+
     }
 
     button {
@@ -87,6 +109,7 @@
       height: 0;
       width: 0;
       opacity: 0;
+      border-radius: 8px;
       transition:
         width 0.15s ease,
         height 0.1s ease 0.1s,
@@ -95,47 +118,76 @@
     }
 
     #dimensionsDropdown {
+
       overflow-y: auto;
     }
 
     #selectedDimensions {
       cursor: pointer;
+      border-radius: 8px;
+    }
+
+    #metricsArrow.text-gray-500 {
+      pointer-events: none;
     }
   </style>
 </head>
 
 <body>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
+  <header class="bg-color-[#1f2937] px-8 py-4 text-left flex row items-center justify-between flex-row shadow-lg">
+    <div class="items-start justify-start flex-col">
+      <h1 class="text-3xl font-bold mb-1 text-xl">Google Search Console SQL Query Builder</h1>
+      <p class="mb-1 text-sm">Build your SQL queries for Google Search Console data easily.</p>
+    </div>
+    <div class="flex items-center">
+      <p class="text-sm">powered by</p>
+      <a href="#" class="max-w-[120px] block">
+        <img src="search-analyzer-logo-1024x341.png" alt="" />
+      </a>
+    </div>
+  </header>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 max-w-[1440px] mx-auto">
     <div class="space-y-4">
-      <h1 class="text-2xl font-bold">GSC SQL Query Builder</h1>
+
 
       <div>
         <label for="dateRange">Date Range</label>
-        <div id="dateRangeContainer" class="relative w-full">
-          <div id="selectedDateRange"
-            class="bg-gray-800 border border-gray-600 p-2 rounded h-[50px] flex items-center justify-between cursor-pointer">
-            <span id="dateRangeLabel">Select date range</span>
-            <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+        <div id="dateRangeContainer" class="relative w-full  ">
+          <div class="relative group focus-within:ring-0 w-full">
+            <!-- Subtle glow layer -->
+            <div
+              class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+            </div>
+
+            <!-- Input field -->
+            <div id="selectedDateRange" tabindex="0" data-toggle="dropdown" data-target="#dateRangeDropdown"
+              data-arrow="#dateRangeArrow"
+              class="relative bg-gray-800 border border-gray-600 p-2 rounded-[8px] h-[50px] flex items-center justify-between cursor-pointer focus:outline-none">
+              <span id="dateRangeLabel">Select date range</span>
+
+
+              <svg id="dateRangeArrow" class="w-4 h-4 transition-transform duration-300" fill="none"
+                stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
           </div>
-          <div id="dateRangeDropdown"
+          <div id="dateRangeDropdown" data-open="false"
             class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all mt-[8px]">
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Yesterday')">Yesterday</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last Week')">Last Week</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last month')">Last month</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Month to yesterday')">Month to
+            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Yesterday">Yesterday</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last Week">Last Week</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last month">Last month</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Month to yesterday">Month to
               yesterday</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last 7 days')">Last 7 days</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last 14 days')">Last 14 days
+            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 7 days">Last 7 days</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 14 days">Last 14 days
             </div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last 30 days')">Last 30 days
+            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 30 days">Last 30 days
             </div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Year to yesterday')">Year to
+            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Year to yesterday">Year to
               yesterday</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Last year')">Last year</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDateRange('Custom date range')">Custom date
+            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last year">Last year</div>
+            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Custom date range">Custom date
               range</div>
           </div>
         </div>
@@ -144,101 +196,199 @@
         <!-- Hidden by default, shown when "Custom date range" is selected -->
         <div id="customDateInputs" class="hidden mt-2">
           <div class="grid grid-cols-2 gap-4">
+            <!-- Start Date -->
             <div>
-              <label for="startDate">Start Date</label>
-              <input class="bg-gray-800 border border-gray-600 p-2 rounded h-[50px] w-full" type="date"
-                id="startDate" />
+              <label for="startDate" class="mb-1 block">Start Date</label>
+              <div class="relative group w-full">
+                <!-- Glow layer -->
+                <div
+                  class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+                </div>
+                <!-- Input -->
+                <input
+                  class="relative z-10 bg-gray-800 border border-gray-600 p-2 h-[50px] w-full rounded-[8px] focus:outline-none"
+                  type="date" id="startDate" />
+              </div>
             </div>
+
+            <!-- End Date -->
             <div>
-              <label for="endDate">End Date</label>
-              <input class="bg-gray-800 border border-gray-600 p-2 rounded h-[50px] w-full" type="date" id="endDate" />
+              <label for="endDate" class="mb-1 block">End Date</label>
+              <div class="relative group w-full">
+                <!-- Glow layer -->
+                <div
+                  class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+                </div>
+                <!-- Input -->
+                <input
+                  class="relative z-10 bg-gray-800 border border-gray-600 p-2 h-[50px] w-full rounded-[8px] focus:outline-none"
+                  type="date" id="endDate" />
+              </div>
             </div>
           </div>
         </div>
+
 
         <!-- Custom date inputs end -->
 
 
         <!-- Metrics starts here -->
-        <label for="metrics">Metrics</label>
-        <div id="metricsContainer" class="relative w-full">
-          <div id="selectedMetrics" class="flex flex-wrap gap-2 mb-2"></div>
-          <div id="metricsDropdown" class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all">
+        <div class="flex items-center justify-between">
+          <label for="metrics">Metrics</label>
+          <button id="clearMetricsBtn"
+            class="text-sm text-red-100 hover:underline flex items-center space-x-1 w-auto border-none hidden"
+            onclick="clearAllMetrics()">
+            <i class="fa-regular fa-circle-xmark"></i>
+            <span>Clear all</span>
+          </button>
+        </div>
+        <div id="metricsContainer" class="relative w-full group focus-within:ring-0">
+          <!-- Subtle glowing border -->
+          <div
+            class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-lg blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+          </div>
 
+          <!-- Selected metrics box -->
+          <div id="selectedMetrics" tabindex="0"
+            class="relative bg-gray-800 border border-gray-600 p-2 rounded-[8px] h-[50px] flex items-center justify-between cursor-pointer focus:outline-none">
+            <div id="metricsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto">
+              <span id="metricsPlaceholder" class="text-gray-400">Select metrics</span>
+            </div>
+            <svg id="metricsArrow" class="w-4 h-4 transition-transform duration-300 ml-2 flex-shrink-0" fill="none"
+              stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+
+          <!-- Dropdown items -->
+          <div id="metricsDropdown" data-open="false"
+            class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all mt-[8px]">
             <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Impressions')">Impressions</div>
             <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Clicks')">Clicks</div>
             <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('CTR')">CTR</div>
             <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Position')">Position</div>
           </div>
         </div>
+
         <!-- Metrics ends here -->
 
         <!-- Dimensions starts here -->
-        <label for="dimensions">Dimensions</label>
-        <div id="dimensionsContainer" class="relative w-full">
-          <div id="selectedDimensions"
-            class="flex flex-wrap gap-2 mb-2 w-full h-[50px] p-2 border border-gray-700 rounded bg-gray-800"></div>
-          <!-- <div id="dimensionsDropdown"
-            class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all">
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Query')">Query</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Page')">Page</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Country')">Country</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectDimension('Device')">Device</div>
-          </div> -->
+        <div class="flex items-center justify-between">
+          <label for="dimensions">Dimensions</label>
+          <button id="clearDimensionsBtn"
+            class="text-sm text-red-100 hover:underline flex items-center space-x-1 w-auto border-none hidden"
+            onclick="clearAllDimensions()">
+            <i class="fa-regular fa-circle-xmark"></i>
+            <span>Clear all</span>
+          </button>
+        </div>
+        <div id="dimensionsContainer" class="relative w-full group focus-within:ring-0">
+          <!-- Glow when focused -->
+          <div
+            class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-lg blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+          </div>
+
+          <!-- Selected Dimensions -->
+          <div id="selectedDimensions" tabindex="0"
+            class="relative bg-gray-800 border border-gray-600 p-2 rounded-[8px] min-h-[50px] flex items-center justify-between cursor-pointer focus:outline-none">
+            <div id="dimensionsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto"><span
+                id="dimensionsPlaceholder" class="text-gray-400">Select dimensions</span></div>
+            <svg id="dimensionsArrow" class="w-4 h-4 transition-transform duration-300 ml-2 flex-shrink-0" fill="none"
+              stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+
+          <!-- Dimensions dropdown -->
           <div id="dimensionsDropdown"
             class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all max-h-[400px] overflow-y-auto w-full">
-
-          </div>
-          <div class="border-gray-700 rounded bg-gray-800 text-white p-4 rounded-md w-full max-w-4xl mx-auto">
-            <div class="flex justify-between items-center cursor-pointer" onclick="toggleFilters()">
-              <span class="font-bold">Filters</span>
-              <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
-                stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-
-            <div id="filterSection" class="mt-4 space-y-4 hidden transition-all duration-300">
-              <div class="flex flex-wrap gap-2">
-                <!-- Field dropdown -->
-                <select class=" px-4 py-2 border-gray-700 rounded-[8px] bg-gray-800 text-white border ">
-                  <option>Select Field</option>
-                  <option>Query</option>
-                  <option>Page</option>
-                  <option>Country</option>
-                  <option>Device</option>
-                </select>
-
-                <!-- Condition dropdown -->
-                <select class=" px-4 py-2 border-gray-700 rounded-[8px] bg-gray-800 text-white border ">
-                  <option>EQUALS</option>
-                  <option>CONTAINS</option>
-                  <option>NOT EQUALS</option>
-                </select>
-
-                <!-- Value input -->
-                <input type="text" placeholder="Type value"
-                  class=" px-4 py-2 border-gray-700 rounded-[8px] bg-gray-800 text-white border  w-64" />
-              </div>
-
-              <div class="flex gap-2 mt-2">
-                <button
-                  class="bg-blue-500 hover:bg-blue-900 rounded-[8px] text-white px-4 py-1  text-lg font-bold">+</button>
-                <button
-                  class="bg-blue-500 hover:bg-blue-900 rounded-[8px] text-white px-4 py-1  text-lg font-bold">−</button>
-              </div>
-            </div>
           </div>
 
-          <script>
-            function toggleFilters() {
-              const section = document.getElementById('filterSection');
-              const arrow = document.getElementById('filterArrow');
-              section.classList.toggle('hidden');
-              arrow.classList.toggle('rotate-180');
-            }
-          </script>
 
+        </div>
+        <!-- Filters section -->
+        <div class="border border-gray-700 rounded bg-gray-800 text-white p-4 rounded-md w-full max-w-4xl mx-auto mt-4">
+          <div class="flex justify-between items-center cursor-pointer" onclick="toggleFilters()">
+            <span class="font-bold">Filters</span>
+            <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
+              stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+
+          <div id="filterSection" class="mt-4 space-y-4 hidden transition-all duration-300">
+            <div class="flex flex-wrap gap-2">
+              <!-- Field dropdown -->
+              <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white">
+                <option value="Select Field" disabled="">Select Field</option>
+                <option value="Query">Query </option>
+                <option value="URL">URL </option>
+                <option value="Country">Country </option>
+                <option value="Search Type">Search Type </option>
+                <option value="Device">Device </option>
+                <option value="Site URL">Site URL </option>
+                <option value="Date">Date </option>
+                <option value="Month">Month </option>
+                <option value="Year">Year </option>
+                <option value="Is Anonymized Query">Is Anonymized Query </option>
+                <option value="Is Anonymized Discover">Is Anonymized Discover </option>
+                <option value="Is AMP Top Stories">Is AMP Top Stories </option>
+                <option value="Is AMP Blue Link">Is AMP Blue Link </option>
+                <option value="Is Job Listing">Is Job Listing </option>
+                <option value="Is Job Details">Is Job Details </option>
+                <option value="Is TPF QA">Is TPF QA </option>
+                <option value="Is TPF FAQ">Is TPF FAQ </option>
+                <option value="Is TPF HowTo">Is TPF HowTo </option>
+                <option value="Is Weblite">Is Weblite </option>
+                <option value="Is Action">Is Action </option>
+                <option value="Is Events Listing">Is Events Listing </option>
+                <option value="Is Events Details">Is Events Details </option>
+                <option value="Is Search Appearance Android App">Is Search Appearance Android App </option>
+                <option value="Is AMP Story">Is AMP Story </option>
+                <option value="Is AMP Image Result">Is AMP Image Result </option>
+                <option value="Is Video">Is Video </option>
+                <option value="Is Organc Shopping">Is Organc Shopping </option>
+                <option value="Is Review Snippet">Is Review Snippet </option>
+                <option value="Is Special Announcement">Is Special Announcement </option>
+                <option value="Is Recipe Feature">Is Recipe Feature </option>
+                <option value="Is Recipe Rich Snippet">Is Recipe Rich Snippet </option>
+                <option value="Is Subscribed Content">Is Subscribed Content </option>
+                <option value="Is Page Experience">Is Page Experience </option>
+                <option value="Is Practice Problems">Is Practice Problems </option>
+                <option value="Is Math Solvers">Is Math Solvers </option>
+                <option value="Is Translated Result">Is Translated Result </option>
+                <option value="Is Product Snippets">Is Product Snippets </option>
+                <option value="Is Merchant Listings">Is Merchant Listings </option>
+                <option value="Impressions">Impressions </option>
+              </select>
+
+
+
+
+              <!-- Condition dropdown -->
+              <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white">
+                <option value="" disabled="">Operator</option>
+                <option value="EQUALS">EQUALS </option>
+                <option value="NOT EQUALS">NOT EQUALS </option>
+                <option value="CONTAINS">CONTAINS </option>
+                <option value="NOT CONTAINS">NOT CONTAINS </option>
+                <option value="GREATER THAN">GREATER THAN </option>
+                <option value="LESS THAN">LESS THAN </option>
+                <option value="IS NULL">IS NULL </option>
+                <option value="IS NOT NULL">IS NOT NULL </option>
+              </select>
+              <!-- Value input -->
+              <input type="text" placeholder="Type value"
+                class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white w-64" />
+            </div>
+
+            <div class="flex gap-2 mt-2">
+              <button
+                class="bg-blue-500 hover:bg-blue-900 rounded-[8px] text-white px-4 py-1 text-lg font-bold">+</button>
+              <button
+                class="bg-blue-500 hover:bg-blue-900 rounded-[8px] text-white px-4 py-1 text-lg font-bold">−</button>
+            </div>
+          </div>
         </div>
         <!-- Dimensions ends here -->
 
@@ -256,6 +406,15 @@
   </div>
 
   <script>
+    // Function to toggle the visibility of the filter section
+    // and rotate the arrow icon  
+    function toggleFilters() {
+      const section = document.getElementById('filterSection');
+      const arrow = document.getElementById('filterArrow');
+      section.classList.toggle('hidden');
+      arrow.classList.toggle('rotate-180');
+    }
+
     function toggleCustomDateInputs() {
       // const dateRange = document.getElementById('dateRange').value;
       const customInputs = document.getElementById('customDateInputs');
@@ -327,20 +486,21 @@
     let isDropdownOpen = false;
 
     const selectedDimensions = new Set();
-    let isDimensionsDropdownOpen = false;
+    // let isDimensionsDropdownOpen = false;
 
     let selectedDateRange = '';
     let isDateRangeDropdownOpen = false;
 
-    document.getElementById("selectedDateRange").addEventListener("click", () => {
+    document.getElementById("selectedDateRange").addEventListener("click", (event) => {
+      event.stopPropagation();
+
       const dropdown = document.getElementById("dateRangeDropdown");
-      if (isDateRangeDropdownOpen) {
-        closeDropdown(dropdown);
-      } else {
-        openDropdown(dropdown);
-      }
-      isDateRangeDropdownOpen = !isDateRangeDropdownOpen;
+      const arrow = document.getElementById("dateRangeArrow");
+      const isOpen = dropdown.getAttribute("data-open") === "true";
+
+      toggleDropdown(dropdown, arrow, !isOpen);
     });
+    window.selectDateRange = selectDateRange;
 
     function selectDateRange(range) {
       selectedDateRange = range;
@@ -349,6 +509,13 @@
       isDateRangeDropdownOpen = false;
       toggleCustomDateInputs(range); // Show/hide custom fields
     }
+    // Bind selection for all date range items
+    document.querySelectorAll('#dateRangeDropdown [data-range]').forEach(item => {
+      item.addEventListener('click', () => {
+        const range = item.getAttribute('data-range');
+        selectDateRange(range);
+      });
+    });
 
     function toggleCustomDateInputs(range) {
       const customInputs = document.getElementById('customDateInputs');
@@ -359,36 +526,7 @@
       }
     }
 
-    function selectMetric(metric) {
-      if (selectedMetrics.has(metric)) return;
-      selectedMetrics.add(metric);
 
-      // Remove from dropdown
-      const dropdown = document.getElementById("metricsDropdown");
-      const items = dropdown.querySelectorAll("div");
-      items.forEach(item => {
-        if (item.textContent === metric) item.style.display = "none";
-      });
-
-      // Add tag
-      const tag = document.createElement("div");
-      tag.className = "bg-gray-700 text-white px-2 py-1 rounded flex items-center space-x-2";
-      tag.innerHTML = `${metric} <button onclick="removeMetric('${metric}')" class="ml-2 text-red-400 font-bold">&times;</button>`;
-      tag.id = `tag-${metric}`;
-      document.getElementById("selectedMetrics").appendChild(tag);
-
-      closeDropdown(document.getElementById("metricsDropdown"));
-      isDropdownOpen = false;
-
-      // Hide dropdown if all selected
-      const dropdownItems = document.querySelectorAll("#metricsDropdown > div");
-      const visibleItems = Array.from(dropdownItems).filter(item => item.style.display !== "none");
-      if (visibleItems.length === 0) {
-        dropdown.classList.add("hidden");
-      } else {
-        dropdown.classList.add("hidden"); // hide dropdown after selection even if not all selected
-      }
-    }
 
     // Populate dimensions dropdown
     const dimensionEntries = [
@@ -447,7 +585,7 @@
       iconWrapper.className = "ml-2 relative group";
 
       const icon = document.createElement("i");
-      icon.className = "fas fa-question-circle text-gray-400";
+      icon.className = "ml-2 text-white font-bold outline-none fa-question-circle text-gray-400";
 
       const tooltipDiv = document.createElement("div");
       tooltipDiv.className = "absolute left-6 top-0 bg-gray-900 text-xs text-white p-2 rounded shadow-lg w-64 z-20 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300";
@@ -468,6 +606,7 @@
       if (selectedDimensions.has(dimension)) return;
       selectedDimensions.add(dimension);
 
+      // Hide the item in dropdown
       const dropdownItems = document.querySelectorAll("#dimensionsDropdown > div");
       dropdownItems.forEach(item => {
         const label = item.querySelector("span");
@@ -476,20 +615,33 @@
         }
       });
 
+      // Hide placeholder
+      const placeholder = document.getElementById("dimensionsPlaceholder");
+      if (placeholder) placeholder.classList.add("hidden");
+
+      // Create and append tag
       const tag = document.createElement("div");
-      tag.className = "bg-gray-700 text-white px-2 py-1 rounded flex items-center space-x-2";
-      tag.innerHTML = `${dimension} <button onclick="removeDimension('${dimension}')" class="ml-2 text-red-400 font-bold">&times;</button>`;
+      tag.className = "tag-metric bg-[#145da0] shadow-md text-white px-2 py-[2px] h-[28px] rounded-[8px] flex items-center space-x-2 text-sm whitespace-nowrap";
       tag.id = `tag-dimension-${dimension}`;
-      document.getElementById("selectedDimensions").appendChild(tag);
+      tag.innerHTML = `${dimension} <button onclick="removeDimension('${dimension}')" class="ml-2 mt-[-2px] leading-none text-[1.2rem] text-white font-bold outline-none border-none p-[2px] font-extralight">&times;</button>`;
+
+      document.getElementById("dimensionsTagsContainer").appendChild(tag);
 
       closeDropdown(document.getElementById("dimensionsDropdown"));
-      isDimensionsDropdownOpen = false;
+      updateClearDimensionsButton();
     }
+
+
 
 
     function removeDimension(dimension) {
       selectedDimensions.delete(dimension);
 
+      // Remove tag
+      const tag = document.getElementById(`tag-dimension-${dimension}`);
+      if (tag) tag.remove();
+
+      // Show item in dropdown again
       const dropdownItems = document.querySelectorAll("#dimensionsDropdown > div");
       dropdownItems.forEach(item => {
         const label = item.querySelector("span");
@@ -498,120 +650,292 @@
         }
       });
 
-      const tag = document.getElementById(`tag-dimension-${dimension}`);
-      if (tag) tag.remove();
+      // Show placeholder if empty
+      if (selectedDimensions.size === 0) {
+        const placeholder = document.getElementById("dimensionsPlaceholder");
+        if (placeholder) placeholder.classList.remove("hidden");
+      }
+
+      updateClearDimensionsButton();
+    }
+
+
+    function updateClearMetricsButton() {
+      const clearBtn = document.getElementById("clearMetricsBtn");
+      if (selectedMetrics.size >= 2) {
+        clearBtn.classList.remove("hidden");
+      } else {
+        clearBtn.classList.add("hidden");
+      }
+    }
+
+    function updateMetricsArrowState() {
+      const visibleItems = Array.from(document.querySelectorAll("#metricsDropdown > div"))
+        .filter(item => item.style.display !== "none");
+
+      const arrow = document.getElementById("metricsArrow");
+      if (visibleItems.length === 0) {
+        arrow.classList.add("text-gray-500", "cursor-not-allowed");
+      } else {
+        arrow.classList.remove("text-gray-500", "cursor-not-allowed");
+      }
+    }
+
+
+    function selectMetric(metric) {
+      if (selectedMetrics.has(metric)) return;
+
+      const container = document.getElementById("metricsTagsContainer");
+      const placeholder = document.getElementById("metricsPlaceholder");
+
+      if (!container || !placeholder) {
+        console.error("selectMetric error: container or placeholder is missing");
+        return;
+      }
+
+      selectedMetrics.add(metric);
+
+      // Hide the metric in the dropdown
+      document.querySelectorAll("#metricsDropdown > div").forEach(item => {
+        if (item.textContent === metric) item.style.display = "none";
+      });
+
+      // Create metric tag
+      const tag = document.createElement("div");
+      tag.className = "tag-metric bg-[#145da0] shadow-md text-white px-2 py-[2px] h-[28px] rounded-[8px] flex items-center space-x-2 text-sm whitespace-nowrap";
+      tag.id = `tag-${metric}`;
+
+      const label = document.createElement("span");
+      label.textContent = metric;
+
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "ml-2 mt-[-2px] leading-none text-[1.2rem] text-white font-bold outline-none border-none p-[2px] font-extralight";
+      closeBtn.textContent = "×";
+
+      // ⛔ Prevent bubbling up to selectedMetrics
+      closeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        removeMetric(metric);
+      });
+
+      tag.appendChild(label);
+      tag.appendChild(closeBtn);
+      container.appendChild(tag);
+
+      // Hide placeholder
+      placeholder.classList.add("hidden");
+
+      // Close dropdown and rotate arrow back
+      toggleDropdown(metricsDropdown, metricsArrow, false);
+      isDropdownOpen = false;
+
+      // Hide dropdown if all metrics are selected
+      const visibleItems = Array.from(document.querySelectorAll("#metricsDropdown > div"))
+        .filter(item => item.style.display !== "none");
+      if (visibleItems.length === 0) {
+        metricsDropdown.classList.add("hidden");
+      }
+
+      updateClearMetricsButton();
+      updateMetricsArrowState();
     }
 
 
 
 
+    // Function to update the "Clear all" button visibility
     function removeMetric(metric) {
       selectedMetrics.delete(metric);
+      document.getElementById(`tag-${metric}`)?.remove();
 
-      // Show again in dropdown
-      const dropdown = document.getElementById("metricsDropdown");
-      const items = dropdown.querySelectorAll("div");
-      items.forEach(item => {
+      document.querySelectorAll("#metricsDropdown > div").forEach(item => {
         if (item.textContent === metric) item.style.display = "block";
       });
 
-      // Remove tag
-      const tag = document.getElementById(`tag-${metric}`);
-      if (tag) tag.remove();
+      if (selectedMetrics.size === 0) {
+        metricsPlaceholder.classList.remove("hidden");
+      }
 
-      // Show dropdown if there's at least one item visible
-      dropdown.classList.remove("hidden");
-
+      // Allow dropdown to be reopened after removal
+      isDropdownOpen = false;
+      toggleDropdown(metricsDropdown, metricsArrow, false);
+      updateClearMetricsButton();
+      updateMetricsArrowState();
     }
+
+    function clearAllMetrics() {
+      const tagContainer = document.getElementById("metricsTagsContainer");
+      const placeholder = document.getElementById("metricsPlaceholder");
+      const arrow = document.getElementById("metricsArrow");
+
+      if (!tagContainer || !placeholder) {
+        console.error("clearAllMetrics error: tags container or placeholder is missing");
+        return;
+      }
+
+      tagContainer.querySelectorAll("div").forEach(tag => tag.remove());
+      selectedMetrics.clear();
+      placeholder.classList.remove("hidden");
+
+      document.querySelectorAll("#metricsDropdown > div").forEach(item => {
+        item.style.display = "block";
+      });
+
+      updateClearMetricsButton();
+      updateMetricsArrowState();
+
+      isDropdownOpen = false;
+      toggleDropdown(metricsDropdown, arrow, false);
+    }
+
+
+
+
+
     const selectedMetricsEl = document.getElementById("selectedMetrics");
     const metricsDropdown = document.getElementById("metricsDropdown");
 
     // let isDropdownOpen = false;
 
-    selectedMetricsEl.addEventListener("click", () => {
-      if (isDropdownOpen) {
-        closeDropdown(metricsDropdown);
-      } else {
-        openDropdown(metricsDropdown);
+    selectedMetricsEl.addEventListener("click", (event) => {
+      // Prevent dropdown toggle if clicking a tag (e.g., close button)
+      if (event.target.closest(".tag-metric")) return;
+
+      const arrow = document.getElementById("metricsArrow");
+
+      // Block — if arrow is disabled, stop everything
+      if (arrow.classList.contains("cursor-not-allowed")) {
+        return;
       }
-      isDropdownOpen = !isDropdownOpen;
+
+      const visibleItems = Array.from(metricsDropdown.querySelectorAll("div"))
+        .filter(item => item.style.display !== "none");
+
+      const isOpen = metricsDropdown.getAttribute("data-open") === "true";
+
+      if (visibleItems.length === 0) {
+        closeDropdown(metricsDropdown);
+        arrow.classList.remove("rotate-180");
+        return;
+      }
+
+      toggleDropdown(metricsDropdown, arrow, !isOpen);
+      isDropdownOpen = !isOpen;
     });
+
+
+
+
+
+
 
 
     /* metrics multiselect script - ends here */
 
     // Close metricsDropdown when clicking outside
     document.addEventListener("click", function (event) {
-      const dateRangeContainer = document.getElementById("dateRangeContainer");
-      const dateRangeDropdown = document.getElementById("dateRangeDropdown");
-      const metricsContainer = document.getElementById("metricsContainer");
-      const metricsDropdown = document.getElementById("metricsDropdown");
-      const dimensionsContainer = document.getElementById("dimensionsContainer");
-      const dimensionsDropdown = document.getElementById("dimensionsDropdown");
+      const dropdowns = document.querySelectorAll('[data-open="true"]');
+      const arrows = document.querySelectorAll('svg.rotate-180');
 
-      if (!dateRangeContainer.contains(event.target) && isDateRangeDropdownOpen) {
-        closeDropdown(dateRangeDropdown);
-        isDateRangeDropdownOpen = false;
-      }
-
-      if (!metricsContainer.contains(event.target) && isDropdownOpen) {
-        closeDropdown(metricsDropdown);
-        isDropdownOpen = false;
-      }
-
-      if (!dimensionsContainer.contains(event.target) && isDimensionsDropdownOpen) {
-        closeDropdown(dimensionsDropdown);
-        isDimensionsDropdownOpen = false;
-      }
-    });
-
-    function openDropdown(dropdown) {
-      dropdown.classList.add("block");
-
-      // reset to base state before animation
-      dropdown.style.height = "0px";
-      dropdown.style.width = "0px";
-      dropdown.style.opacity = "0";
-
-      // allow frame to render initial state
-      requestAnimationFrame(() => {
-        // start width and opacity animations
-        dropdown.style.width = "100%";
-        dropdown.style.opacity = "1";
-
-        // trigger height after 300ms
-        setTimeout(() => {
-          dropdown.style.height = dropdown.scrollHeight + "px";
-        }, 100);
+      dropdowns.forEach(d => {
+        if (!d.contains(event.target)) {
+          d.setAttribute("data-open", "false");
+          closeDropdown(d);
+        }
       });
-    }
+
+      arrows.forEach(a => {
+        if (!a.contains(event.target)) {
+          a.classList.remove("rotate-180");
+        }
+      });
+    });
 
 
     function closeDropdown(dropdown) {
-      // collapse height immediately
       dropdown.style.height = "0px";
 
-      // collapse width after height transition ends (300ms delay for height + 300ms duration)
       setTimeout(() => {
         dropdown.style.width = "0px";
         dropdown.style.opacity = "0";
       }, 300);
 
-      // clean up display after full transition
       setTimeout(() => {
         dropdown.classList.remove("block");
-      }, 600); // total transition time
+        dropdown.classList.add("hidden");
+        dropdown.setAttribute("data-open", "false");
+      }, 600);
     }
-    const selectedDimensionsEl = document.getElementById("selectedDimensions");
-    selectedDimensionsEl.addEventListener("click", () => {
-      const dropdown = document.getElementById("dimensionsDropdown");
-      if (isDimensionsDropdownOpen) {
+
+    function openDropdown(dropdown) {
+      dropdown.classList.remove("hidden");
+      dropdown.classList.add("block");
+
+      dropdown.style.height = "0px";
+      dropdown.style.width = "0px";
+      dropdown.style.opacity = "0";
+
+      requestAnimationFrame(() => {
+        dropdown.style.width = "100%";
+        dropdown.style.opacity = "1";
+
+        setTimeout(() => {
+          dropdown.style.height = dropdown.scrollHeight + "px";
+          dropdown.setAttribute("data-open", "true");
+        }, 100);
+      });
+    }
+
+
+    function toggleDropdown(dropdown, arrow, open) {
+      const allDropdowns = document.querySelectorAll('[data-open="true"]');
+      const allArrows = document.querySelectorAll('svg.rotate-180');
+
+      // Close any other open dropdowns and reset arrows
+      allDropdowns.forEach(d => {
+        if (d !== dropdown) closeDropdown(d);
+      });
+      allArrows.forEach(a => {
+        if (a !== arrow) a.classList.remove("rotate-180");
+      });
+
+      const visibleItems = Array.from(dropdown.querySelectorAll("div"))
+        .filter(item => item.style.display !== "none");
+
+      const arrowDisabled = arrow?.classList.contains("cursor-not-allowed");
+
+      if (open && visibleItems.length === 0) {
         closeDropdown(dropdown);
-      } else {
-        openDropdown(dropdown);
+        arrow?.classList.remove("rotate-180");
+        return;
       }
-      isDimensionsDropdownOpen = !isDimensionsDropdownOpen;
-    });
+
+      if (open) {
+        openDropdown(dropdown);
+        if (!arrowDisabled) arrow?.classList.add("rotate-180");
+      } else {
+        closeDropdown(dropdown);
+        arrow?.classList.remove("rotate-180");
+      }
+    }
+
+
+
+
+
+
+    // const selectedDimensionsEl = document.getElementById("selectedDimensions");
+    // selectedDimensionsEl.addEventListener("click", () => {
+    //   const dropdown = document.getElementById("dimensionsDropdown");
+    //   if (isDimensionsDropdownOpen) {
+    //     closeDropdown(dropdown);
+    //   } else {
+    //     openDropdown(dropdown);
+    //   }
+    //   isDimensionsDropdownOpen = !isDimensionsDropdownOpen;
+    // });
+
+
 
     // toogle filters slide down starts here
     function toggleFilters() {
@@ -621,6 +945,93 @@
       arrow.classList.toggle('rotate-180');
     }
     // toogle filters slide down ends here
+
+
+    //
+    document.querySelectorAll('[data-toggle="dropdown"]').forEach(toggle => {
+      toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+
+        const targetSelector = this.getAttribute('data-target');
+        const arrowSelector = this.getAttribute('data-arrow');
+        const dropdown = document.querySelector(targetSelector);
+        const arrow = document.querySelector(arrowSelector);
+        const isOpen = dropdown.getAttribute('data-open') === 'true';
+
+        // Close all dropdowns
+        document.querySelectorAll('[data-toggle="dropdown"]').forEach(el => {
+          const d = document.querySelector(el.getAttribute('data-target'));
+          const a = document.querySelector(el.getAttribute('data-arrow'));
+          if (d) {
+            d.style.height = "0px";
+            d.style.width = "0px";
+            d.style.opacity = "0";
+            d.setAttribute('data-open', 'false');
+          }
+          if (a) a.classList.remove('rotate-180');
+        });
+
+        // Open current if it was closed
+        if (!isOpen) {
+          dropdown.style.height = dropdown.scrollHeight + "px";
+          dropdown.style.width = "100%";
+          dropdown.style.opacity = "1";
+          dropdown.setAttribute('data-open', 'true');
+          arrow?.classList.add('rotate-180');
+        }
+      });
+    });
+
+
+
+    let isDimensionsDropdownOpen = false;
+
+
+    const selectedDimensionsEl = document.getElementById("selectedDimensions");
+    const dimensionsArrow = document.getElementById("dimensionsArrow");
+
+    selectedDimensionsEl.addEventListener("click", (event) => {
+      if (event.target.closest(".tag-metric")) return;
+
+      const isOpen = dimensionsDropdown.getAttribute("data-open") === "true";
+
+      // Close other dropdowns
+      document.querySelectorAll('[data-open="true"]').forEach(d => {
+        if (d !== dimensionsDropdown) closeDropdown(d);
+      });
+      document.querySelectorAll('svg.rotate-180').forEach(a => {
+        if (a !== dimensionsArrow) a.classList.remove("rotate-180");
+      });
+
+      toggleDropdown(dimensionsDropdown, dimensionsArrow, !isOpen);
+      isDimensionsDropdownOpen = !isOpen;
+    });
+
+    function updateClearDimensionsButton() {
+      const btn = document.getElementById("clearDimensionsBtn");
+      if (selectedDimensions.size >= 2) {
+        btn.classList.remove("hidden");
+      } else {
+        btn.classList.add("hidden");
+      }
+    }
+
+    function clearAllDimensions() {
+      selectedDimensions.clear();
+      document.getElementById("dimensionsTagsContainer").innerHTML = "";
+
+      // Show placeholder again
+      const placeholder = document.getElementById("dimensionsPlaceholder");
+      if (placeholder) placeholder.classList.remove("hidden");
+
+      document.querySelectorAll("#dimensionsDropdown > div").forEach(item => {
+        item.style.display = "flex";
+      });
+
+      updateClearDimensionsButton();
+      toggleDropdown(dimensionsDropdown, dimensionsArrow, false);
+    }
+
   </script>
 
 </body>
