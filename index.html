@@ -118,7 +118,7 @@
     }
 
     #dimensionsDropdown {
-
+      /* overflow: visible; */
       overflow-y: auto;
     }
 
@@ -134,6 +134,9 @@
 </head>
 
 <body>
+  <div id="global-tooltip"
+    class="fixed z-50 pointer-events-none bg-gray-900 text-xs text-white p-2 rounded shadow-lg max-w-xs hidden">
+  </div>
   <header class="bg-color-[#1f2937] px-8 py-4 text-left flex row items-center justify-between flex-row shadow-lg">
     <div class="items-start justify-start flex-col">
       <h1 class="text-3xl font-bold mb-1 text-xl">Google Search Console SQL Query Builder</h1>
@@ -301,26 +304,31 @@
 
           <!-- Dimensions dropdown -->
           <div id="dimensionsDropdown"
-            class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all max-h-[400px] overflow-y-auto w-full">
+            class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all max-h-[400px] overflow-y-auto w-full mt-[8px]">
           </div>
-
+          <!-- Dimensions ends here -->
 
         </div>
-        <!-- Filters section -->
-        <div class="border border-gray-700 rounded bg-gray-800 text-white p-4 rounded-md w-full max-w-4xl mx-auto mt-4">
-          <div class="flex justify-between items-center cursor-pointer" onclick="toggleFilters()">
-            <span class="font-bold">Filters</span>
-            <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
-              stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
+        <!-- Filters section starts here -->
+        <!-- Filters Header (inside gray box) -->
+<div class="w-full max-w-4xl mx-auto mt-4">
+  <div class="bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer"
+       onclick="toggleFilters()">
+    <span class="font-bold">Filters</span>
+    <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
+         stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  </div>
 
-          <div id="filterSection" class="mt-4 space-y-4 hidden transition-all duration-300">
-            <div class="flex flex-wrap gap-2">
-              <!-- Field dropdown -->
-              <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white">
-                <option value="Select Field" disabled="">Select Field</option>
+  <!-- Filters Form Section (outside the gray box) -->
+  <div id="filterSection" class="hidden bg-transparent px-4 py-4 space-y-2">
+    <div id="filterRows" class="space-y-2">
+      <!-- Initial Filter Row -->
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[160px]">
+          <option value="" disabled selected>Select Field</option>
+          
                 <option value="Query">Query </option>
                 <option value="URL">URL </option>
                 <option value="Country">Country </option>
@@ -362,12 +370,8 @@
                 <option value="Impressions">Impressions </option>
               </select>
 
-
-
-
-              <!-- Condition dropdown -->
-              <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white">
-                <option value="" disabled="">Operator</option>
+        <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[160px]">
+           <option value="" disabled="">Operator</option>
                 <option value="EQUALS">EQUALS </option>
                 <option value="NOT EQUALS">NOT EQUALS </option>
                 <option value="CONTAINS">CONTAINS </option>
@@ -376,21 +380,25 @@
                 <option value="LESS THAN">LESS THAN </option>
                 <option value="IS NULL">IS NULL </option>
                 <option value="IS NOT NULL">IS NOT NULL </option>
-              </select>
-              <!-- Value input -->
-              <input type="text" placeholder="Type value"
-                class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white w-64" />
-            </div>
+          <!-- etc -->
+        </select>
 
-            <div class="flex gap-2 mt-2">
-              <button
-                class="bg-blue-500 hover:bg-blue-900 rounded-[8px] text-white px-4 py-1 text-lg font-bold">+</button>
-              <button
-                class="bg-blue-500 hover:bg-blue-900 rounded-[8px] text-white px-4 py-1 text-lg font-bold">−</button>
-            </div>
-          </div>
-        </div>
-        <!-- Dimensions ends here -->
+        <input type="text" placeholder="Type value"
+               class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[200px]" />
+      </div>
+    </div>
+
+    <!-- Add/Remove Buttons -->
+    <div class="flex gap-2 mt-2">
+      <button onclick="addFilterRow()"
+              class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-[8px] font-bold text-lg">+</button>
+      <button onclick="removeFilterRow()"
+              class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-[8px] font-bold text-lg">−</button>
+    </div>
+  </div>
+</div>
+
+        <!-- Filters section ends here -->
 
         <button type="submit" onclick="generateSQL()"
           class="block w-auto mt-[24px]  m-auto bg-blue-800 text-white border-none px-10 py-2 text-center rounded-[8px] text-[1.25rem] leading-[2rem] ">Generate
@@ -571,34 +579,71 @@
     ];
 
     const dimensionsDropdown = document.getElementById("dimensionsDropdown");
-    dimensionsDropdown.innerHTML = "";
+    dimensionsDropdown.innerHTML = '<div id="dimensionsScrollArea" class="max-h-[400px] overflow-y-auto pr-2"></div>';
+    const scrollArea = document.getElementById("dimensionsScrollArea");
+
+
+    // dimensionEntries.forEach(([name, tooltip]) => {
+    //   const item = document.createElement("div");
+    //   item.className = "relative group cursor-pointer p-1 hover:bg-gray-700 flex items-center justify-between";
+    //   item.setAttribute("onclick", `selectDimension('${name}')`);
+
+    //   const span = document.createElement("span");
+    //   span.textContent = name;
+
+    //   const iconWrapper = document.createElement("div");
+    //   iconWrapper.className = "ml-2 relative group";
+
+    //   const icon = document.createElement("i");
+    //   icon.className = "ml-2 text-white font-bold outline-none far fa-question-circle text-gray-400";
+
+    //   const tooltipDiv = document.createElement("div");
+    //   tooltipDiv.className = "absolute left-6 top-0 bg-gray-900 text-xs text-white p-2 rounded shadow-lg w-64 z-20 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300";
+    //   tooltipDiv.textContent = tooltip;
+
+    //   iconWrapper.appendChild(icon);
+    //   iconWrapper.appendChild(tooltipDiv);
+
+
+    //   item.appendChild(span);
+    //   item.appendChild(iconWrapper);
+    //   dimensionsDropdown.appendChild(item);
+    // });
+    const tooltipBox = document.getElementById("global-tooltip");
 
     dimensionEntries.forEach(([name, tooltip]) => {
       const item = document.createElement("div");
-      item.className = "relative group cursor-pointer p-1 hover:bg-gray-700 flex items-center justify-between";
+      item.className = "relative cursor-pointer p-1 hover:bg-gray-700 flex items-center justify-between";
       item.setAttribute("onclick", `selectDimension('${name}')`);
 
       const span = document.createElement("span");
       span.textContent = name;
 
-      const iconWrapper = document.createElement("div");
-      iconWrapper.className = "ml-2 relative group";
-
+      // Icon setup
       const icon = document.createElement("i");
-      icon.className = "ml-2 text-white font-bold outline-none fa-question-circle text-gray-400";
+      icon.className = "far fa-question-circle text-gray-400";
+      icon.style.cursor = "pointer";
 
-      const tooltipDiv = document.createElement("div");
-      tooltipDiv.className = "absolute left-6 top-0 bg-gray-900 text-xs text-white p-2 rounded shadow-lg w-64 z-20 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300";
-      tooltipDiv.textContent = tooltip;
+      // Tooltip logic
+      icon.addEventListener("mouseenter", (e) => {
+        tooltipBox.textContent = tooltip;
+        tooltipBox.classList.remove("hidden");
 
-      iconWrapper.appendChild(icon);
-      iconWrapper.appendChild(tooltipDiv);
+        const rect = e.target.getBoundingClientRect();
+        tooltipBox.style.top = `${rect.top + window.scrollY}px`;
+        tooltipBox.style.left = `${rect.right + 8 + window.scrollX}px`;
+      });
 
+      icon.addEventListener("mouseleave", () => {
+        tooltipBox.classList.add("hidden");
+      });
 
       item.appendChild(span);
-      item.appendChild(iconWrapper);
+      item.appendChild(icon);
       dimensionsDropdown.appendChild(item);
     });
+
+
     // dimensions dropdown items end
 
 
@@ -1032,6 +1077,43 @@
       toggleDropdown(dimensionsDropdown, dimensionsArrow, false);
     }
 
+    //filter functionality starts here
+
+  function addFilterRow() {
+    const container = document.getElementById('filterRows');
+    const row = document.createElement('div');
+    row.className = "flex flex-wrap gap-2 items-center";
+
+    row.innerHTML = `
+      <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[160px]">
+        <option value="" disabled selected>Select Field</option>
+        <option value="Query">Query</option>
+        <option value="URL">URL</option>
+        <!-- ... -->
+      </select>
+
+      <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[160px]">
+        <option value="EQUALS">EQUALS</option>
+        <option value="NOT EQUALS">NOT EQUALS</option>
+        <option value="CONTAINS">CONTAINS</option>
+      </select>
+
+      <input type="text" placeholder="Type value"
+             class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[200px]" />
+    `;
+    container.appendChild(row);
+  }
+
+  function removeFilterRow() {
+    const container = document.getElementById('filterRows');
+    if (container.children.length > 1) {
+      container.lastElementChild.remove();
+    }
+  }
+
+    //filter functionality ends here
+  // Pre-select default metrics on page load
+['Clicks', 'Impressions', 'CTR', 'Position'].forEach(metric => selectMetric(metric));
   </script>
 
 </body>
