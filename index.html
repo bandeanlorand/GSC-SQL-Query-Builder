@@ -130,6 +130,46 @@
     #metricsArrow.text-gray-500 {
       pointer-events: none;
     }
+    #sqlOutput {
+    min-height: calc(100vh - 400px);
+  }
+  body.show-copied::after {
+  content: "Copied to clipboard";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9); /* Tailwind gray-700 with transparency */
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem; /* Large font */
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+@keyframes slideInFadeOut {
+  0% {
+    bottom: 20px;
+    opacity: 0;
+  }
+  10% {
+    bottom: 40px;
+    opacity: 1;
+  }
+  90% {
+    bottom: 40px;
+    opacity: 1;
+  }
+  100% {
+    bottom: 20px;
+    opacity: 0;
+  }
+}
+
   </style>
 </head>
 
@@ -306,99 +346,47 @@
           <div id="dimensionsDropdown"
             class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all max-h-[400px] overflow-y-auto w-full mt-[8px]">
           </div>
-          <!-- Dimensions ends here -->
+
 
         </div>
+
+        <!-- Dimensions ends here -->
+
         <!-- Filters section starts here -->
         <!-- Filters Header (inside gray box) -->
-<div class="w-full max-w-4xl mx-auto mt-4">
-  <div class="bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer"
-       onclick="toggleFilters()">
-    <span class="font-bold">Filters</span>
-    <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
-         stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-    </svg>
-  </div>
+        <div class="w-full max-w-4xl mx-auto mt-4">
+          <div
+            class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition transition-all"
+            onclick="toggleFilters()">
+            <span class="font-bold">Filters</span>
+            <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
+              stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
 
-  <!-- Filters Form Section (outside the gray box) -->
-  <div id="filterSection" class="hidden bg-transparent px-4 py-4 space-y-2">
-    <div id="filterRows" class="space-y-2">
-      <!-- Initial Filter Row -->
-      <div class="flex flex-wrap gap-2 items-center">
-        <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[160px]">
-          <option value="" disabled selected>Select Field</option>
-          
-                <option value="Query">Query </option>
-                <option value="URL">URL </option>
-                <option value="Country">Country </option>
-                <option value="Search Type">Search Type </option>
-                <option value="Device">Device </option>
-                <option value="Site URL">Site URL </option>
-                <option value="Date">Date </option>
-                <option value="Month">Month </option>
-                <option value="Year">Year </option>
-                <option value="Is Anonymized Query">Is Anonymized Query </option>
-                <option value="Is Anonymized Discover">Is Anonymized Discover </option>
-                <option value="Is AMP Top Stories">Is AMP Top Stories </option>
-                <option value="Is AMP Blue Link">Is AMP Blue Link </option>
-                <option value="Is Job Listing">Is Job Listing </option>
-                <option value="Is Job Details">Is Job Details </option>
-                <option value="Is TPF QA">Is TPF QA </option>
-                <option value="Is TPF FAQ">Is TPF FAQ </option>
-                <option value="Is TPF HowTo">Is TPF HowTo </option>
-                <option value="Is Weblite">Is Weblite </option>
-                <option value="Is Action">Is Action </option>
-                <option value="Is Events Listing">Is Events Listing </option>
-                <option value="Is Events Details">Is Events Details </option>
-                <option value="Is Search Appearance Android App">Is Search Appearance Android App </option>
-                <option value="Is AMP Story">Is AMP Story </option>
-                <option value="Is AMP Image Result">Is AMP Image Result </option>
-                <option value="Is Video">Is Video </option>
-                <option value="Is Organc Shopping">Is Organc Shopping </option>
-                <option value="Is Review Snippet">Is Review Snippet </option>
-                <option value="Is Special Announcement">Is Special Announcement </option>
-                <option value="Is Recipe Feature">Is Recipe Feature </option>
-                <option value="Is Recipe Rich Snippet">Is Recipe Rich Snippet </option>
-                <option value="Is Subscribed Content">Is Subscribed Content </option>
-                <option value="Is Page Experience">Is Page Experience </option>
-                <option value="Is Practice Problems">Is Practice Problems </option>
-                <option value="Is Math Solvers">Is Math Solvers </option>
-                <option value="Is Translated Result">Is Translated Result </option>
-                <option value="Is Product Snippets">Is Product Snippets </option>
-                <option value="Is Merchant Listings">Is Merchant Listings </option>
-                <option value="Impressions">Impressions </option>
-              </select>
+          <!-- Filters Form Section (outside the gray box) -->
+          <!-- filter input and dropdown row starts here -->
+          <div id="filterSection" class="hidden bg-transparent px-0 py-4 space-y-2">
+            <div id="filterRows" class="space-y-2">
+              <!--Filter Row gets injected here -->
+            </div>
+            <!-- Add/Remove Buttons -->
+            <div class="flex gap-2 mt-2">
+              <button onclick="addFilterRow()"
+                class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">
+                +
+              </button>
+              <button onclick="removeFilterRow()"
+                class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">
+                −
+              </button>
+            </div>
+          </div>
+          <!-- Filters section ends here -->
+        </div>
 
-        <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[160px]">
-           <option value="" disabled="">Operator</option>
-                <option value="EQUALS">EQUALS </option>
-                <option value="NOT EQUALS">NOT EQUALS </option>
-                <option value="CONTAINS">CONTAINS </option>
-                <option value="NOT CONTAINS">NOT CONTAINS </option>
-                <option value="GREATER THAN">GREATER THAN </option>
-                <option value="LESS THAN">LESS THAN </option>
-                <option value="IS NULL">IS NULL </option>
-                <option value="IS NOT NULL">IS NOT NULL </option>
-          <!-- etc -->
-        </select>
 
-        <input type="text" placeholder="Type value"
-               class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[200px]" />
-      </div>
-    </div>
-
-    <!-- Add/Remove Buttons -->
-    <div class="flex gap-2 mt-2">
-      <button onclick="addFilterRow()"
-              class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-[8px] font-bold text-lg">+</button>
-      <button onclick="removeFilterRow()"
-              class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-[8px] font-bold text-lg">−</button>
-    </div>
-  </div>
-</div>
-
-        <!-- Filters section ends here -->
 
         <button type="submit" onclick="generateSQL()"
           class="block w-auto mt-[24px]  m-auto bg-blue-800 text-white border-none px-10 py-2 text-center rounded-[8px] text-[1.25rem] leading-[2rem] ">Generate
@@ -408,8 +396,15 @@
 
 
     <div>
-      <h2 class="text-xl font-semibold mb-2">Generated SQL</h2>
-      <pre id="sqlOutput"></pre>
+      
+      <div class="flex justify-between items-center mb-2">
+  <h2 class="text-xl font-semibold">Generated SQL</h2>
+  <button onclick="copySQL()" onclick="copyToTheClipboard(document.getElementById('sqlOutput').textContent)"  class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded w-auto">
+    Copy SQL
+  </button>
+</div>
+<pre id="sqlOutput" class="overflow-auto rounded bg-gray-900 p-4 text-sm whitespace-pre-wrap"></pre>
+
     </div>
   </div>
 
@@ -469,22 +464,91 @@
       }
     }
 
+    // function generateSQL() {
+    //   const dateClause = getDateRangeClause();
+
+    //   const metrics = Array.from(selectedMetrics);
+    //   const metricStr = metrics.map(m => `  SUM(${m}) AS ${m.toLowerCase()}`).join(',\n');
+
+    //   const dimensions = Array.from(selectedDimensions);
+    //   const dimStr = dimensions.map(d => `  ${d}`).join(',\n');
+
+    //   const selectClause = [dimStr, metricStr].filter(Boolean).join(',\n');
+    //   const groupByClause = dimensions.length ? `GROUP BY\n  ${dimensions.join(', ')}` : '';
+
+    //   const sql = `SELECT\n${selectClause}\nFROM\n  \`searchconsole.searchdata_site_impression\`\nWHERE\n  data_date BETWEEN ${dateClause}\n${groupByClause}`;
+
+    //   document.getElementById('sqlOutput').textContent = sql;
+    // }
+
     function generateSQL() {
-      const dateClause = getDateRangeClause();
+  const dateClause = getDateRangeClause();
 
-      const metrics = Array.from(selectedMetrics);
-      const metricStr = metrics.map(m => `  SUM(${m}) AS ${m.toLowerCase()}`).join(',\n');
+  const metrics = Array.from(selectedMetrics);
+  const dimensions = Array.from(selectedDimensions);
 
-      const dimensions = Array.from(selectedDimensions);
-      const dimStr = dimensions.map(d => `  ${d}`).join(',\n');
+  const selectLines = [];
 
-      const selectClause = [dimStr, metricStr].filter(Boolean).join(',\n');
-      const groupByClause = dimensions.length ? `GROUP BY\n  ${dimensions.join(', ')}` : '';
+  // Add dimensions
+  dimensions.forEach(dim => selectLines.push(`  ${dim}`));
 
-      const sql = `SELECT\n${selectClause}\nFROM\n  \`searchconsole.searchdata_site_impression\`\nWHERE\n  data_date BETWEEN ${dateClause}\n${groupByClause}`;
+  // Handle metrics
+  if (metrics.includes('Clicks')) {
+    selectLines.push(`  SUM(Clicks) AS clicks`);
+  }
+  if (metrics.includes('Impressions')) {
+    selectLines.push(`  SUM(Impressions) AS impressions`);
+  }
+  if (metrics.includes('CTR')) {
+    selectLines.push(`  SUM(Clicks) / SUM(Impressions) AS ctr`);
+  }
+  if (metrics.includes('Position')) {
+    selectLines.push(`  ((SUM(sum_top_position) / SUM(Impressions)) + 1.0) AS avg_position`);
+  }
 
-      document.getElementById('sqlOutput').textContent = sql;
+  const selectClause = `SELECT\n${selectLines.join(',\n')}`;
+  const fromClause = `FROM\n  \`searchconsole.searchdata_site_impression\``;
+
+  // Filters
+  const filterWrappers = document.querySelectorAll('#filterRows > div');
+  const filterConditions = [];
+
+  filterWrappers.forEach((wrapper, index) => {
+    const selects = wrapper.querySelectorAll('select');
+    const input = wrapper.querySelector('input[type="text"]');
+    const logic = wrapper.querySelector('input[type="radio"]:checked');
+
+    const field = selects[0]?.value;
+    const operator = selects[1]?.value;
+    const value = input?.value;
+
+    if (!field || !operator || !value) return;
+
+    // SQL operator conversion
+    let sqlOp = operator;
+    if (operator === 'EQUALS') sqlOp = '=';
+    else if (operator === 'NOT EQUALS') sqlOp = '!=';
+    else if (operator === 'CONTAINS') sqlOp = 'LIKE';
+    else if (operator === 'NOT CONTAINS') sqlOp = 'NOT LIKE';
+
+    let condition = `${field} ${sqlOp} '${sqlOp.includes('LIKE') ? `%${value}%` : value}'`;
+
+    if (index > 0 && logic) {
+      condition = `${logic.value} ${condition}`;
     }
+
+    filterConditions.push(condition);
+  });
+
+  const whereClause = `WHERE\n  data_date BETWEEN ${dateClause}`
+    + (filterConditions.length ? `\n  ${filterConditions.join('\n  ')}` : '');
+
+  const groupByClause = dimensions.length ? `GROUP BY\n  ${dimensions.join(', ')}` : '';
+
+  const sql = `${selectClause}\n${fromClause}\n${whereClause}\n${groupByClause}`;
+  document.getElementById('sqlOutput').textContent = sql;
+}
+
 
 
 
@@ -583,32 +647,6 @@
     const scrollArea = document.getElementById("dimensionsScrollArea");
 
 
-    // dimensionEntries.forEach(([name, tooltip]) => {
-    //   const item = document.createElement("div");
-    //   item.className = "relative group cursor-pointer p-1 hover:bg-gray-700 flex items-center justify-between";
-    //   item.setAttribute("onclick", `selectDimension('${name}')`);
-
-    //   const span = document.createElement("span");
-    //   span.textContent = name;
-
-    //   const iconWrapper = document.createElement("div");
-    //   iconWrapper.className = "ml-2 relative group";
-
-    //   const icon = document.createElement("i");
-    //   icon.className = "ml-2 text-white font-bold outline-none far fa-question-circle text-gray-400";
-
-    //   const tooltipDiv = document.createElement("div");
-    //   tooltipDiv.className = "absolute left-6 top-0 bg-gray-900 text-xs text-white p-2 rounded shadow-lg w-64 z-20 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300";
-    //   tooltipDiv.textContent = tooltip;
-
-    //   iconWrapper.appendChild(icon);
-    //   iconWrapper.appendChild(tooltipDiv);
-
-
-    //   item.appendChild(span);
-    //   item.appendChild(iconWrapper);
-    //   dimensionsDropdown.appendChild(item);
-    // });
     const tooltipBox = document.getElementById("global-tooltip");
 
     dimensionEntries.forEach(([name, tooltip]) => {
@@ -757,7 +795,7 @@
       closeBtn.className = "ml-2 mt-[-2px] leading-none text-[1.2rem] text-white font-bold outline-none border-none p-[2px] font-extralight";
       closeBtn.textContent = "×";
 
-      // ⛔ Prevent bubbling up to selectedMetrics
+      // Prevent bubbling up to selectedMetrics
       closeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         removeMetric(metric);
@@ -969,19 +1007,6 @@
 
 
 
-    // const selectedDimensionsEl = document.getElementById("selectedDimensions");
-    // selectedDimensionsEl.addEventListener("click", () => {
-    //   const dropdown = document.getElementById("dimensionsDropdown");
-    //   if (isDimensionsDropdownOpen) {
-    //     closeDropdown(dropdown);
-    //   } else {
-    //     openDropdown(dropdown);
-    //   }
-    //   isDimensionsDropdownOpen = !isDimensionsDropdownOpen;
-    // });
-
-
-
     // toogle filters slide down starts here
     function toggleFilters() {
       const section = document.getElementById('filterSection');
@@ -1079,41 +1104,127 @@
 
     //filter functionality starts here
 
-  function addFilterRow() {
-    const container = document.getElementById('filterRows');
-    const row = document.createElement('div');
-    row.className = "flex flex-wrap gap-2 items-center";
+    /* add filter row script starts here */
 
-    row.innerHTML = `
-      <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[160px]">
-        <option value="" disabled selected>Select Field</option>
-        <option value="Query">Query</option>
-        <option value="URL">URL</option>
-        <!-- ... -->
-      </select>
+    const fieldOptions = [
+  "Query", "URL", "Country", "Search Type", "Device", "Site URL", "Date", "Month", "Year",
+  "Is Anonymized Query", "Is Anonymized Discover", "Is AMP Top Stories", "Is AMP Blue Link", "Is Job Listing",
+  "Is Job Details", "Is TPF QA", "Is TPF FAQ", "Is TPF HowTo", "Is Weblite", "Is Action", "Is Events Listing",
+  "Is Events Details", "Is Search Appearance Android App", "Is AMP Story", "Is AMP Image Result", "Is Video",
+  "Is Organc Shopping", "Is Review Snippet", "Is Special Announcement", "Is Recipe Feature", "Is Recipe Rich Snippet",
+  "Is Subscribed Content", "Is Page Experience", "Is Practice Problems", "Is Math Solvers", "Is Translated Result",
+  "Is Product Snippets", "Is Merchant Listings", "Impressions"
+];
 
-      <select class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[160px]">
-        <option value="EQUALS">EQUALS</option>
-        <option value="NOT EQUALS">NOT EQUALS</option>
-        <option value="CONTAINS">CONTAINS</option>
-      </select>
+const operatorOptions = [
+  "EQUALS", "NOT EQUALS", "CONTAINS", "NOT CONTAINS", "GREATER THAN",
+  "LESS THAN", "IS NULL", "IS NOT NULL"
+];
 
-      <input type="text" placeholder="Type value"
-             class="px-4 py-2 border border-gray-700 rounded-[8px] bg-gray-800 text-white min-w-[200px]" />
+
+   function addFilterRow() {
+  const container = document.getElementById('filterRows');
+  const isFirst = container.children.length === 0;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = "space-y-2 w-full transition-all duration-500 ease-in-out overflow-hidden opacity-100 max-h-[200px]";
+
+  // Top row (only for non-first filters): radio buttons + remove button
+  if (!isFirst) {
+    const topRow = document.createElement('div');
+    topRow.className = "flex justify-between items-center";
+
+    const radioGroup = document.createElement('div');
+    radioGroup.className = "flex items-center gap-4 text-sm text-white";
+
+    radioGroup.innerHTML = `
+      <label class="inline-flex items-center gap-1">
+        <input type="radio" name="logicGroup-${container.children.length}" value="AND" class="text-blue-500 focus:ring-0" checked />
+        AND
+      </label>
+      <label class="inline-flex items-center gap-1">
+        <input type="radio" name="logicGroup-${container.children.length}" value="OR" class="text-blue-500 focus:ring-0" />
+        OR
+      </label>
     `;
-    container.appendChild(row);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.innerHTML = "&times;";
+    removeBtn.className = "text-white text-lg font-bold px-3 hover:text-red-500 flex w-auto";
+    removeBtn.onclick = () => {
+      wrapper.style.opacity = '0';
+      wrapper.style.maxHeight = '0px';
+      wrapper.style.padding = '0';
+      wrapper.style.margin = '0';
+      setTimeout(() => wrapper.remove(), 500);
+    };
+
+    topRow.appendChild(radioGroup);
+    topRow.appendChild(removeBtn);
+    wrapper.appendChild(topRow);
   }
 
-  function removeFilterRow() {
-    const container = document.getElementById('filterRows');
-    if (container.children.length > 1) {
-      container.lastElementChild.remove();
-    }
+  // Bottom row: field, operator, input
+  const bottomRow = document.createElement('div');
+  bottomRow.className = "flex flex-nowrap items-center gap-2 overflow-x-auto";
+
+  const fieldSelect = document.createElement('select');
+  fieldSelect.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 text-white w-[140px]";
+  fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` +
+    fieldOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+  const operatorSelect = document.createElement('select');
+  operatorSelect.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 text-white w-[140px]";
+  operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
+    operatorOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+  const input = document.createElement('input');
+  input.type = "text";
+  input.placeholder = "Type value";
+  input.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 text-white w-[400px]";
+
+  bottomRow.appendChild(fieldSelect);
+  bottomRow.appendChild(operatorSelect);
+  bottomRow.appendChild(input);
+
+  wrapper.appendChild(bottomRow);
+  container.appendChild(wrapper);
+}
+
+/* copy to  clipboard script starts here */
+function copySQL() {
+  const sqlText = document.getElementById('sqlOutput').textContent;
+  copyToTheClipboard(sqlText);
+}
+
+async function copyToTheClipboard(textToCopy) {
+  try {
+    await navigator.clipboard.writeText(textToCopy);
+    document.body.classList.add('show-copied');
+    setTimeout(() => {
+      document.body.classList.remove('show-copied');
+    }, 3000);
+  } catch (err) {
+    console.error('Failed to copy: ', err);
   }
+}
+
+/* copy to  clipboard script ends here */
+
+/* add filter row script ends here */
+
+    function removeFilterRow() {
+      const container = document.getElementById('filterRows');
+      if (container.children.length > 1) {
+        container.lastElementChild.remove();
+      }
+    }
 
     //filter functionality ends here
-  // Pre-select default metrics on page load
-['Clicks', 'Impressions', 'CTR', 'Position'].forEach(metric => selectMetric(metric));
+    // Pre-select default metrics on page load
+    ['Clicks', 'Impressions', 'CTR', 'Position'].forEach(metric => selectMetric(metric));
+    // Inject the first filter row on page load
+addFilterRow();
   </script>
 
 </body>
