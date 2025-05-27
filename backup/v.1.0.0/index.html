@@ -220,35 +220,8 @@
               </button>
             </div>
           </div>
-
+          <!-- Filters section ends here -->
         </div>
-        <!-- Filters section ends here -->
-        <!-- Sort by section starts -->
-        <!-- Sort By Section -->
-        <div class="w-full max-w-4xl mx-auto mt-4">
-          <div
-            class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition-all"
-            onclick="toggleSortBy()">
-            <span class="font-bold">Sort by</span>
-            <svg id="sortArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
-              stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-
-          <div id="sortSection" class="hidden bg-transparent px-0 py-4 space-y-2">
-            <div id="sortRows" class="space-y-2"></div>
-            <div class="flex gap-2 mt-2">
-              <button onclick="addSortRow()"
-                class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">+</button>
-              <button onclick="removeSortRow()"
-                class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">−</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sort by section ends -->
-
 
 
 
@@ -269,8 +242,7 @@
         </button>
       </div>
       <pre id="sqlOutput" class="overflow-auto rounded bg-gray-900 p-4 text-sm whitespace-pre-wrap"></pre>
-      <pre id="sqlOutputFormated"
-        class="overflow-auto rounded bg-gray-900 p-4 text-sm whitespace-pre-wrap mt-2 h-1 opacity-0"></pre>
+      <pre id="sqlOutputFormated" class="overflow-auto rounded bg-gray-900 p-4 text-sm whitespace-pre-wrap mt-2 h-1 opacity-0"></pre>
 
     </div>
   </div>
@@ -331,185 +303,178 @@
       }
     }
 
+   
+let plainSQL = "";
 
-    /*  generateSQL function starts here */
-    let plainSQL = "";
+function generateSQL() {
+  const dateClause = getDateRangeClause();
+  const metrics = Array.from(selectedMetrics);
+  const dimensions = Array.from(selectedDimensions);
 
-    function generateSQL() {
-      const dateClause = getDateRangeClause();
-      const metrics = Array.from(selectedMetrics);
-      const dimensions = Array.from(selectedDimensions);
+  const selectLines = [];
+  const plainSelectLines = [];
 
-      const indent = '<span style="display:inline-block; width:1em"></span>';
+  dimensions.forEach(dim => {
+    selectLines.push(`<span class="sql-column">${dim}</span>`);
+    plainSelectLines.push(dim);
+  });
 
-      const selectLines = [];
-      const plainSelectLines = [];
+  if (metrics.includes('Clicks')) {
+    selectLines.push(`<span class="sql-function">SUM(Clicks)</span> AS <span class="sql-alias">clicks</span>`);
+    plainSelectLines.push(`SUM(Clicks) AS clicks`);
+  }
+  if (metrics.includes('Impressions')) {
+    selectLines.push(`<span class="sql-function">SUM(Impressions)</span> AS <span class="sql-alias">impressions</span>`);
+    plainSelectLines.push(`SUM(Impressions) AS impressions`);
+  }
+  if (metrics.includes('CTR')) {
+    selectLines.push(`<span class="sql-expression">SUM(Clicks) / SUM(Impressions)</span> AS <span class="sql-alias">ctr</span>`);
+    plainSelectLines.push(`SUM(Clicks) / SUM(Impressions) AS ctr`);
+  }
+  if (metrics.includes('Position')) {
+    selectLines.push(`((<span class="sql-function">SUM(sum_position)</span> / <span class="sql-function">SUM(Impressions)</span>) + 1.0) AS <span class="sql-alias">avg_position</span>`);
+    plainSelectLines.push(`((SUM(sum_position) / SUM(Impressions)) + 1.0) AS avg_position`);
+  }
 
-      dimensions.forEach(dim => {
-        selectLines.push(`${indent}<span class="sql-column">${dim}</span>`);
-        plainSelectLines.push(`    ${dim}`);
-      });
+  const selectClause = `<span class="sql-keyword">SELECT</span><br>${selectLines.join(',<br>')}`;
+  const plainSelectClause = `SELECT\n${plainSelectLines.join(',\n')}`;
 
-      if (metrics.includes('Clicks')) {
-        selectLines.push(`${indent}<span class="sql-function">SUM(Clicks)</span> AS <span class="sql-alias">clicks</span>`);
-        plainSelectLines.push(`    SUM(Clicks) AS clicks`);
-      }
-      if (metrics.includes('Impressions')) {
-        selectLines.push(`${indent}<span class="sql-function">SUM(Impressions)</span> AS <span class="sql-alias">impressions</span>`);
-        plainSelectLines.push(`    SUM(Impressions) AS impressions`);
-      }
-      if (metrics.includes('CTR')) {
-        selectLines.push(`${indent}<span class="sql-expression">SUM(Clicks) / SUM(Impressions)</span> AS <span class="sql-alias">ctr</span>`);
-        plainSelectLines.push(`    SUM(Clicks) / SUM(Impressions) AS ctr`);
-      }
-      if (metrics.includes('Position')) {
-        selectLines.push(`${indent}((<span class="sql-function">SUM(sum_position)</span> / <span class="sql-function">SUM(Impressions)</span>) + 1.0) AS <span class="sql-alias">avg_position</span>`);
-        plainSelectLines.push(`    ((SUM(sum_position) / SUM(Impressions)) + 1.0) AS avg_position`);
-      }
+  const fromTable = dimensions.includes('URL')
+    ? '`searchconsole.searchdata_url_impression`'
+    : '`searchconsole.searchdata_site_impression`';
 
-      const selectClause = `<span class="sql-keyword">SELECT</span><br>${selectLines.join(',<br>')}`;
-      const plainSelectClause = `SELECT\n${plainSelectLines.join(',\n')}`;
+  const fromClause = `<br><span class="sql-keyword">FROM</span><br>  <span class="sql-table">${fromTable}</span>`;
+  const plainFromClause = `FROM\n  ${fromTable}`;
 
-      const fromTable = dimensions.includes('URL')
-        ? '`searchconsole.searchdata_url_impression`'
-        : '`searchconsole.searchdata_site_impression`';
+  const filterWrappers = document.querySelectorAll('#filterRows > div');
+  const filterConditions = [];
+  const plainFilterConditions = [];
 
-      const fromClause = `<br><span class="sql-keyword">FROM</span><br>${indent}<span class="sql-table">${fromTable}</span>`;
-      const plainFromClause = `FROM\n    ${fromTable}`;
+  filterWrappers.forEach((wrapper) => {
+    const selects = wrapper.querySelectorAll('select');
+    const input = wrapper.querySelector('input[type="text"]');
+    const field = selects[0]?.value;
+    const operator = selects[1]?.value;
+    const value = input?.value;
 
-      const filterWrappers = document.querySelectorAll('#filterRows > div');
-      const filterConditions = [];
-      const plainFilterConditions = [];
+    if (!field || !operator || (operator.indexOf('NULL') === -1 && !value)) return;
 
-      filterWrappers.forEach((wrapper) => {
-        const selects = wrapper.querySelectorAll('select');
-        const input = wrapper.querySelector('input[type="text"]');
-        const field = selects[0]?.value;
-        const operator = selects[1]?.value;
-        const value = input?.value;
-
-        if (!field || !operator || (operator.indexOf('NULL') === -1 && !value)) return;
-
-        let sqlOp;
-        if (operator === 'EQUALS') sqlOp = '=';
-        else if (operator === 'NOT EQUALS') sqlOp = '!=';
-        else if (operator === 'CONTAINS') sqlOp = 'LIKE';
-        else if (operator === 'NOT CONTAINS') sqlOp = 'NOT LIKE';
-        else if (operator === 'GREATER THAN') sqlOp = '>';
-        else if (operator === 'LESS THAN') sqlOp = '<';
-        else if (operator === 'IS NULL') {
-          filterConditions.push(`${indent}<span class="sql-keyword">AND</span> ${field} <span class="sql-keyword">IS NULL</span>`);
-          plainFilterConditions.push(`    AND ${field} IS NULL`);
-          return;
-        } else if (operator === 'IS NOT NULL') {
-          filterConditions.push(`${indent}<span class="sql-keyword">AND</span> ${field} <span class="sql-keyword">IS NOT NULL</span>`);
-          plainFilterConditions.push(`    AND ${field} IS NOT NULL`);
-          return;
-        }
-
-        let condition = `${field} ${sqlOp} '${sqlOp.includes('LIKE') ? `%${value}%` : value}'`;
-        filterConditions.push(`${indent}<span class="sql-keyword">AND</span> ${condition}`);
-        plainFilterConditions.push(`    AND ${condition}`);
-      });
-
-      const whereClause = `<br><span class="sql-keyword">WHERE</span><br>${indent}<span class="sql-column">data_date</span> <span class="sql-keyword">BETWEEN</span> ${dateClause}` + (filterConditions.length ? `<br>${filterConditions.join('<br>')}` : '');
-      const plainWhereClause = `WHERE\n    data_date BETWEEN ${dateClause}` + (plainFilterConditions.length ? `\n${plainFilterConditions.join('\n')}` : '');
-
-      const groupByClause = dimensions.length
-        ? `<br><span class="sql-keyword">GROUP BY</span><br>${indent}${dimensions.map(d => `<span class="sql-column">${d}</span>`).join(', ')}`
-        : '';
-      const plainGroupByClause = dimensions.length
-        ? `GROUP BY\n    ${dimensions.join(', ')}`
-        : '';
-
-      const sql = `${selectClause}${fromClause}${whereClause}${groupByClause}`;
-      plainSQL = `${plainSelectClause}\n${plainFromClause}\n${plainWhereClause}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}`;
-
-      document.getElementById('sqlOutput').innerHTML = sql;
-      document.getElementById('sqlOutputFormated').textContent = plainSQL;
+    let sqlOp;
+    if (operator === 'EQUALS') sqlOp = '=';
+    else if (operator === 'NOT EQUALS') sqlOp = '!=';
+    else if (operator === 'CONTAINS') sqlOp = 'LIKE';
+    else if (operator === 'NOT CONTAINS') sqlOp = 'NOT LIKE';
+    else if (operator === 'GREATER THAN') sqlOp = '>';
+    else if (operator === 'LESS THAN') sqlOp = '<';
+    else if (operator === 'IS NULL') {
+      filterConditions.push(`<span class="sql-keyword">AND</span> ${field} <span class="sql-keyword">IS NULL</span>`);
+      plainFilterConditions.push(`AND ${field} IS NULL`);
+      return;
+    } else if (operator === 'IS NOT NULL') {
+      filterConditions.push(`<span class="sql-keyword">AND</span> ${field} <span class="sql-keyword">IS NOT NULL</span>`);
+      plainFilterConditions.push(`AND ${field} IS NOT NULL`);
+      return;
     }
 
-    function copySQL() {
-      navigator.clipboard.writeText(plainSQL).then(() => {
-        document.body.classList.add('show-copied');
-        setTimeout(() => document.body.classList.remove('show-copied'), 3000);
-      }).catch(err => console.error('Copy failed', err));
-    }
+    let condition = `${field} ${sqlOp} '${sqlOp.includes('LIKE') ? `%${value}%` : value}'`;
+    filterConditions.push(`<span class="sql-keyword">AND</span> ${condition}`);
+    plainFilterConditions.push(`AND ${condition}`);
+  });
 
-    function getDateRangeClause() {
-      const range = selectedDateRange;
-      switch (range) {
-        case 'Yesterday':
-          return `DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
-        case 'Last Week':
-          return `DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
-        case 'Last month':
-          return `DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
-        case 'Month to yesterday':
-          return `DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), MONTH) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
-        case 'Last 7 days':
-          return `DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY) AND CURRENT_DATE()`;
-        case 'Last 14 days':
-          return `DATE_SUB(CURRENT_DATE(), INTERVAL 13 DAY) AND CURRENT_DATE()`;
-        case 'Last 30 days':
-          return `DATE_SUB(CURRENT_DATE(), INTERVAL 29 DAY) AND CURRENT_DATE()`;
-        case 'Year to yesterday':
-          return `DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), YEAR) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
-        case 'Last year':
-          return `DATE_SUB(DATE_TRUNC(CURRENT_DATE(), YEAR), INTERVAL 1 YEAR) AND DATE_SUB(DATE_TRUNC(CURRENT_DATE(), YEAR), INTERVAL 1 DAY)`;
-        case 'Custom date range':
-          const startDate = document.getElementById('startDate').value;
-          const endDate = document.getElementById('endDate').value;
-          if (startDate && endDate) {
-            return `DATE('${startDate}') AND DATE('${endDate}')`;
-          } else {
-            return 'DATE1 AND DATE2 -- replace with actual dates';
-          }
-        default:
-          return '... AND ...';
+  const whereClause = `<br><span class="sql-keyword">WHERE</span><br>  <span class="sql-column">data_date</span> <span class="sql-keyword">BETWEEN</span> ${dateClause}` + (filterConditions.length ? `<br>  ${filterConditions.join('<br>  ')}` : '');
+  const plainWhereClause = `WHERE\n  data_date BETWEEN ${dateClause}` + (plainFilterConditions.length ? `\n  ${plainFilterConditions.join('\n  ')}` : '');
+
+  const groupByClause = dimensions.length
+    ? `<br><span class="sql-keyword">GROUP BY</span><br>  ${dimensions.map(d => `<span class="sql-column">${d}</span>`).join(', ')}`
+    : '';
+  const plainGroupByClause = dimensions.length
+    ? `GROUP BY\n  ${dimensions.join(', ')}`
+    : '';
+
+  const sql = `${selectClause}${fromClause}${whereClause}${groupByClause}`;
+  plainSQL = `${plainSelectClause}\n${plainFromClause}\n${plainWhereClause}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}`;
+
+  document.getElementById('sqlOutput').innerHTML = sql;
+  document.getElementById('sqlOutputFormated').textContent = plainSQL;
+}
+
+function copySQL() {
+  navigator.clipboard.writeText(plainSQL).then(() => {
+    document.body.classList.add('show-copied');
+    setTimeout(() => document.body.classList.remove('show-copied'), 3000);
+  }).catch(err => console.error('Copy failed', err));
+}
+
+function getDateRangeClause() {
+  const range = selectedDateRange;
+  switch (range) {
+    case 'Yesterday':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
+    case 'Last Week':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
+    case 'Last month':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
+    case 'Month to yesterday':
+      return `DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), MONTH) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
+    case 'Last 7 days':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY) AND CURRENT_DATE()`;
+    case 'Last 14 days':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 13 DAY) AND CURRENT_DATE()`;
+    case 'Last 30 days':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 29 DAY) AND CURRENT_DATE()`;
+    case 'Year to yesterday':
+      return `DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), YEAR) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
+    case 'Last year':
+      return `DATE_SUB(DATE_TRUNC(CURRENT_DATE(), YEAR), INTERVAL 1 YEAR) AND DATE_SUB(DATE_TRUNC(CURRENT_DATE(), YEAR), INTERVAL 1 DAY)`;
+    case 'Custom date range':
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      if (startDate && endDate) {
+        return `DATE('${startDate}') AND DATE('${endDate}')`;
+      } else {
+        return 'DATE1 AND DATE2 -- replace with actual dates';
       }
-    }
+    default:
+      return '... AND ...';
+  }
+}
 
-    // Trigger SQL generation on Enter key
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        generateSQL();
+function getDateRangeClause() {
+  const range = selectedDateRange;
+  switch (range) {
+    case 'Yesterday':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
+    case 'Last Week':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
+    case 'Last month':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
+    case 'Month to yesterday':
+      return `DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), MONTH) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
+    case 'Last 7 days':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY) AND CURRENT_DATE()`;
+    case 'Last 14 days':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 13 DAY) AND CURRENT_DATE()`;
+    case 'Last 30 days':
+      return `DATE_SUB(CURRENT_DATE(), INTERVAL 29 DAY) AND CURRENT_DATE()`;
+    case 'Year to yesterday':
+      return `DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), YEAR) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`;
+    case 'Last year':
+      return `DATE_SUB(DATE_TRUNC(CURRENT_DATE(), YEAR), INTERVAL 1 YEAR) AND DATE_SUB(DATE_TRUNC(CURRENT_DATE(), YEAR), INTERVAL 1 DAY)`;
+    case 'Custom date range':
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      if (startDate && endDate) {
+        return `DATE('${startDate}') AND DATE('${endDate}')`;
+      } else {
+        return 'DATE1 AND DATE2 -- replace with actual dates';
       }
-    });
-
+    default:
+      return '... AND ...';
+  }
+}
 
 
     /*  generateSQL function ends here */
-    // Prevent Metrics and Dimensions dropdowns from closing on selection
-    // Prevent Metrics and Dimensions dropdowns from closing on selection
-    // Prevent Metrics and Dimensions dropdowns from closing on selection
-    // Prevent Metrics and Dimensions dropdowns from closing on selection
-    let suppressDropdownClose = false;
-
-    document.addEventListener("DOMContentLoaded", () => {
-      ['metricsDropdown', 'dimensionsDropdown'].forEach(id => {
-        const dropdown = document.getElementById(id);
-        dropdown?.querySelectorAll('div').forEach(item => {
-
-          item.addEventListener('mousedown', (e) => {
-            suppressDropdownClose = true; // block global click listener temporarily
-
-            const parentId = item.parentElement.id;
-            const label = item.textContent.trim();
-            if (parentId === 'metricsDropdown') {
-              selectMetric(label);
-            } else if (parentId === 'dimensionsDropdown') {
-              const span = item.querySelector('span');
-              if (span) {
-                selectDimension(span.textContent.trim());
-              }
-            }
-          });
-
-
-        });
-      });
-    });
 
 
 
@@ -876,48 +841,23 @@
     /* metrics multiselect script - ends here */
 
     // Close metricsDropdown when clicking outside
-    // document.addEventListener("click", function (event) {
-    //   const dropdowns = document.querySelectorAll('[data-open="true"]');
-    //   const arrows = document.querySelectorAll('svg.rotate-180');
+    document.addEventListener("click", function (event) {
+      const dropdowns = document.querySelectorAll('[data-open="true"]');
+      const arrows = document.querySelectorAll('svg.rotate-180');
 
-    //   dropdowns.forEach(d => {
-    //     if (!d.contains(event.target)) {
-    //       d.setAttribute("data-open", "false");
-    //       closeDropdown(d);
-    //     }
-    //   });
+      dropdowns.forEach(d => {
+        if (!d.contains(event.target)) {
+          d.setAttribute("data-open", "false");
+          closeDropdown(d);
+        }
+      });
 
-    //   arrows.forEach(a => {
-    //     if (!a.contains(event.target)) {
-    //       a.classList.remove("rotate-180");
-    //     }
-    //   });
-    // });
-    document.addEventListener("click", (e) => {
-      const dropdowns = document.querySelectorAll('.dropdown-menu');
-
-      dropdowns.forEach(menu => {
-        const trigger = menu.previousElementSibling;
-
-        // Don't close if click is inside menu or its trigger
-        if (!menu.contains(e.target) && !trigger.contains(e.target)) {
-          menu.classList.add('hidden');
-          menu.classList.remove('block');
-          menu.setAttribute("data-open", "false");
-          trigger.querySelector('svg')?.classList.remove("rotate-180");
+      arrows.forEach(a => {
+        if (!a.contains(event.target)) {
+          a.classList.remove("rotate-180");
         }
       });
     });
-    document.querySelectorAll('.dimension-option').forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.stopPropagation(); // 🛑 prevent closing the dropdown
-        const label = item.getAttribute('data-label');
-        if (label) {
-          selectDimension(label);
-        }
-      });
-    });
-
 
 
     function closeDropdown(dropdown) {
@@ -1114,6 +1054,7 @@
       const wrapper = document.createElement('div');
       wrapper.className = "space-y-2 w-full transition-all duration-500 ease-in-out overflow-hidden opacity-100 max-h-[200px]";
 
+      // Top row (only for non-first filters): radio buttons + remove button
       if (!isFirst) {
         const topRow = document.createElement('div');
         topRow.className = "flex justify-between items-center";
@@ -1140,10 +1081,7 @@
           wrapper.style.maxHeight = '0px';
           wrapper.style.padding = '0';
           wrapper.style.margin = '0';
-          setTimeout(() => {
-            wrapper.remove();
-            updateFilterRemoveButton();
-          }, 500);
+          setTimeout(() => wrapper.remove(), 500);
         };
 
         topRow.appendChild(radioGroup);
@@ -1151,6 +1089,7 @@
         wrapper.appendChild(topRow);
       }
 
+      // Bottom row: field, operator, input
       const bottomRow = document.createElement('div');
       bottomRow.className = "flex flex-nowrap items-center gap-2 overflow-x-auto";
 
@@ -1175,32 +1114,7 @@
 
       wrapper.appendChild(bottomRow);
       container.appendChild(wrapper);
-
-      updateFilterRemoveButton();
     }
-
-    function removeFilterRow() {
-      const container = document.getElementById('filterRows');
-      if (container.children.length > 1) {
-        container.lastElementChild.remove();
-        updateFilterRemoveButton();
-      }
-    }
-
-    function updateFilterRemoveButton() {
-      const container = document.getElementById('filterRows');
-      const removeBtn = document.querySelector('[onclick="removeFilterRow()"]');
-      if (!removeBtn) return;
-
-      if (container.children.length <= 1) {
-        removeBtn.classList.add("opacity-50", "cursor-not-allowed");
-        removeBtn.setAttribute("disabled", "true");
-      } else {
-        removeBtn.classList.remove("opacity-50", "cursor-not-allowed");
-        removeBtn.removeAttribute("disabled");
-      }
-    }
-
 
     /* copy to  clipboard script starts here */
     function copySQL() {
@@ -1224,93 +1138,18 @@
 
     /* add filter row script ends here */
 
-
-
-
-
-
-    function toggleSortBy() {
-      const section = document.getElementById('sortSection');
-      const arrow = document.getElementById('sortArrow');
-      section.classList.toggle('hidden');
-      arrow.classList.toggle('rotate-180');
-    }
-
-    const sortFieldOptions = [
-      "URL", "Device", "Clicks", "Impressions", "CTR", "Avg Position"
-    ];
-
-    function toggleSortBy() {
-      const section = document.getElementById('sortSection');
-      const arrow = document.getElementById('sortArrow');
-      section.classList.toggle('hidden');
-      arrow.classList.toggle('rotate-180');
-    }
-
-    function addSortRow() {
-      const container = document.getElementById('sortRows');
-
-      const wrapper = document.createElement('div');
-      wrapper.className = "flex items-center gap-4";
-
-      const fieldSelect = document.createElement('select');
-      fieldSelect.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 text-white w-[240px]";
-      fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` +
-        sortFieldOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
-
-      const radioGroup = document.createElement('div');
-      radioGroup.className = "flex items-center gap-4 text-sm text-white";
-
-      radioGroup.innerHTML = `
-    <label class="inline-flex items-center gap-1">
-      <input type="radio" name="sort-${container.children.length}" value="ASC" class="text-blue-500 focus:ring-0" checked />
-      Ascending
-    </label>
-    <label class="inline-flex items-center gap-1">
-      <input type="radio" name="sort-${container.children.length}" value="DESC" class="text-blue-500 focus:ring-0" />
-      Descending
-    </label>
-  `;
-
-      wrapper.appendChild(fieldSelect);
-      wrapper.appendChild(radioGroup);
-      container.appendChild(wrapper);
-
-      updateSortRemoveButton();
-    }
-
-    function removeSortRow() {
-      const container = document.getElementById('sortRows');
+    function removeFilterRow() {
+      const container = document.getElementById('filterRows');
       if (container.children.length > 1) {
         container.lastElementChild.remove();
-        updateSortRemoveButton();
       }
     }
-
-    function updateSortRemoveButton() {
-      const container = document.getElementById('sortRows');
-      const removeBtn = document.querySelector('[onclick="removeSortRow()"]');
-      if (!removeBtn) return;
-
-      if (container.children.length <= 1) {
-        removeBtn.classList.add("opacity-50", "cursor-not-allowed");
-        removeBtn.setAttribute("disabled", "true");
-      } else {
-        removeBtn.classList.remove("opacity-50", "cursor-not-allowed");
-        removeBtn.removeAttribute("disabled");
-      }
-    }
-
-
-
 
     //filter functionality ends here
     // Pre-select default metrics on page load
     ['Clicks', 'Impressions', 'CTR', 'Position'].forEach(metric => selectMetric(metric));
     // Inject the first filter row on page load
     addFilterRow();
-    // Inject the first sort row on page load
-    addSortRow();
   </script>
 
 </body>
