@@ -249,6 +249,27 @@
 
         <!-- Sort by section ends -->
 
+        <!-- Custom Fields section starts -->
+<div class="w-full max-w-4xl mx-auto mt-4">
+  <div class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition-all" onclick="toggleCustomFields()">
+    <span class="font-bold">Custom Fields</span>
+    <span class="relative group">
+      <i class="fas fa-question-circle text-sm text-gray-300 cursor-pointer"></i>
+      <div class="absolute hidden group-hover:block bg-gray-900 text-white text-xs w-[250px] rounded px-2 py-1 shadow-lg top-full left-1/2 transform -translate-x-1/2 mt-1 whitespace-pre-wrap max-w-xs z-10">
+        Create your own fields. For example, group branded vs non-branded keywords. When query contains your brand name, the field will show "Brand", else "Non-Brand".
+      </div>
+    </span>
+  </div>
+
+  <div id="customFieldsSection" class="hidden bg-transparent px-0 py-4 space-y-4">
+    <div id="customFieldGroups" class="space-y-4"></div>
+
+    <button onclick="addCustomFieldGroup()" class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-full w-auto">+ Custom Field</button>
+  </div>
+</div>
+<!-- Custom Fields section ends -->
+
+
 
 
 
@@ -418,12 +439,44 @@
       const groupByClause = dimensions.length
         ? `<br><span class="sql-keyword">GROUP BY</span><br>${indent}${dimensions.map(d => `<span class="sql-column">${d}</span>`).join(', ')}`
         : '';
+
+      // Sort By Clause
+const sortWrappers = document.querySelectorAll('#sortRows > div');
+const sortConditions = [];
+const plainSortConditions = [];
+
+sortWrappers.forEach((wrapper) => {
+  const select = wrapper.querySelector('select');
+  const radios = wrapper.querySelectorAll('input[type="radio"]');
+
+  const field = select?.value;
+  let direction = "ASC";
+  radios.forEach(r => {
+    if (r.checked) direction = r.value;
+  });
+
+  if (field) {
+    sortConditions.push(`${indent}<span class="sql-column">${field}</span> <span class="sql-keyword">${direction}</span>`);
+    plainSortConditions.push(`    ${field} ${direction}`);
+  }
+});
+
+const orderByClause = sortConditions.length
+  ? `<br><span class="sql-keyword">ORDER BY</span><br>${sortConditions.join(',<br>')}`
+  : '';
+
+const plainOrderByClause = plainSortConditions.length
+  ? `ORDER BY\n${plainSortConditions.join(',\n')}`
+  : '';
+
+
       const plainGroupByClause = dimensions.length
         ? `GROUP BY\n    ${dimensions.join(', ')}`
         : '';
 
-      const sql = `${selectClause}${fromClause}${whereClause}${groupByClause}`;
-      plainSQL = `${plainSelectClause}\n${plainFromClause}\n${plainWhereClause}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}`;
+      const sql = `${selectClause}${fromClause}${whereClause}${groupByClause}${orderByClause}`;
+plainSQL = `${plainSelectClause}\n${plainFromClause}\n${plainWhereClause}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}${plainOrderByClause ? `\n${plainOrderByClause}` : ''}`;
+
 
       document.getElementById('sqlOutput').innerHTML = sql;
       document.getElementById('sqlOutputFormated').textContent = plainSQL;
@@ -1236,9 +1289,7 @@
       arrow.classList.toggle('rotate-180');
     }
 
-    const sortFieldOptions = [
-      "URL", "Device", "Clicks", "Impressions", "CTR", "Avg Position"
-    ];
+    const sortFieldOptions = ["Query", "Impressions"];
 
     function toggleSortBy() {
       const section = document.getElementById('sortSection');
@@ -1301,6 +1352,715 @@
       }
     }
 
+    /* Custom fields script starts here */
+    function toggleCustomFields() {
+  const section = document.getElementById('customFieldsSection');
+  section.classList.toggle('hidden');
+}
+function createConditionRow(hasRemove = true) {
+  const container = document.createElement('div');
+
+  // Condition input row
+ 
+
+  const fieldSelect = document.createElement('select');
+  fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+  fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` +
+    fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+  const operatorSelect = document.createElement('select');
+  operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+  operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
+    operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+  const valueInput = document.createElement('input');
+  valueInput.type = 'text';
+  valueInput.placeholder = 'My Website Name';
+  valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+  conditionRow.appendChild(fieldSelect);
+  conditionRow.appendChild(operatorSelect);
+  conditionRow.appendChild(valueInput);
+
+  container.appendChild(conditionRow);
+
+  if (hasRemove) {
+    // Then row with label, input and remove button
+    const thenRow = document.createElement('div');
+    thenRow.className = 'flex items-center gap-2';
+
+    const thenLabel = document.createElement('label');
+    thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+    thenLabel.textContent = 'Then';
+
+    const thenInput = document.createElement('input');
+    thenInput.type = 'text';
+    thenInput.placeholder = 'Brand';
+    thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '−';
+    removeBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
+    removeBtn.onclick = () => {
+      container.remove();
+    };
+
+    thenRow.appendChild(thenLabel);
+    thenRow.appendChild(thenInput);
+    thenRow.appendChild(removeBtn);
+
+    container.appendChild(thenRow);
+  }
+
+  return container;
+}
+
+// function addCustomFieldGroup() {
+//   const groupContainer = document.createElement('div');
+//   groupContainer.className = 'space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
+
+//   const conditionsWrapper = document.createElement('div');
+//   conditionsWrapper.className = 'space-y-4 custom-condition-group';
+
+//   // Only include the condition row on initial load (no Then here)
+//   const initialConditionRow = document.createElement('div');
+//   initialConditionRow.className = 'flex items-center gap-2 flex-wrap';
+
+//   const fieldSelect = document.createElement('select');
+//   fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+//   fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` +
+//     fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+//   const operatorSelect = document.createElement('select');
+//   operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+//   operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
+//     operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+//   const valueInput = document.createElement('input');
+//   valueInput.type = 'text';
+//   valueInput.placeholder = 'My Website Name';
+//   valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   initialConditionRow.appendChild(fieldSelect);
+//   initialConditionRow.appendChild(operatorSelect);
+//   initialConditionRow.appendChild(valueInput);
+
+//   conditionsWrapper.appendChild(initialConditionRow);
+
+//   const thenRow = document.createElement('div');
+//   thenRow.className = 'flex items-center gap-2';
+
+//   const thenLabel = document.createElement('label');
+//   thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+//   thenLabel.textContent = 'Then';
+
+//   const thenInput = document.createElement('input');
+//   thenInput.type = 'text';
+//   thenInput.placeholder = 'Brand';
+//   thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   const addConditionBtn = document.createElement('button');
+//   addConditionBtn.textContent = '+ Condition';
+//   addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
+//   addConditionBtn.onclick = () => {
+//     const newCondition = createConditionRow(true);
+//     conditionsWrapper.appendChild(newCondition);
+//   };
+
+//   thenRow.appendChild(thenLabel);
+//   thenRow.appendChild(thenInput);
+//   thenRow.appendChild(addConditionBtn);
+
+//   const elseRow = document.createElement('div');
+//   elseRow.className = 'flex items-center gap-2';
+
+//   const elseLabel = document.createElement('label');
+//   elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+//   elseLabel.textContent = 'Else';
+
+//   const elseInput = document.createElement('input');
+//   elseInput.type = 'text';
+//   elseInput.placeholder = 'Non-Brand';
+//   elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   elseRow.appendChild(elseLabel);
+//   elseRow.appendChild(elseInput);
+
+//   groupContainer.appendChild(conditionsWrapper);
+//   groupContainer.appendChild(thenRow);
+//   groupContainer.appendChild(elseRow);
+
+//   document.getElementById('customFieldGroups').appendChild(groupContainer);
+// }
+
+
+
+
+function addCustomFieldGroup() {
+  const groupContainer = document.createElement('div');
+  groupContainer.className = 'space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
+
+  const conditionsWrapper = document.createElement('div');
+  conditionsWrapper.className = 'space-y-4 custom-condition-group';
+
+  const initialCondition = createConditionRow(false);
+  conditionsWrapper.appendChild(initialCondition);
+
+  const thenRow = document.createElement('div');
+  thenRow.className = 'flex items-center gap-2';
+
+  const thenLabel = document.createElement('label');
+  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+  thenLabel.textContent = 'Then';
+
+  const thenInput = document.createElement('input');
+  thenInput.type = 'text';
+  thenInput.placeholder = 'Brand';
+  thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+  const addConditionBtn = document.createElement('button');
+  addConditionBtn.textContent = '+ Condition';
+  addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
+  addConditionBtn.onclick = () => {
+    const newCondition = createConditionRow(true);
+    conditionsWrapper.appendChild(newCondition);
+  };
+
+  thenRow.appendChild(thenLabel);
+  thenRow.appendChild(thenInput);
+  thenRow.appendChild(addConditionBtn);
+
+  const elseRow = document.createElement('div');
+  elseRow.className = 'flex items-center gap-2';
+
+  const elseLabel = document.createElement('label');
+  elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+  elseLabel.textContent = 'Else';
+
+  const elseInput = document.createElement('input');
+  elseInput.type = 'text';
+  elseInput.placeholder = 'Non-Brand';
+  elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+  elseRow.appendChild(elseLabel);
+  elseRow.appendChild(elseInput);
+
+  groupContainer.appendChild(conditionsWrapper);
+  groupContainer.appendChild(thenRow);
+  groupContainer.appendChild(elseRow);
+
+  document.getElementById('customFieldGroups').appendChild(groupContainer);
+}
+
+
+// function addCustomFieldGroup() {
+//   const groupContainer = document.createElement('div');
+//   groupContainer.className = 'space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
+
+//   const conditionsWrapper = document.createElement('div');
+//   conditionsWrapper.className = 'space-y-2 custom-condition-group';
+
+//   const conditionRow = document.createElement('div');
+//   conditionRow.className = 'flex items-center gap-2 flex-wrap';
+
+//   const fieldSelect = document.createElement('select');
+//   fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+//   fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` + 
+//     fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+//   const operatorSelect = document.createElement('select');
+//   operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+//   operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` + 
+//     operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+//   const valueInput = document.createElement('input');
+//   valueInput.type = 'text';
+//   valueInput.placeholder = 'My Website Name';
+//   valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   conditionRow.appendChild(fieldSelect);
+//   conditionRow.appendChild(operatorSelect);
+//   conditionRow.appendChild(valueInput);
+//   conditionsWrapper.appendChild(conditionRow);
+
+//   // THEN input + button
+//   const thenRow = document.createElement('div');
+//   thenRow.className = 'flex items-center gap-2';
+
+//   const thenLabel = document.createElement('label');
+//   thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+//   thenLabel.textContent = 'Then';
+
+//   const thenInput = document.createElement('input');
+//   thenInput.type = 'text';
+//   thenInput.placeholder = 'Brand';
+//   thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   const addConditionBtn = document.createElement('button');
+//   addConditionBtn.textContent = '+ Condition';
+//   addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
+//   addConditionBtn.onclick = () => {
+//     const extraCondition = createConditionRow(); // reuse same structure
+//     conditionsWrapper.appendChild(extraCondition);
+//   };
+
+//   thenRow.appendChild(thenLabel);
+//   thenRow.appendChild(thenInput);
+//   thenRow.appendChild(addConditionBtn);
+
+//   // ELSE row
+//   const elseRow = document.createElement('div');
+//   elseRow.className = 'flex items-center gap-2';
+
+//   const elseLabel = document.createElement('label');
+//   elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+//   elseLabel.textContent = 'Else';
+
+//   const elseInput = document.createElement('input');
+//   elseInput.type = 'text';
+//   elseInput.placeholder = 'Non-Brand';
+//   elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   elseRow.appendChild(elseLabel);
+//   elseRow.appendChild(elseInput);
+
+//   groupContainer.appendChild(conditionsWrapper);
+//   groupContainer.appendChild(thenRow);
+//   groupContainer.appendChild(elseRow);
+
+//   document.getElementById('customFieldGroups').appendChild(groupContainer);
+// }
+
+// function addCustomFieldGroup() {
+//   const groupContainer = document.createElement('div');
+//   groupContainer.className = 'space-y-2 p-4 border border-gray-700 rounded-lg bg-gray-800';
+
+//   const conditionsWrapper = document.createElement('div');
+//   conditionsWrapper.className = 'space-y-2';
+//   conditionsWrapper.classList.add('custom-condition-group');
+
+//   const conditionRow = createConditionRow();
+//   conditionsWrapper.appendChild(conditionRow);
+
+//   const thenInput = document.createElement('input');
+//   thenInput.type = 'text';
+//   thenInput.placeholder = 'Then';
+//   thenInput.className = 'w-full h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   const elseInput = document.createElement('input');
+//   elseInput.type = 'text';
+//   elseInput.placeholder = 'Else';
+//   elseInput.className = 'w-full h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   const buttonsRow = document.createElement('div');
+//   buttonsRow.className = 'flex items-center gap-2';
+
+//   const addConditionBtn = document.createElement('button');
+//   addConditionBtn.textContent = '+';
+//   addConditionBtn.className = 'bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded';
+//   addConditionBtn.onclick = () => {
+//     conditionsWrapper.appendChild(createConditionRow());
+//   };
+
+//   const removeGroupBtn = document.createElement('button');
+//   removeGroupBtn.textContent = '–';
+//   removeGroupBtn.className = 'text-white text-lg font-bold px-3 hover:text-red-500';
+//   removeGroupBtn.onclick = () => {
+//     groupContainer.remove();
+//   };
+
+//   buttonsRow.appendChild(addConditionBtn);
+//   buttonsRow.appendChild(removeGroupBtn);
+
+//   groupContainer.appendChild(conditionsWrapper);
+//   groupContainer.appendChild(thenInput);
+//   groupContainer.appendChild(elseInput);
+//   groupContainer.appendChild(buttonsRow);
+
+//   document.getElementById('customFieldGroups').appendChild(groupContainer);
+// }
+
+// function createConditionRow() {
+//   const row = document.createElement('div');
+//   row.className = 'flex items-center gap-2';
+
+//   const fieldSelect = document.createElement('select');
+//   fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+//   fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` + fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+//   const operatorSelect = document.createElement('select');
+//   operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+//   operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` + operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+//   const valueInput = document.createElement('input');
+//   valueInput.type = 'text';
+//   valueInput.placeholder = 'Value';
+//   valueInput.className = 'w-full h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   row.appendChild(fieldSelect);
+//   row.appendChild(operatorSelect);
+//   row.appendChild(valueInput);
+
+//   return row;
+// }
+
+// function createConditionRow(hasRemove = true) {
+//   const container = document.createElement('div');
+
+//   // Condition input row
+//   const conditionRow = document.createElement('div');
+//   conditionRow.className = 'flex items-center gap-2 flex-wrap';
+
+//   const fieldSelect = document.createElement('select');
+//   fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+//   fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` +
+//     fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+//   const operatorSelect = document.createElement('select');
+//   operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+//   operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
+//     operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+//   const valueInput = document.createElement('input');
+//   valueInput.type = 'text';
+//   valueInput.placeholder = 'My Website Name';
+//   valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   conditionRow.appendChild(fieldSelect);
+//   conditionRow.appendChild(operatorSelect);
+//   conditionRow.appendChild(valueInput);
+
+//   container.appendChild(conditionRow);
+
+//   // Then row with label, input and remove button (initially hidden)
+//   const thenRow = document.createElement('div');
+//   thenRow.className = 'flex items-center gap-2';
+
+//   const thenLabel = document.createElement('label');
+//   thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+//   thenLabel.textContent = 'Then';
+
+//   const thenInput = document.createElement('input');
+//   thenInput.type = 'text';
+//   thenInput.placeholder = 'Brand';
+//   thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   const removeBtn = document.createElement('button');
+//   removeBtn.textContent = '−';
+//   removeBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
+//   removeBtn.onclick = () => {
+//     container.remove();
+//   };
+
+//   thenRow.appendChild(thenLabel);
+//   thenRow.appendChild(thenInput);
+//   thenRow.appendChild(removeBtn);
+
+//   container.appendChild(thenRow);
+//   container._thenRow = thenRow; // expose for toggling
+
+//   return container;
+// }
+
+// function addCustomFieldGroup() {
+//   const groupContainer = document.createElement('div');
+//   groupContainer.className = 'space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
+
+//   const conditionsWrapper = document.createElement('div');
+//   conditionsWrapper.className = 'space-y-4 custom-condition-group';
+
+//   // Only include the condition row on initial load (no Then here)
+//   const initialConditionRow = document.createElement('div');
+//   initialConditionRow.className = 'flex items-center gap-2 flex-wrap';
+
+//   const fieldSelect = document.createElement('select');
+//   fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+//   fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` +
+//     fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+//   const operatorSelect = document.createElement('select');
+//   operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+//   operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
+//     operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+//   const valueInput = document.createElement('input');
+//   valueInput.type = 'text';
+//   valueInput.placeholder = 'My Website Name';
+//   valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   initialConditionRow.appendChild(fieldSelect);
+//   initialConditionRow.appendChild(operatorSelect);
+//   initialConditionRow.appendChild(valueInput);
+
+//   conditionsWrapper.appendChild(initialConditionRow);
+
+//   const thenRow = document.createElement('div');
+//   thenRow.className = 'flex items-center gap-2';
+
+//   const thenLabel = document.createElement('label');
+//   thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+//   thenLabel.textContent = 'Then';
+
+//   const thenInput = document.createElement('input');
+//   thenInput.type = 'text';
+//   thenInput.placeholder = 'Brand';
+//   thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   const addConditionBtn = document.createElement('button');
+//   addConditionBtn.textContent = '+ Condition';
+//   addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
+//   addConditionBtn.onclick = () => {
+//     const newCondition = createConditionRow(true);
+//     newCondition._thenRow.classList.remove('hidden');
+//     conditionsWrapper.appendChild(newCondition);
+//   };
+
+//   thenRow.appendChild(thenLabel);
+//   thenRow.appendChild(thenInput);
+//   thenRow.appendChild(addConditionBtn);
+
+//   const elseRow = document.createElement('div');
+//   elseRow.className = 'flex items-center gap-2';
+
+//   const elseLabel = document.createElement('label');
+//   elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+//   elseLabel.textContent = 'Else';
+
+//   const elseInput = document.createElement('input');
+//   elseInput.type = 'text';
+//   elseInput.placeholder = 'Non-Brand';
+//   elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   elseRow.appendChild(elseLabel);
+//   elseRow.appendChild(elseInput);
+
+//   groupContainer.appendChild(conditionsWrapper);
+//   groupContainer.appendChild(thenRow);
+//   groupContainer.appendChild(elseRow);
+
+//   document.getElementById('customFieldGroups').appendChild(groupContainer);
+// }
+
+
+
+function createConditionRow(hasRemove = true) {
+  const container = document.createElement('div');
+
+  // Condition input row
+  const conditionRow = document.createElement('div');
+  conditionRow.className = 'flex items-center gap-2 flex-wrap';
+
+  const fieldSelect = document.createElement('select');
+  fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+  fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` +
+    fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+  const operatorSelect = document.createElement('select');
+  operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+  operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
+    operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+  const valueInput = document.createElement('input');
+  valueInput.type = 'text';
+  valueInput.placeholder = 'My Website Name';
+  valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+  conditionRow.appendChild(fieldSelect);
+  conditionRow.appendChild(operatorSelect);
+  conditionRow.appendChild(valueInput);
+
+  container.appendChild(conditionRow);
+
+  if (hasRemove) {
+    // Then row with label, input and remove button (initially hidden)
+    const thenRow = document.createElement('div');
+    thenRow.className = 'flex items-center gap-2';
+
+    const thenLabel = document.createElement('label');
+    thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+    thenLabel.textContent = 'Then';
+
+    const thenInput = document.createElement('input');
+    thenInput.type = 'text';
+    thenInput.placeholder = 'Brand';
+    thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '−';
+    removeBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
+    removeBtn.onclick = () => {
+      container.remove();
+    };
+
+    thenRow.appendChild(thenLabel);
+    thenRow.appendChild(thenInput);
+    thenRow.appendChild(removeBtn);
+
+    container.appendChild(thenRow);
+  }
+
+  return container;
+}
+
+function addCustomFieldGroup() {
+  const groupContainer = document.createElement('div');
+  groupContainer.className = 'space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
+
+  const conditionsWrapper = document.createElement('div');
+  conditionsWrapper.className = 'space-y-4 custom-condition-group';
+
+  // Only include one initial condition row (no "Then" yet)
+  const initialConditionRow = document.createElement('div');
+  initialConditionRow.className = 'flex items-center gap-2 flex-wrap';
+
+  const fieldSelect = document.createElement('select');
+  fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+  fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` +
+    fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+  const operatorSelect = document.createElement('select');
+  operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+  operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
+    operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+  const valueInput = document.createElement('input');
+  valueInput.type = 'text';
+  valueInput.placeholder = 'My Website Name';
+  valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+  initialConditionRow.appendChild(fieldSelect);
+  initialConditionRow.appendChild(operatorSelect);
+  initialConditionRow.appendChild(valueInput);
+
+  conditionsWrapper.appendChild(initialConditionRow);
+
+  const thenRow = document.createElement('div');
+  thenRow.className = 'flex items-center gap-2';
+
+  const thenLabel = document.createElement('label');
+  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+  thenLabel.textContent = 'Then';
+
+  const thenInput = document.createElement('input');
+  thenInput.type = 'text';
+  thenInput.placeholder = 'Brand';
+  thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+  const addConditionBtn = document.createElement('button');
+  addConditionBtn.textContent = '+ Condition';
+  addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
+  addConditionBtn.onclick = () => {
+    const newCondition = createConditionRow(true);
+    conditionsWrapper.appendChild(newCondition);
+    // show the original "Then" row in the newCondition (it's initially hidden)
+    const lastThenRow = newCondition.querySelector('.flex.items-center.gap-2');
+    if (lastThenRow) lastThenRow.classList.remove('hidden');
+  };
+
+  thenRow.appendChild(thenLabel);
+  thenRow.appendChild(thenInput);
+  thenRow.appendChild(addConditionBtn);
+
+  const elseRow = document.createElement('div');
+  elseRow.className = 'flex items-center gap-2';
+
+  const elseLabel = document.createElement('label');
+  elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+  elseLabel.textContent = 'Else';
+
+  const elseInput = document.createElement('input');
+  elseInput.type = 'text';
+  elseInput.placeholder = 'Non-Brand';
+  elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+  elseRow.appendChild(elseLabel);
+  elseRow.appendChild(elseInput);
+
+  groupContainer.appendChild(conditionsWrapper);
+  groupContainer.appendChild(thenRow);
+  groupContainer.appendChild(elseRow);
+
+  document.getElementById('customFieldGroups').appendChild(groupContainer);
+}
+
+
+// function addCustomFieldGroup() {
+//   const groupContainer = document.createElement('div');
+//   groupContainer.className = 'space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
+
+//   const conditionsWrapper = document.createElement('div');
+//   conditionsWrapper.className = 'space-y-2 custom-condition-group';
+
+//   const initialCondition = createConditionRow(false);
+//   conditionsWrapper.appendChild(initialCondition);
+
+//   const thenRow = document.createElement('div');
+//   thenRow.className = 'flex items-center gap-2';
+
+//   const thenLabel = document.createElement('label');
+//   thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+//   thenLabel.textContent = 'Then';
+
+//   const thenInput = document.createElement('input');
+//   thenInput.type = 'text';
+//   thenInput.placeholder = 'Brand';
+//   thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   const addConditionBtn = document.createElement('button');
+//   addConditionBtn.textContent = '+ Condition';
+//   addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
+//   addConditionBtn.onclick = () => {
+//     const newCondition = createConditionRow();
+//     conditionsWrapper.appendChild(newCondition);
+//   };
+
+//   thenRow.appendChild(thenLabel);
+//   thenRow.appendChild(thenInput);
+//   thenRow.appendChild(addConditionBtn);
+
+//   const elseRow = document.createElement('div');
+//   elseRow.className = 'flex items-center gap-2';
+
+//   const elseLabel = document.createElement('label');
+//   elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+//   elseLabel.textContent = 'Else';
+
+//   const elseInput = document.createElement('input');
+//   elseInput.type = 'text';
+//   elseInput.placeholder = 'Non-Brand';
+//   elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+//   elseRow.appendChild(elseLabel);
+//   elseRow.appendChild(elseInput);
+
+//   groupContainer.appendChild(conditionsWrapper);
+//   groupContainer.appendChild(thenRow);
+//   groupContainer.appendChild(elseRow);
+
+//   document.getElementById('customFieldGroups').appendChild(groupContainer);
+// }
+
+
+
+
+
+// Shared dropdown values from your earlier message
+const fieldOptionsCustomField = [
+  "Query", "URL", "Country", "Search Type", "Device", "Site URL", "Date", "Month", "Year",
+  "Is Anonymized Query", "Is Anonymized Discover", "Is AMP Top Stories", "Is AMP Blue Link",
+  "Is Job Listing", "Is Job Details", "Is TPF QA", "Is TPF FAQ", "Is TPF HowTo", "Is Weblite",
+  "Is Action", "Is Events Listing", "Is Events Details", "Is Search Appearance Android App",
+  "Is AMP Story", "Is AMP Image Result", "Is Video", "Is Organc Shopping", "Is Review Snippet",
+  "Is Special Announcement", "Is Recipe Feature", "Is Recipe Rich Snippet", "Is Subscribed Content",
+  "Is Page Experience", "Is Practice Problems", "Is Math Solvers", "Is Translated Result",
+  "Is Product Snippets", "Is Merchant Listings"
+];
+
+const operatorOptionsCustomFields = [
+  "EQUALS", "NOT EQUALS", "CONTAINS", "NOT CONTAINS", "REGEX CONTAINS", "REGEX NOT CONTAINS"
+];
+
+    /* Custom fields script ends here */
 
 
 
@@ -1311,6 +2071,8 @@
     addFilterRow();
     // Inject the first sort row on page load
     addSortRow();
+// Ensure the first custom field group is present on page load
+    addCustomFieldGroup();
   </script>
 
 </body>
