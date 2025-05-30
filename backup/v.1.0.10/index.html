@@ -665,41 +665,69 @@
 
     // dimensions dropdown items end
 
+    // function selectDimension(dimension) {
+    //   if (selectedDimensions.has(dimension)) return;
+    //   selectedDimensions.add(dimension);
 
-    function selectDimension(dimension) {
-      if (selectedDimensions.has(dimension)) return;
+    //   // Hide the item in dropdown
+    //   const dropdownItems = document.querySelectorAll("#dimensionsDropdown > div");
+    //   dropdownItems.forEach(item => {
+    //     const label = item.querySelector("span");
+    //     if (label && label.textContent === dimension) {
+    //       item.style.display = "none";
+    //     }
+    //   });
 
-      selectedDimensions.add(dimension);
+    //   // Hide placeholder
+    //   const placeholder = document.getElementById("dimensionsPlaceholder");
+    //   if (placeholder) placeholder.classList.add("hidden");
 
-      const dropdownItems = document.querySelectorAll("#dimensionsDropdown > div");
-      dropdownItems.forEach(item => {
-        const label = item.querySelector("span");
-        if (label && label.textContent === dimension) {
-          item.style.display = "none";
-        }
-      });
+    //   // Create and append tag
+    //   const tag = document.createElement("div");
+    //   tag.className = "tag-metric bg-[#145da0] shadow-md text-white px-2 py-[2px] h-[28px] rounded-[8px] flex items-center space-x-2 text-sm whitespace-nowrap";
+    //   tag.id = `tag-dimension-${dimension}`;
+    //   tag.innerHTML = `${dimension} <button onclick="removeDimension('${dimension}')" class="ml-2 mt-[-2px] leading-none text-[1.2rem] text-white font-bold outline-none border-none p-[2px] font-extralight">&times;</button>`;
 
-      const placeholder = document.getElementById("dimensionsPlaceholder");
-      if (placeholder) placeholder.classList.add("hidden");
+    //   document.getElementById("dimensionsTagsContainer").appendChild(tag);
 
-      const tag = document.createElement("div");
-      tag.className = "tag-metric bg-[#145da0] shadow-md text-white px-2 py-[2px] h-[28px] rounded-[8px] flex items-center space-x-2 text-sm whitespace-nowrap";
-      tag.id = `tag-dimension-${dimension}`;
-      tag.innerHTML = `${dimension} <button onclick="removeDimension('${dimension}')" class="ml-2 mt-[-2px] leading-none text-[1.2rem] text-white font-bold outline-none border-none p-[2px] font-extralight">&times;</button>`;
+    //   closeDropdown(document.getElementById("dimensionsDropdown"));
+    //   updateClearDimensionsButton();
+    // }
 
-      document.getElementById("dimensionsTagsContainer").appendChild(tag);
+function selectDimension(dimension) {
+  if (selectedDimensions.has(dimension)) return;
 
-      updateClearDimensionsButton();
+  selectedDimensions.add(dimension);
 
-      const remaining = Array.from(document.querySelectorAll("#dimensionsDropdown > div"))
-        .filter(item => item.style.display !== "none");
-
-      if (remaining.length === 0) {
-        closeDropdown(dimensionsDropdown);
-        document.getElementById("dimensionsArrow").classList.remove("rotate-180");
-      }
-      refreshDropdownHeight(dimensionsDropdown);
+  const dropdownItems = document.querySelectorAll("#dimensionsDropdown > div");
+  dropdownItems.forEach(item => {
+    const label = item.querySelector("span");
+    if (label && label.textContent === dimension) {
+      item.style.display = "none";
     }
+  });
+
+  const placeholder = document.getElementById("dimensionsPlaceholder");
+  if (placeholder) placeholder.classList.add("hidden");
+
+  const tag = document.createElement("div");
+  tag.className = "tag-metric bg-[#145da0] shadow-md text-white px-2 py-[2px] h-[28px] rounded-[8px] flex items-center space-x-2 text-sm whitespace-nowrap";
+  tag.id = `tag-dimension-${dimension}`;
+  tag.innerHTML = `${dimension} <button onclick="removeDimension('${dimension}')" class="ml-2 mt-[-2px] leading-none text-[1.2rem] text-white font-bold outline-none border-none p-[2px] font-extralight">&times;</button>`;
+
+  document.getElementById("dimensionsTagsContainer").appendChild(tag);
+
+  updateClearDimensionsButton();
+
+  const remaining = Array.from(document.querySelectorAll("#dimensionsDropdown > div"))
+    .filter(item => item.style.display !== "none");
+
+  if (remaining.length === 0) {
+    closeDropdown(dimensionsDropdown);
+    document.getElementById("dimensionsArrow").classList.remove("rotate-180");
+  }
+  refreshDropdownHeight(dimensionsDropdown);
+}
 
     function removeDimension(dimension) {
       selectedDimensions.delete(dimension);
@@ -750,55 +778,55 @@
     }
 
 
-    /* metrics dropdown functions - starts here*/
+/* metrics dropdown functions - starts here*/
     function selectMetric(metric) {
-      if (selectedMetrics.has(metric)) return;
+  if (selectedMetrics.has(metric)) return;
 
-      const container = document.getElementById("metricsTagsContainer");
-      const placeholder = document.getElementById("metricsPlaceholder");
+  const container = document.getElementById("metricsTagsContainer");
+  const placeholder = document.getElementById("metricsPlaceholder");
 
-      selectedMetrics.add(metric);
+  selectedMetrics.add(metric);
 
-      document.querySelectorAll("#metricsDropdown > div").forEach(item => {
-        if (item.textContent === metric) item.style.display = "none";
-      });
+  document.querySelectorAll("#metricsDropdown > div").forEach(item => {
+    if (item.textContent === metric) item.style.display = "none";
+  });
 
-      const tag = document.createElement("div");
-      tag.className = "tag-metric bg-[#145da0] shadow-md text-white px-2 py-[2px] h-[28px] rounded-[8px] flex items-center space-x-2 text-sm whitespace-nowrap";
-      tag.id = `tag-${metric}`;
+  const tag = document.createElement("div");
+  tag.className = "tag-metric bg-[#145da0] shadow-md text-white px-2 py-[2px] h-[28px] rounded-[8px] flex items-center space-x-2 text-sm whitespace-nowrap";
+  tag.id = `tag-${metric}`;
 
-      const label = document.createElement("span");
-      label.textContent = metric;
+  const label = document.createElement("span");
+  label.textContent = metric;
 
-      const closeBtn = document.createElement("button");
-      closeBtn.className = "ml-2 mt-[-2px] leading-none text-[1.2rem] text-white font-bold outline-none border-none p-[2px] font-extralight";
-      closeBtn.textContent = "×";
-      closeBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        removeMetric(metric);
-      });
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "ml-2 mt-[-2px] leading-none text-[1.2rem] text-white font-bold outline-none border-none p-[2px] font-extralight";
+  closeBtn.textContent = "×";
+  closeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    removeMetric(metric);
+  });
 
-      tag.appendChild(label);
-      tag.appendChild(closeBtn);
-      container.appendChild(tag);
+  tag.appendChild(label);
+  tag.appendChild(closeBtn);
+  container.appendChild(tag);
 
-      placeholder.classList.add("hidden");
+  placeholder.classList.add("hidden");
 
-      updateClearMetricsButton();
-      updateMetricsArrowState();
+  updateClearMetricsButton();
+  updateMetricsArrowState();
 
-      // If all selected, hide dropdown
-      const remaining = Array.from(document.querySelectorAll("#metricsDropdown > div"))
-        .filter(item => item.style.display !== "none");
+  // If all selected, hide dropdown
+  const remaining = Array.from(document.querySelectorAll("#metricsDropdown > div"))
+    .filter(item => item.style.display !== "none");
 
-      if (remaining.length === 0) {
-        closeDropdown(metricsDropdown);
-        document.getElementById("metricsArrow").classList.remove("rotate-180");
-      }
+  if (remaining.length === 0) {
+    closeDropdown(metricsDropdown);
+    document.getElementById("metricsArrow").classList.remove("rotate-180");
+  }
 
-      refreshDropdownHeight(metricsDropdown);
-    }
-    /* metrics dropdown functions - ends here*/
+  refreshDropdownHeight(metricsDropdown);
+}
+/* metrics dropdown functions - ends here*/
     // Function to update the "Clear all" button visibility
     function removeMetric(metric) {
       selectedMetrics.delete(metric);
@@ -879,19 +907,19 @@
 
     /* metrics multiselect script - ends here */
     document.addEventListener("click", (e) => {
-      const dropdowns = [
-        { menu: document.getElementById("metricsDropdown"), trigger: document.getElementById("selectedMetrics"), arrow: document.getElementById("metricsArrow") },
-        { menu: document.getElementById("dimensionsDropdown"), trigger: document.getElementById("selectedDimensions"), arrow: document.getElementById("dimensionsArrow") },
-        { menu: document.getElementById("dateRangeDropdown"), trigger: document.getElementById("selectedDateRange"), arrow: document.getElementById("dateRangeArrow") }
-      ];
+  const dropdowns = [
+    { menu: document.getElementById("metricsDropdown"), trigger: document.getElementById("selectedMetrics"), arrow: document.getElementById("metricsArrow") },
+    { menu: document.getElementById("dimensionsDropdown"), trigger: document.getElementById("selectedDimensions"), arrow: document.getElementById("dimensionsArrow") },
+    { menu: document.getElementById("dateRangeDropdown"), trigger: document.getElementById("selectedDateRange"), arrow: document.getElementById("dateRangeArrow") }
+  ];
 
-      dropdowns.forEach(({ menu, trigger, arrow }) => {
-        if (menu && !menu.contains(e.target) && !trigger.contains(e.target)) {
-          closeDropdown(menu);
-          arrow?.classList.remove("rotate-180");
-        }
-      });
-    });
+  dropdowns.forEach(({ menu, trigger, arrow }) => {
+    if (menu && !menu.contains(e.target) && !trigger.contains(e.target)) {
+      closeDropdown(menu);
+      arrow?.classList.remove("rotate-180");
+    }
+  });
+});
 
     document.querySelectorAll('.dimension-option').forEach(item => {
       item.addEventListener('click', (e) => {
@@ -938,27 +966,27 @@
         }, 100);
       });
     }
-    function refreshDropdownHeight(dropdown) {
+   function refreshDropdownHeight(dropdown) {
 
-      if (typeof dropdown === "string") {
-        dropdown = document.getElementById(dropdown);
-      }
+  if (typeof dropdown === "string") {
+    dropdown = document.getElementById(dropdown);
+  }
 
-      if (!dropdown || typeof dropdown.getAttribute !== "function") return;
+  if (!dropdown || typeof dropdown.getAttribute !== "function") return;
 
-      if (dropdown.getAttribute("data-open") === "true") {
-        setTimeout(() => {
-          dropdown.style.height = "auto"; // Reset to allow re-calc
-          const newHeight = dropdown.scrollHeight + "px";
+  if (dropdown.getAttribute("data-open") === "true") {
+    setTimeout(() => {
+      dropdown.style.height = "auto"; // Reset to allow re-calc
+      const newHeight = dropdown.scrollHeight + "px";
 
-          dropdown.style.height = dropdown.offsetHeight + "px"; // Force reflow
+      dropdown.style.height = dropdown.offsetHeight + "px"; // Force reflow
 
-          requestAnimationFrame(() => {
-            dropdown.style.height = newHeight;
-          });
-        }, 300); // Delay for animation/DOM sync
-      }
-    }
+      requestAnimationFrame(() => {
+        dropdown.style.height = newHeight;
+      });
+    }, 300); // Delay for animation/DOM sync
+  }
+}
 
 
 
@@ -1071,31 +1099,45 @@
       }
     }
 
+    // function clearAllDimensions() {
+    //   selectedDimensions.clear();
+    //   document.getElementById("dimensionsTagsContainer").innerHTML = "";
 
+    //   // Show placeholder again
+    //   const placeholder = document.getElementById("dimensionsPlaceholder");
+    //   if (placeholder) placeholder.classList.remove("hidden");
 
-    function clearAllDimensions() {
-      selectedDimensions.clear();
+    //   document.querySelectorAll("#dimensionsDropdown > div").forEach(item => {
+    //     item.style.display = "flex";
+    //   });
 
-      // Remove all tag-metric elements only (not the placeholder)
-      const tagContainer = document.getElementById("dimensionsTagsContainer");
-      tagContainer.querySelectorAll(".tag-metric").forEach(tag => tag.remove());
+    //   updateClearDimensionsButton();
+    //   toggleDropdown(dimensionsDropdown, dimensionsArrow, false);
+    // }
 
-      // Show the placeholder again
-      const placeholder = document.getElementById("dimensionsPlaceholder");
-      if (placeholder) placeholder.classList.remove("hidden");
+   function clearAllDimensions() {
+  selectedDimensions.clear();
 
-      // Show all dropdown options again
-      document.querySelectorAll("#dimensionsDropdown > div").forEach(item => {
-        item.style.display = "flex";
-      });
+  // Remove all tag-metric elements only (not the placeholder)
+  const tagContainer = document.getElementById("dimensionsTagsContainer");
+  tagContainer.querySelectorAll(".tag-metric").forEach(tag => tag.remove());
 
-      updateClearDimensionsButton();
+  // Show the placeholder again
+  const placeholder = document.getElementById("dimensionsPlaceholder");
+  if (placeholder) placeholder.classList.remove("hidden");
 
-      // Reset dropdown state
-      isDimensionsDropdownOpen = false;
-      const arrow = document.getElementById("dimensionsArrow");
-      toggleDropdown(dimensionsDropdown, arrow, false);
-    }
+  // Show all dropdown options again
+  document.querySelectorAll("#dimensionsDropdown > div").forEach(item => {
+    item.style.display = "flex";
+  });
+
+  updateClearDimensionsButton();
+
+  // Reset dropdown state
+  isDimensionsDropdownOpen = false;
+  const arrow = document.getElementById("dimensionsArrow");
+  toggleDropdown(dimensionsDropdown, arrow, false);
+}
 
 
 
@@ -1169,19 +1211,13 @@
       bottomRow.className = "flex flex-nowrap items-center gap-2 overflow-x-auto";
 
       const fieldSelect = document.createElement('select');
-      fieldSelect.className = 'h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800  w-[140px]';
-
-
-      fieldSelect.required = true;
-      fieldSelect.value = ''; // ensures it starts with the placeholder
-
-      fieldSelect.innerHTML =
-        `<option value="" disabled selected hidden>Select Field</option>` +
-        fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+      fieldSelect.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 text-white w-[140px]";
+      fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` +
+        fieldOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
       const operatorSelect = document.createElement('select');
-      operatorSelect.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 w-[140px]";
-      operatorSelect.innerHTML = `<option value="" disabled selected hidden>Operator</option>` +
+      operatorSelect.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 text-white w-[140px]";
+      operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
         operatorOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
       const input = document.createElement('input');
@@ -1262,8 +1298,8 @@
       wrapper.className = "flex items-center gap-4";
 
       const fieldSelect = document.createElement('select');
-      fieldSelect.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 w-[240px]";
-      fieldSelect.innerHTML = `<option value="" disabled selected hidden>Select Field</option>` +
+      fieldSelect.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 text-white w-[240px]";
+      fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` +
         sortFieldOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
       const radioGroup = document.createElement('div');
@@ -1317,123 +1353,122 @@
 
 
     function createConditionRow(hasRemove = true, addButtons = true, groupContainer = null, defaultField = '', defaultOperator = '') {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'py-4 px-2 border border-gray-600 space-y-2 bg-gray-800 added-custom-condition-group';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'py-4 px-2 border border-gray-600 space-y-2 bg-gray-800 added-custom-condition-group';
 
-      // Input row: Field + Operator + Input
-      const inputRow = document.createElement('div');
-      inputRow.className = 'flex items-center gap-2 flex-wrap';
+  // Input row: Field + Operator + Input
+ const inputRow = document.createElement('div');
+inputRow.className = 'flex items-center gap-2 flex-wrap';
 
-      const whenLabel = document.createElement('label');
-      whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-      whenLabel.textContent = 'When';
+const whenLabel = document.createElement('label');
+whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+whenLabel.textContent = 'When';
 
-      inputRow.appendChild(whenLabel);
+inputRow.appendChild(whenLabel);
 
-      const fieldSelect = document.createElement('select');
-      fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
-      fieldSelect.required = true;
-      fieldSelect.value = ''; // ensures it starts with the placeholder
+  const fieldSelect = document.createElement('select');
+  fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+  fieldSelect.innerHTML =
+    `<option value="" disabled ${!defaultField ? 'selected' : ''}>Select Field</option>` +
+    fieldOptionsCustomField.map(opt =>
+      `<option value="${opt}" ${opt === defaultField ? 'selected' : ''}>${opt}</option>`
+    ).join('');
 
-      fieldSelect.innerHTML =
-        `<option value="" disabled selected hidden>Select Field</option>` +
-        fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+  const operatorSelect = document.createElement('select');
+  operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+  operatorSelect.innerHTML =
+    `<option value="" disabled ${!defaultOperator ? 'selected' : ''}>Operator</option>` +
+    operatorOptionsCustomFields.map(opt =>
+      `<option value="${opt}" ${opt === defaultOperator ? 'selected' : ''}>${opt}</option>`
+    ).join('');
 
-      const operatorSelect = document.createElement('select');
-      operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
-      operatorSelect.innerHTML =
-        `<option value="" disabled ${!defaultOperator ? 'selected' : ''}>Operator</option>` +
-        operatorOptionsCustomFields.map(opt =>
-          `<option value="${opt}" ${opt === defaultOperator ? 'selected' : ''}>${opt}</option>`
-        ).join('');
+  const valueInput = document.createElement('input');
+  valueInput.type = 'text';
+  valueInput.placeholder = 'My Website Name';
+  valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
-      const valueInput = document.createElement('input');
-      valueInput.type = 'text';
-      valueInput.placeholder = 'My Website Name';
-      valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+  inputRow.appendChild(fieldSelect);
+  inputRow.appendChild(operatorSelect);
+  inputRow.appendChild(valueInput);
+  wrapper.appendChild(inputRow);
 
-      inputRow.appendChild(fieldSelect);
-      inputRow.appendChild(operatorSelect);
-      inputRow.appendChild(valueInput);
-      wrapper.appendChild(inputRow);
+  // Then row
+  const thenRow = document.createElement('div');
+  thenRow.className = 'flex items-center gap-2';
 
-      // Then row
-      const thenRow = document.createElement('div');
-      thenRow.className = 'flex items-center gap-2';
+  const thenLabel = document.createElement('label');
+  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+  thenLabel.textContent = 'Then';
 
-      const thenLabel = document.createElement('label');
-      thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-      thenLabel.textContent = 'Then';
+  const thenInput = document.createElement('input');
+  thenInput.type = 'text';
+  thenInput.placeholder = 'Brand';
+  thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
-      const thenInput = document.createElement('input');
-      thenInput.type = 'text';
-      thenInput.placeholder = 'Brand';
-      thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+  thenRow.appendChild(thenLabel);
+  thenRow.appendChild(thenInput);
 
-      thenRow.appendChild(thenLabel);
-      thenRow.appendChild(thenInput);
+  if (addButtons) {
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '−';
+    removeBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
+    removeBtn.onclick = () => {
+      wrapper.remove();
+      updateConditionButtonsVisibility();
+    };
 
-      if (addButtons) {
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = '−';
-        removeBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
-        removeBtn.onclick = () => {
-          wrapper.remove();
-          updateConditionButtonsVisibility(groupContainer);
-        };
+    const addConditionBtn = document.createElement('button');
+    addConditionBtn.textContent = '+ Condition';
+    addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
+    addConditionBtn.onclick = () => {
+      if (!groupContainer) return;
 
-        const addConditionBtn = document.createElement('button');
-        addConditionBtn.textContent = '+ Condition';
-        addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
-        addConditionBtn.onclick = () => {
-          if (!groupContainer) return;
-
-          // Add new condition row with defaultField = '', defaultOperator = 'EQUALS'
-          const newGroup = createConditionRow(true, true, groupContainer, '', 'EQUALS');
-          newGroup.classList.add('added-custom-condition-group');
-
-          const elseRow = Array.from(groupContainer.children).find(child => {
-            const label = child.querySelector('label');
-            return label && label.textContent.trim().toLowerCase() === 'else';
-          });
-
-          if (elseRow) {
-            groupContainer.insertBefore(newGroup, elseRow);
-          } else {
-            groupContainer.appendChild(newGroup);
-          }
-
-          updateConditionButtonsVisibility(groupContainer);
-        };
-
-        thenRow.appendChild(removeBtn);
-        thenRow.appendChild(addConditionBtn);
-      }
-
-      wrapper.appendChild(thenRow);
-      return wrapper;
-    }
-
-    function createConditionGroupWrapper(groupContainer) {
-      // Defaults: no preselected field, but operator is 'EQUALS'
+      // Add new condition row with defaultField = '', defaultOperator = 'EQUALS'
       const newGroup = createConditionRow(true, true, groupContainer, '', 'EQUALS');
       newGroup.classList.add('added-custom-condition-group');
-      return newGroup;
-    }
+
+      const elseRow = Array.from(groupContainer.children).find(child => {
+        const label = child.querySelector('label');
+        return label && label.textContent.trim().toLowerCase() === 'else';
+      });
+
+      if (elseRow) {
+        groupContainer.insertBefore(newGroup, elseRow);
+      } else {
+        groupContainer.appendChild(newGroup);
+      }
+
+      updateConditionButtonsVisibility();
+    };
+
+    thenRow.appendChild(removeBtn);
+    thenRow.appendChild(addConditionBtn);
+  }
+
+  wrapper.appendChild(thenRow);
+  return wrapper;
+}
+
+    function createConditionGroupWrapper(groupContainer) {
+  // Defaults: no preselected field, but operator is 'EQUALS'
+  const newGroup = createConditionRow(true, true, groupContainer, '', 'EQUALS');
+  newGroup.classList.add('added-custom-condition-group');
+  return newGroup;
+}
 
     // Pre-select "Query" and "CONTAINS" for the first custom field group
-    document.addEventListener("DOMContentLoaded", () => {
-      setTimeout(() => {
-        const firstGroup = document.querySelector('#customFieldGroups > div');
-        if (!firstGroup) return;
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    const firstGroup = document.querySelector('#customFieldGroups > div');
+    if (!firstGroup) return;
 
-        const fieldSelect = firstGroup.querySelector('select:nth-of-type(1)');
-        const operatorSelect = firstGroup.querySelector('select:nth-of-type(2)');
+    const fieldSelect = firstGroup.querySelector('select:nth-of-type(1)');
+    const operatorSelect = firstGroup.querySelector('select:nth-of-type(2)');
 
-        if (fieldSelect) fieldSelect.value = 'Query';
-        if (operatorSelect) operatorSelect.value = 'CONTAINS';
-      }, 100); // slight delay to ensure DOM is updated
-    });
+    if (fieldSelect) fieldSelect.value = 'Query';
+    if (operatorSelect) operatorSelect.value = 'CONTAINS';
+  }, 100); // slight delay to ensure DOM is updated
+});
 
 
     function addCustomFieldGroup() {
@@ -1447,22 +1482,22 @@
       const conditionRow = document.createElement('div');
       conditionRow.className = 'space-y-2';
 
-
+      
 
       // Input row: When + Field + Operator + Input
-      const inputRow = document.createElement('div');
-      inputRow.className = 'flex items-center gap-2 flex-wrap';
+const inputRow = document.createElement('div');
+inputRow.className = 'flex items-center gap-2 flex-wrap';
 
-      const whenLabel = document.createElement('label');
-      whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-      whenLabel.textContent = 'When';
+const whenLabel = document.createElement('label');
+whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+whenLabel.textContent = 'When';
 
-      inputRow.appendChild(whenLabel);
+inputRow.appendChild(whenLabel);
 
 
       const fieldSelect = document.createElement('select');
       fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
-      fieldSelect.innerHTML = `<option value="" disabled selected hidden>Select Field</option>` +
+      fieldSelect.innerHTML = `<option value="" disabled selected>Select Field</option>` +
         fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
       const operatorSelect = document.createElement('select');
@@ -1494,18 +1529,9 @@
       thenInput.placeholder = 'Brand';
       thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
-
-      const removeBtn = document.createElement('button');
-      removeBtn.textContent = '−';
-      removeBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto initial-remove-btn hidden';
-      removeBtn.onclick = () => {
-        wrapper.remove();
-        updateConditionButtonsVisibility(groupContainer);
-      };
-
       const addConditionBtn = document.createElement('button');
       addConditionBtn.textContent = '+ Condition';
-      addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto initial-add-btn';
+      addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
       addConditionBtn.onclick = () => {
         const newGroup = createConditionGroupWrapper(groupContainer);
         const elseRow = Array.from(groupContainer.children).find(child => {
@@ -1518,12 +1544,11 @@
         } else {
           groupContainer.appendChild(newGroup);
         }
-        updateConditionButtonsVisibility(groupContainer);
+        updateConditionButtonsVisibility();
       };
 
       thenRow.appendChild(thenLabel);
       thenRow.appendChild(thenInput);
-      // thenRow.appendChild(removeBtn); - if remove has to be added to the first custom field
       thenRow.appendChild(addConditionBtn);
 
       // Else row
@@ -1550,53 +1575,40 @@
       document.getElementById('customFieldGroups').appendChild(groupContainer);
     }
 
+    function updateConditionButtonsVisibility() {
+      const allAddedGroups = Array.from(document.querySelectorAll('.added-custom-condition-group'));
 
-
-    function updateConditionButtonsVisibility(groupContainer) {
-      const addedGroups = Array.from(groupContainer.querySelectorAll('.added-custom-condition-group'));
-
-      // Hide all + Condition buttons in this group
-      addedGroups.forEach(group => {
+      // Hide all + Condition buttons in added groups
+      allAddedGroups.forEach(group => {
         const plusBtn = [...group.querySelectorAll('button')].find(btn => btn.textContent.trim() === '+ Condition');
         if (plusBtn) {
           plusBtn.classList.add('hidden');
         }
       });
 
-      // Show + Condition only in the last added group (within this container)
-      if (addedGroups.length > 0) {
-        const lastGroup = addedGroups[addedGroups.length - 1];
+      // Show + Condition only in the last added group
+      if (allAddedGroups.length > 0) {
+        const lastGroup = allAddedGroups[allAddedGroups.length - 1];
         const lastPlusBtn = [...lastGroup.querySelectorAll('button')].find(btn => btn.textContent.trim() === '+ Condition');
         if (lastPlusBtn) {
           lastPlusBtn.classList.remove('hidden');
         }
       }
 
-      // Handle the initial (non-added) group in this container
-
-
-      const conditionsWrapper = groupContainer.querySelector('.custom-condition-group');
-      const initialGroup = conditionsWrapper?.querySelector(':scope > div:not(.added-custom-condition-group)');
-
-
+      // Always handle the initial group separately
+      const initialGroup = document.querySelector('#customFieldGroups > div:not(.added-custom-condition-group)');
       if (initialGroup) {
-
-        const initialPlusBtn = groupContainer.querySelector('.initial-add-btn');
-        // const initialMinusBtn = groupContainer.querySelector('.initial-remove-btn');
+        const initialPlusBtn = [...initialGroup.querySelectorAll('button')].find(btn => btn.textContent.trim() === '+ Condition');
 
         if (initialPlusBtn) {
-
-          if (addedGroups.length === 0) {
+          if (allAddedGroups.length === 0) {
             initialPlusBtn.classList.remove('hidden');
-            // initialMinusBtn.classList.add('hidden');
           } else {
             initialPlusBtn.classList.add('hidden');
-            // initialMinusBtn.classList.remove('hidden');
           }
         }
       }
     }
-
 
     // Shared dropdown values for custom fields
     const fieldOptionsCustomField = [
@@ -1618,40 +1630,40 @@
 
 
     document.addEventListener("click", (e) => {
-      const dropdowns = [
-        {
-          menu: document.getElementById("metricsDropdown"),
-          trigger: document.getElementById("selectedMetrics"),
-          arrow: document.getElementById("metricsArrow")
-        },
-        {
-          menu: document.getElementById("dimensionsDropdown"),
-          trigger: document.getElementById("selectedDimensions"),
-          arrow: document.getElementById("dimensionsArrow")
-        },
-        {
-          menu: document.getElementById("dateRangeDropdown"),
-          trigger: document.getElementById("selectedDateRange"),
-          arrow: document.getElementById("dateRangeArrow")
-        }
-      ];
+  const dropdowns = [
+    {
+      menu: document.getElementById("metricsDropdown"),
+      trigger: document.getElementById("selectedMetrics"),
+      arrow: document.getElementById("metricsArrow")
+    },
+    {
+      menu: document.getElementById("dimensionsDropdown"),
+      trigger: document.getElementById("selectedDimensions"),
+      arrow: document.getElementById("dimensionsArrow")
+    },
+    {
+      menu: document.getElementById("dateRangeDropdown"),
+      trigger: document.getElementById("selectedDateRange"),
+      arrow: document.getElementById("dateRangeArrow")
+    }
+  ];
 
-      dropdowns.forEach(({ menu, trigger, arrow }) => {
-        if (
-          menu?.getAttribute("data-open") === "true" &&
-          !menu.contains(e.target) &&
-          !trigger.contains(e.target)
-        ) {
-          // Close dropdown
-          menu.classList.add("hidden");
-          menu.classList.remove("block");
-          menu.setAttribute("data-open", "false");
+  dropdowns.forEach(({ menu, trigger, arrow }) => {
+    if (
+      menu?.getAttribute("data-open") === "true" &&
+      !menu.contains(e.target) &&
+      !trigger.contains(e.target)
+    ) {
+      // Close dropdown
+      menu.classList.add("hidden");
+      menu.classList.remove("block");
+      menu.setAttribute("data-open", "false");
 
-          // Reset arrow rotation
-          arrow?.classList.remove("rotate-180");
-        }
-      });
-    });
+      // Reset arrow rotation
+      arrow?.classList.remove("rotate-180");
+    }
+  });
+});
 
 
 

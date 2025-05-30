@@ -176,12 +176,3 @@ html {
   .sql-table { color: #a78bfa; }
   .sql-value { color: #f87171; }
   .sql-expression { color: #6ee7b7; }
-
-  .added-custom-condition-group{
-    background-color: lime;
-  }
-
-  select:invalid,
-select option[value=""] {
-  color: #9ca3af; /* Tailwind's text-gray-400 */
-}

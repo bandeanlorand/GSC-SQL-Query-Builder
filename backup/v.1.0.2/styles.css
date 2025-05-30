@@ -180,8 +180,3 @@ html {
   .added-custom-condition-group{
     background-color: lime;
   }
-
-  select:invalid,
-select option[value=""] {
-  color: #9ca3af; /* Tailwind's text-gray-400 */
-}
