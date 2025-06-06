@@ -145,28 +145,6 @@ html {
       animation: slideInFadeOut 3s forwards;
     }
 
-    body.show-generated::after {
-  content: "SQL Generated!";
-  position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(55, 65, 81, 0.9);
-      /* Tailwind gray-700 with transparency */
-      color: white;
-      padding: 0.75rem 1.5rem;
-      font-size: 1.25rem;
-      /* Large font */
-      font-weight: 600;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-      opacity: 0;
-      z-index: 9999;
-      animation: slideInFadeOut 3s forwards;
-}
-
-
-
     @keyframes slideInFadeOut {
       0% {
         bottom: 20px;

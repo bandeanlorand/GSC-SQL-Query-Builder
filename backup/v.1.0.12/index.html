@@ -279,8 +279,9 @@
 
 
 
-        <button type="submit" onclick="handleGenerateSQL()"
-          class="block w-auto mt-[24px]  m-auto bg-blue-800 text-white border-none px-10 py-2 text-center rounded-[8px] text-[1.25rem] leading-[2rem] ">Generate SQL</button>
+        <button type="submit" onclick="generateSQL()"
+          class="block w-auto mt-[24px]  m-auto bg-blue-800 text-white border-none px-10 py-2 text-center rounded-[8px] text-[1.25rem] leading-[2rem] ">Generate
+          SQL</button>
       </div>
     </div>
 
@@ -359,7 +360,289 @@
     /*  generateSQL function starts here */
     let plainSQL = "";
 
- 
+    // function generateSQL() {
+    //   const dateClause = getDateRangeClause();
+    //   const metrics = Array.from(selectedMetrics);
+    //   const dimensions = Array.from(selectedDimensions);
+
+    //   const indent = '<span style="display:inline-block; width:1em"></span>';
+
+    //   const selectLines = [];
+    //   const plainSelectLines = [];
+
+    //   dimensions.forEach(dim => {
+    //     selectLines.push(`${indent}<span class="sql-column">${dim}</span>`);
+    //     plainSelectLines.push(`    ${dim}`);
+    //   });
+
+    //   if (metrics.includes('Clicks')) {
+    //     selectLines.push(`${indent}<span class="sql-function">SUM(Clicks)</span> AS <span class="sql-alias">clicks</span>`);
+    //     plainSelectLines.push(`    SUM(Clicks) AS clicks`);
+    //   }
+    //   if (metrics.includes('Impressions')) {
+    //     selectLines.push(`${indent}<span class="sql-function">SUM(Impressions)</span> AS <span class="sql-alias">impressions</span>`);
+    //     plainSelectLines.push(`    SUM(Impressions) AS impressions`);
+    //   }
+    //   if (metrics.includes('CTR')) {
+    //     selectLines.push(`${indent}<span class="sql-expression">SUM(Clicks) / SUM(Impressions)</span> AS <span class="sql-alias">ctr</span>`);
+    //     plainSelectLines.push(`    SUM(Clicks) / SUM(Impressions) AS ctr`);
+    //   }
+    //   if (metrics.includes('Position')) {
+    //     selectLines.push(`${indent}((<span class="sql-function">SUM(sum_position)</span> / <span class="sql-function">SUM(Impressions)</span>) + 1.0) AS <span class="sql-alias">avg_position</span>`);
+    //     plainSelectLines.push(`    ((SUM(sum_position) / SUM(Impressions)) + 1.0) AS avg_position`);
+    //   }
+
+    //   const selectClause = `<span class="sql-keyword">SELECT</span><br>${selectLines.join(',<br>')}`;
+    //   const plainSelectClause = `SELECT\n${plainSelectLines.join(',\n')}`;
+
+    //   const fromTable = dimensions.includes('URL')
+    //     ? '`searchconsole.searchdata_url_impression`'
+    //     : '`searchconsole.searchdata_site_impression`';
+
+    //   const fromClause = `<br><span class="sql-keyword">FROM</span><br>${indent}<span class="sql-table">${fromTable}</span>`;
+    //   const plainFromClause = `FROM\n    ${fromTable}`;
+
+    //   const filterWrappers = document.querySelectorAll('#filterRows > div');
+    //   const filterConditions = [];
+    //   const plainFilterConditions = [];
+
+    //   filterWrappers.forEach((wrapper) => {
+    //     const selects = wrapper.querySelectorAll('select');
+    //     const input = wrapper.querySelector('input[type="text"]');
+    //     const field = selects[0]?.value;
+    //     const operator = selects[1]?.value;
+    //     const value = input?.value;
+
+    //     if (!field || !operator || (operator.indexOf('NULL') === -1 && !value)) return;
+
+    //     let sqlOp;
+    //     if (operator === 'EQUALS') sqlOp = '=';
+    //     else if (operator === 'NOT EQUALS') sqlOp = '!=';
+    //     else if (operator === 'CONTAINS') sqlOp = 'LIKE';
+    //     else if (operator === 'NOT CONTAINS') sqlOp = 'NOT LIKE';
+    //     else if (operator === 'GREATER THAN') sqlOp = '>';
+    //     else if (operator === 'LESS THAN') sqlOp = '<';
+    //     else if (operator === 'IS NULL') {
+    //       filterConditions.push(`${indent}<span class="sql-keyword">AND</span> ${field} <span class="sql-keyword">IS NULL</span>`);
+    //       plainFilterConditions.push(`    AND ${field} IS NULL`);
+    //       return;
+    //     } else if (operator === 'IS NOT NULL') {
+    //       filterConditions.push(`${indent}<span class="sql-keyword">AND</span> ${field} <span class="sql-keyword">IS NOT NULL</span>`);
+    //       plainFilterConditions.push(`    AND ${field} IS NOT NULL`);
+    //       return;
+    //     }
+
+    //     let condition = `${field} ${sqlOp} '${sqlOp.includes('LIKE') ? `%${value}%` : value}'`;
+    //     filterConditions.push(`${indent}<span class="sql-keyword">AND</span> ${condition}`);
+    //     plainFilterConditions.push(`    AND ${condition}`);
+    //   });
+
+    //   const whereClause = `<br><span class="sql-keyword">WHERE</span><br>${indent}<span class="sql-column">data_date</span> <span class="sql-keyword">BETWEEN</span> ${dateClause}` + (filterConditions.length ? `<br>${filterConditions.join('<br>')}` : '');
+    //   const plainWhereClause = `WHERE\n    data_date BETWEEN ${dateClause}` + (plainFilterConditions.length ? `\n${plainFilterConditions.join('\n')}` : '');
+
+    //   const groupByClause = dimensions.length
+    //     ? `<br><span class="sql-keyword">GROUP BY</span><br>${indent}${dimensions.map(d => `<span class="sql-column">${d}</span>`).join(', ')}`
+    //     : '';
+
+    //   // Sort By Clause
+    //   const sortWrappers = document.querySelectorAll('#sortRows > div');
+    //   const sortConditions = [];
+    //   const plainSortConditions = [];
+
+    //   sortWrappers.forEach((wrapper) => {
+    //     const select = wrapper.querySelector('select');
+    //     const radios = wrapper.querySelectorAll('input[type="radio"]');
+
+    //     const field = select?.value;
+    //     let direction = "ASC";
+    //     radios.forEach(r => {
+    //       if (r.checked) direction = r.value;
+    //     });
+
+    //     if (field) {
+    //       sortConditions.push(`${indent}<span class="sql-column">${field}</span> <span class="sql-keyword">${direction}</span>`);
+    //       plainSortConditions.push(`    ${field} ${direction}`);
+    //     }
+    //   });
+
+    //   const orderByClause = sortConditions.length
+    //     ? `<br><span class="sql-keyword">ORDER BY</span><br>${sortConditions.join(',<br>')}`
+    //     : '';
+
+    //   const plainOrderByClause = plainSortConditions.length
+    //     ? `ORDER BY\n${plainSortConditions.join(',\n')}`
+    //     : '';
+
+
+    //   const plainGroupByClause = dimensions.length
+    //     ? `GROUP BY\n    ${dimensions.join(', ')}`
+    //     : '';
+
+    //   const sql = `${selectClause}${fromClause}${whereClause}${groupByClause}${orderByClause}`;
+    //   plainSQL = `${plainSelectClause}\n${plainFromClause}\n${plainWhereClause}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}${plainOrderByClause ? `\n${plainOrderByClause}` : ''}`;
+
+
+    //   document.getElementById('sqlOutput').innerHTML = sql;
+    //   document.getElementById('sqlOutputFormated').textContent = plainSQL;
+    // }
+
+//     function generateSQL() {
+//   const dateClause = getDateRangeClause();
+//   const metrics = Array.from(selectedMetrics);
+//   const dimensions = Array.from(selectedDimensions);
+
+//   const indent = '<span style="display:inline-block; width:1em"></span>';
+//   const selectLines = [];
+//   const plainSelectLines = [];
+
+//   dimensions.forEach(dim => {
+//     selectLines.push(`${indent}<span class="sql-column">${dim}</span>`);
+//     plainSelectLines.push(`    ${dim}`);
+//   });
+
+//   // Add metrics
+//   if (metrics.includes('Clicks')) {
+//     selectLines.push(`${indent}<span class="sql-function">SUM(Clicks)</span> AS <span class="sql-alias">clicks</span>`);
+//     plainSelectLines.push(`    SUM(Clicks) AS clicks`);
+//   }
+//   if (metrics.includes('Impressions')) {
+//     selectLines.push(`${indent}<span class="sql-function">SUM(Impressions)</span> AS <span class="sql-alias">impressions</span>`);
+//     plainSelectLines.push(`    SUM(Impressions) AS impressions`);
+//   }
+//   if (metrics.includes('CTR')) {
+//     selectLines.push(`${indent}<span class="sql-expression">SUM(Clicks) / SUM(Impressions)</span> AS <span class="sql-alias">ctr</span>`);
+//     plainSelectLines.push(`    SUM(Clicks) / SUM(Impressions) AS ctr`);
+//   }
+//   if (metrics.includes('Position')) {
+//     selectLines.push(`${indent}((<span class="sql-function">SUM(sum_position)</span> / <span class="sql-function">SUM(Impressions)</span>) + 1.0) AS <span class="sql-alias">avg_position</span>`);
+//     plainSelectLines.push(`    ((SUM(sum_position) / SUM(Impressions)) + 1.0) AS avg_position`);
+//   }
+
+//   // CUSTOM FIELDS CASE generation
+//   const customFieldsContainer = document.getElementById('customFieldGroups');
+//   const customFieldGroups = customFieldsContainer.querySelectorAll(':scope > div');
+//   const customFieldNames = [];
+
+//   let customFieldSQL = '';
+//   let plainCustomFieldSQL = '';
+
+//   customFieldGroups.forEach((group, index) => {
+//     const fieldName = `custom_field_${index + 1}`;
+//     customFieldNames.push(fieldName);
+
+//     const whenClauses = [];
+//     const conditions = group.querySelectorAll('.custom-condition-group > div, .added-custom-condition-group');
+
+//     conditions.forEach(condition => {
+//       const selects = condition.querySelectorAll('select');
+//       const inputs = condition.querySelectorAll('input[type="text"]');
+
+//       const field = selects[0]?.value;
+//       const operator = selects[1]?.value;
+//       const value = inputs[0]?.value;
+//       const thenValue = inputs[1]?.value;
+
+//       if (!field || !operator || !value || !thenValue) return;
+
+//       let sqlOp = '';
+//       let clause = '';
+
+//       switch (operator) {
+//         case 'EQUALS': sqlOp = '='; clause = `${field} ${sqlOp} '${value}'`; break;
+//         case 'NOT EQUALS': sqlOp = '!='; clause = `${field} ${sqlOp} '${value}'`; break;
+//         case 'CONTAINS': sqlOp = 'LIKE'; clause = `${field} ${sqlOp} '%${value}%'`; break;
+//         case 'NOT CONTAINS': sqlOp = 'NOT LIKE'; clause = `${field} ${sqlOp} '%${value}%'`; break;
+//         case 'REGEX CONTAINS': clause = `REGEXP_CONTAINS(${field}, '${value}')`; break;
+//         case 'REGEX NOT CONTAINS': clause = `NOT REGEXP_CONTAINS(${field}, '${value}')`; break;
+//       }
+
+//       whenClauses.push(`WHEN ${clause} THEN '${thenValue}'`);
+//     });
+
+//     const elseInput = group.querySelector('div:last-child input[type="text"]');
+//     const elseValue = elseInput?.value || 'Other';
+
+//     const caseSQL = `${indent}<span class="sql-keyword">CASE</span><br>${whenClauses.map(w => indent + w).join('<br>')}<br>${indent}<span class="sql-keyword">ELSE</span> '${elseValue}'<br>${indent}<span class="sql-keyword">END</span> AS <span class="sql-alias">${fieldName}</span>`;
+//     const plainCaseSQL = `CASE\n${whenClauses.map(w => `    ${w}`).join('\n')}\n    ELSE '${elseValue}'\nEND AS ${fieldName}`;
+
+//     selectLines.push(caseSQL);
+//     plainSelectLines.push(plainCaseSQL);
+//   });
+
+//   // Final SELECT
+//   const selectClause = `<span class="sql-keyword">SELECT</span><br>${selectLines.join(',<br>')}`;
+//   const plainSelectClause = `SELECT\n${plainSelectLines.join(',\n')}`;
+
+//   const fromTable = dimensions.includes('URL')
+//     ? '`searchconsole.searchdata_url_impression`'
+//     : '`searchconsole.searchdata_site_impression`';
+
+//   const fromClause = `<br><span class="sql-keyword">FROM</span><br>${indent}<span class="sql-table">${fromTable}</span>`;
+//   const plainFromClause = `FROM\n    ${fromTable}`;
+
+//   // Filters
+//   const filterWrappers = document.querySelectorAll('#filterRows > div');
+//   const filterConditions = [];
+//   const plainFilterConditions = [];
+
+//   filterWrappers.forEach((wrapper) => {
+//     const selects = wrapper.querySelectorAll('select');
+//     const input = wrapper.querySelector('input[type="text"]');
+//     const field = selects[0]?.value;
+//     const operator = selects[1]?.value;
+//     const value = input?.value;
+
+//     if (!field || !operator || (operator.indexOf('NULL') === -1 && !value)) return;
+
+//     let sqlOp;
+//     if (operator === 'EQUALS') sqlOp = '=';
+//     else if (operator === 'NOT EQUALS') sqlOp = '!=';
+//     else if (operator === 'CONTAINS') sqlOp = 'LIKE';
+//     else if (operator === 'NOT CONTAINS') sqlOp = 'NOT LIKE';
+//     else if (operator === 'GREATER THAN') sqlOp = '>';
+//     else if (operator === 'LESS THAN') sqlOp = '<';
+//     else if (operator === 'IS NULL') {
+//       filterConditions.push(`${indent}<span class="sql-keyword">AND</span> ${field} <span class="sql-keyword">IS NULL</span>`);
+//       plainFilterConditions.push(`    AND ${field} IS NULL`);
+//       return;
+//     } else if (operator === 'IS NOT NULL') {
+//       filterConditions.push(`${indent}<span class="sql-keyword">AND</span> ${field} <span class="sql-keyword">IS NOT NULL</span>`);
+//       plainFilterConditions.push(`    AND ${field} IS NOT NULL`);
+//       return;
+//     }
+
+//     let condition = `${field} ${sqlOp} '${sqlOp.includes('LIKE') ? `%${value}%` : value}'`;
+//     filterConditions.push(`${indent}<span class="sql-keyword">AND</span> ${condition}`);
+//     plainFilterConditions.push(`    AND ${condition}`);
+//   });
+
+//   const whereClause = `<br><span class="sql-keyword">WHERE</span><br>${indent}<span class="sql-column">data_date</span> <span class="sql-keyword">BETWEEN</span> ${dateClause}` + (filterConditions.length ? `<br>${filterConditions.join('<br>')}` : '');
+//   const plainWhereClause = `WHERE\n    data_date BETWEEN ${dateClause}` + (plainFilterConditions.length ? `\n${plainFilterConditions.join('\n')}` : '');
+
+//   const allGroupBys = [...dimensions, ...customFieldNames];
+
+//   const groupByClause = allGroupBys.length
+//     ? `<br><span class="sql-keyword">GROUP BY</span><br>${indent}${allGroupBys.map(d => `<span class="sql-column">${d}</span>`).join(', ')}`
+//     : '';
+//   const plainGroupByClause = allGroupBys.length
+//     ? `GROUP BY\n    ${allGroupBys.join(', ')}`
+//     : '';
+
+//   const sql = `${selectClause}${fromClause}${whereClause}${groupByClause}`;
+//   const plainSQL = `${plainSelectClause}\n${plainFromClause}\n${plainWhereClause}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}`;
+
+//   document.getElementById('sqlOutput').innerHTML = sql;
+//   document.getElementById('sqlOutputFormated').textContent = plainSQL;
+// }
+
+// Updated generateSQL function with support for custom fields (CASE WHEN)
+// Insert this in place of the original generateSQL() implementation in your page script
+
+// Updated generateSQL function with support for custom fields (CASE WHEN)
+// Insert this in place of the original generateSQL() implementation in your page script
+
+// Updated generateSQL function with support for custom fields (CASE WHEN)
+// Insert this in place of the original generateSQL() implementation in your page script
 
 function generateSQL() {
   const dateClause = getDateRangeClause();
@@ -396,16 +679,13 @@ function generateSQL() {
   // CUSTOM FIELDS
   const customFieldGroups = document.querySelectorAll('#customFieldGroups > div');
   let customFieldIndex = 1;
-
-  customFieldGroups.forEach((group, groupIndex) => {
+  customFieldGroups.forEach(group => {
     const conditionBlocks = group.querySelectorAll('.custom-condition-group > div');
     const elseRow = group.querySelector('input[placeholder="Non-Brand"], input[placeholder="Non-Brand2"], input[placeholder="Else"]');
     const elseValue = elseRow ? elseRow.value.trim() : '';
     const cases = [];
 
-    console.log(`Custom Field Group ${groupIndex + 1}: Found ${conditionBlocks.length} condition blocks`);
-
-    conditionBlocks.forEach((block, blockIndex) => {
+    conditionBlocks.forEach(block => {
       const selects = block.querySelectorAll('select');
       const valueInput = block.querySelector('input[type="text"]');
       const thenInput = block.parentElement.nextElementSibling?.querySelector('input[type="text"]');
@@ -415,12 +695,7 @@ function generateSQL() {
       const value = valueInput?.value.trim();
       const thenValue = thenInput?.value.trim();
 
-      console.log(`Condition ${blockIndex + 1}: field=${field}, operator=${operator}, value=${value}, then=${thenValue}`);
-
-      if (!field || !operator || !value || !thenValue) {
-        console.warn(`Skipping incomplete condition in block ${blockIndex + 1}`);
-        return;
-      }
+      if (!field || !operator || !value || !thenValue) return;
 
       let condition = '';
       switch (operator) {
@@ -438,8 +713,6 @@ function generateSQL() {
       const alias = `custom_field_${customFieldIndex++}`;
       const caseSQL = `CASE\n    ${cases.join('\n    ')}\n    ELSE '${elseValue}'\nEND AS ${alias}`;
       const visualCaseSQL = caseSQL.replace(/\n/g, '<br>' + indent);
-
-      console.log(`Generated CASE for ${alias}:\n${caseSQL}`);
 
       selectLines.push(`${indent}${visualCaseSQL}`);
       plainSelectLines.push(`    ${caseSQL}`);
@@ -491,10 +764,9 @@ function generateSQL() {
     });
 
     /*  generateSQL function ends here */
-
-
     // Prevent Metrics and Dimensions dropdowns from closing on selection
     // let suppressDropdownClose = false;
+
     document.addEventListener("DOMContentLoaded", () => {
       ['metricsDropdown', 'dimensionsDropdown'].forEach(id => {
         const dropdown = document.getElementById(id);
@@ -1234,17 +1506,7 @@ function generateSQL() {
 
     /* copy to  clipboard script ends here */
 
-    /* query generated tooltip - starts here*/
-function handleGenerateSQL() {
-  generateSQL(); // run original logic
 
-  // trigger tooltip
-  document.body.classList.add('show-generated');
-  setTimeout(() => {
-    document.body.classList.remove('show-generated');
-  }, 3000);
-}
-/* query generated tooltip - ends here */
 
     function toggleSortBy() {
       const section = document.getElementById('sortSection');
@@ -1436,228 +1698,121 @@ function handleGenerateSQL() {
     });
 
 
-    // function addCustomFieldGroup() {
-    //   const groupContainer = document.createElement('div');
-    //   groupContainer.className = 'space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
+    function addCustomFieldGroup() {
+      const groupContainer = document.createElement('div');
+      groupContainer.className = 'space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
 
-    //   const conditionsWrapper = document.createElement('div');
-    //   conditionsWrapper.className = 'space-y-4 custom-condition-group';
+      const conditionsWrapper = document.createElement('div');
+      conditionsWrapper.className = 'space-y-4 custom-condition-group';
 
-    //   // Main condition row: Select Field + Operator + Value
-    //   const conditionRow = document.createElement('div');
-    //   conditionRow.className = 'space-y-2';
-
-
-
-    //   // Input row: When + Field + Operator + Input
-    //   const inputRow = document.createElement('div');
-    //   inputRow.className = 'flex items-center gap-2 flex-wrap';
-
-    //   const whenLabel = document.createElement('label');
-    //   whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-    //   whenLabel.textContent = 'When';
-
-    //   inputRow.appendChild(whenLabel);
+      // Main condition row: Select Field + Operator + Value
+      const conditionRow = document.createElement('div');
+      conditionRow.className = 'space-y-2';
 
 
-    //   const fieldSelect = document.createElement('select');
-    //   fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
-    //   fieldSelect.innerHTML = `<option value="" disabled selected hidden>Select Field</option>` +
-    //     fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
-    //   const operatorSelect = document.createElement('select');
-    //   operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
-    //   operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
-    //     operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+      // Input row: When + Field + Operator + Input
+      const inputRow = document.createElement('div');
+      inputRow.className = 'flex items-center gap-2 flex-wrap';
 
-    //   const valueInput = document.createElement('input');
-    //   valueInput.type = 'text';
-    //   valueInput.placeholder = 'My Website Name';
-    //   valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+      const whenLabel = document.createElement('label');
+      whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+      whenLabel.textContent = 'When';
 
-    //   inputRow.appendChild(fieldSelect);
-    //   inputRow.appendChild(operatorSelect);
-    //   inputRow.appendChild(valueInput);
-    //   conditionRow.appendChild(inputRow);
-    //   conditionsWrapper.appendChild(conditionRow);
-
-    //   // Then row with +Condition button
-    //   const thenRow = document.createElement('div');
-    //   thenRow.className = 'flex items-center gap-2';
-
-    //   const thenLabel = document.createElement('label');
-    //   thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-    //   thenLabel.textContent = 'Then';
-
-    //   const thenInput = document.createElement('input');
-    //   thenInput.type = 'text';
-    //   thenInput.placeholder = 'Brand';
-    //   thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+      inputRow.appendChild(whenLabel);
 
 
-    //   const removeBtn = document.createElement('button');
-    //   removeBtn.textContent = '−';
-    //   removeBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto initial-remove-btn hidden';
-    //   removeBtn.onclick = () => {
-    //     wrapper.remove();
-    //     updateConditionButtonsVisibility(groupContainer);
-    //   };
+      const fieldSelect = document.createElement('select');
+      fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+      fieldSelect.innerHTML = `<option value="" disabled selected hidden>Select Field</option>` +
+        fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
-    //   const addConditionBtn = document.createElement('button');
-    //   addConditionBtn.textContent = '+ Condition';
-    //   addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto initial-add-btn';
-    //   addConditionBtn.onclick = () => {
-    //     const newGroup = createConditionGroupWrapper(groupContainer);
-    //     const elseRow = Array.from(groupContainer.children).find(child => {
-    //       const label = child.querySelector('label');
-    //       return label && label.textContent.trim().toLowerCase() === 'else';
-    //     });
+      const operatorSelect = document.createElement('select');
+      operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+      operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
+        operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
-    //     if (elseRow) {
-    //       groupContainer.insertBefore(newGroup, elseRow);
-    //     } else {
-    //       groupContainer.appendChild(newGroup);
-    //     }
-    //     updateConditionButtonsVisibility(groupContainer);
-    //   };
+      const valueInput = document.createElement('input');
+      valueInput.type = 'text';
+      valueInput.placeholder = 'My Website Name';
+      valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
-    //   thenRow.appendChild(thenLabel);
-    //   thenRow.appendChild(thenInput);
-    //   // thenRow.appendChild(removeBtn); - if remove has to be added to the first custom field
-    //   thenRow.appendChild(addConditionBtn);
+      inputRow.appendChild(fieldSelect);
+      inputRow.appendChild(operatorSelect);
+      inputRow.appendChild(valueInput);
+      conditionRow.appendChild(inputRow);
+      conditionsWrapper.appendChild(conditionRow);
 
-    //   // Else row
-    //   const elseRow = document.createElement('div');
-    //   elseRow.className = 'flex items-center gap-2';
+      // Then row with +Condition button
+      const thenRow = document.createElement('div');
+      thenRow.className = 'flex items-center gap-2';
 
-    //   const elseLabel = document.createElement('label');
-    //   elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-    //   elseLabel.textContent = 'Else';
+      const thenLabel = document.createElement('label');
+      thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+      thenLabel.textContent = 'Then';
 
-    //   const elseInput = document.createElement('input');
-    //   elseInput.type = 'text';
-    //   elseInput.placeholder = 'Non-Brand';
-    //   elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+      const thenInput = document.createElement('input');
+      thenInput.type = 'text';
+      thenInput.placeholder = 'Brand';
+      thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
-    //   elseRow.appendChild(elseLabel);
-    //   elseRow.appendChild(elseInput);
 
-    //   // Assemble everything
-    //   groupContainer.appendChild(conditionsWrapper);
-    //   groupContainer.appendChild(thenRow);
-    //   groupContainer.appendChild(elseRow);
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = '−';
+      removeBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto initial-remove-btn hidden';
+      removeBtn.onclick = () => {
+        wrapper.remove();
+        updateConditionButtonsVisibility(groupContainer);
+      };
 
-    //   document.getElementById('customFieldGroups').appendChild(groupContainer);
-    // }
+      const addConditionBtn = document.createElement('button');
+      addConditionBtn.textContent = '+ Condition';
+      addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto initial-add-btn';
+      addConditionBtn.onclick = () => {
+        const newGroup = createConditionGroupWrapper(groupContainer);
+        const elseRow = Array.from(groupContainer.children).find(child => {
+          const label = child.querySelector('label');
+          return label && label.textContent.trim().toLowerCase() === 'else';
+        });
 
-function addCustomFieldGroup() {
-  const groupContainer = document.createElement('div');
-  groupContainer.className = 'relative space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
+        if (elseRow) {
+          groupContainer.insertBefore(newGroup, elseRow);
+        } else {
+          groupContainer.appendChild(newGroup);
+        }
+        updateConditionButtonsVisibility(groupContainer);
+      };
 
-  const isFirstGroup = document.querySelectorAll('#customFieldGroups > div').length > 0;
+      thenRow.appendChild(thenLabel);
+      thenRow.appendChild(thenInput);
+      // thenRow.appendChild(removeBtn); - if remove has to be added to the first custom field
+      thenRow.appendChild(addConditionBtn);
 
-  // ✨ Add a close "×" button only if this is NOT the first group
-  if (isFirstGroup) {
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '&times;';
-    closeBtn.className = 'absolute top-2 right-2 text-white text-lg w-[20px] h-[20px] font-bold hover:text-red-500 font-extralight rounded-[5px] leading-[100%]';
-    closeBtn.onclick = () => groupContainer.remove();
-    groupContainer.appendChild(closeBtn);
-  }
+      // Else row
+      const elseRow = document.createElement('div');
+      elseRow.className = 'flex items-center gap-2';
 
-  const conditionsWrapper = document.createElement('div');
-  conditionsWrapper.className = 'space-y-4 custom-condition-group';
+      const elseLabel = document.createElement('label');
+      elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+      elseLabel.textContent = 'Else';
 
-  const conditionRow = document.createElement('div');
-  conditionRow.className = 'space-y-2';
+      const elseInput = document.createElement('input');
+      elseInput.type = 'text';
+      elseInput.placeholder = 'Non-Brand';
+      elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
-  const inputRow = document.createElement('div');
-  inputRow.className = 'flex items-center gap-2 flex-wrap';
+      elseRow.appendChild(elseLabel);
+      elseRow.appendChild(elseInput);
 
-  const whenLabel = document.createElement('label');
-  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-  whenLabel.textContent = 'When';
+      // Assemble everything
+      groupContainer.appendChild(conditionsWrapper);
+      groupContainer.appendChild(thenRow);
+      groupContainer.appendChild(elseRow);
 
-  inputRow.appendChild(whenLabel);
-
-  const fieldSelect = document.createElement('select');
-  fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
-  fieldSelect.innerHTML = `<option value="" disabled selected hidden>Select Field</option>` +
-    fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
-
-  const operatorSelect = document.createElement('select');
-  operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
-  operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
-    operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
-
-  const valueInput = document.createElement('input');
-  valueInput.type = 'text';
-  valueInput.placeholder = 'My Website Name';
-  valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
-
-  inputRow.appendChild(fieldSelect);
-  inputRow.appendChild(operatorSelect);
-  inputRow.appendChild(valueInput);
-  conditionRow.appendChild(inputRow);
-  conditionsWrapper.appendChild(conditionRow);
-
-  // Then row
-  const thenRow = document.createElement('div');
-  thenRow.className = 'flex items-center gap-2';
-
-  const thenLabel = document.createElement('label');
-  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-  thenLabel.textContent = 'Then';
-
-  const thenInput = document.createElement('input');
-  thenInput.type = 'text';
-  thenInput.placeholder = 'Brand';
-  thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
-
-  const addConditionBtn = document.createElement('button');
-  addConditionBtn.textContent = '+ Condition';
-  addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto initial-add-btn';
-  addConditionBtn.onclick = () => {
-    const newGroup = createConditionGroupWrapper(groupContainer);
-    const elseRow = Array.from(groupContainer.children).find(child => {
-      const label = child.querySelector('label');
-      return label && label.textContent.trim().toLowerCase() === 'else';
-    });
-
-    if (elseRow) {
-      groupContainer.insertBefore(newGroup, elseRow);
-    } else {
-      groupContainer.appendChild(newGroup);
+      document.getElementById('customFieldGroups').appendChild(groupContainer);
     }
-    updateConditionButtonsVisibility(groupContainer);
-  };
 
-  thenRow.appendChild(thenLabel);
-  thenRow.appendChild(thenInput);
-  thenRow.appendChild(addConditionBtn);
 
-  // Else row
-  const elseRow = document.createElement('div');
-  elseRow.className = 'flex items-center gap-2';
-
-  const elseLabel = document.createElement('label');
-  elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-  elseLabel.textContent = 'Else';
-
-  const elseInput = document.createElement('input');
-  elseInput.type = 'text';
-  elseInput.placeholder = 'Non-Brand';
-  elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
-
-  elseRow.appendChild(elseLabel);
-  elseRow.appendChild(elseInput);
-
-  groupContainer.appendChild(conditionsWrapper);
-  groupContainer.appendChild(thenRow);
-  groupContainer.appendChild(elseRow);
-
-  document.getElementById('customFieldGroups').appendChild(groupContainer);
-}
 
     function updateConditionButtonsVisibility(groupContainer) {
       const addedGroups = Array.from(groupContainer.querySelectorAll('.added-custom-condition-group'));
