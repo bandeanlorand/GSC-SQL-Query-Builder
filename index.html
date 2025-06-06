@@ -280,7 +280,8 @@
 
 
         <button type="submit" onclick="handleGenerateSQL()"
-          class="block w-auto mt-[24px]  m-auto bg-blue-800 text-white border-none px-10 py-2 text-center rounded-[8px] text-[1.25rem] leading-[2rem] ">Generate SQL</button>
+          class="block w-auto mt-[24px]  m-auto bg-blue-800 text-white border-none px-10 py-2 text-center rounded-[8px] text-[1.25rem] leading-[2rem] ">Generate
+          SQL</button>
       </div>
     </div>
 
@@ -359,121 +360,121 @@
     /*  generateSQL function starts here */
     let plainSQL = "";
 
- 
 
-function generateSQL() {
-  const dateClause = getDateRangeClause();
-  const metrics = Array.from(selectedMetrics);
-  const dimensions = Array.from(selectedDimensions);
 
-  const indent = '<span style="display:inline-block; width:1em"></span>';
-  const selectLines = [];
-  const plainSelectLines = [];
-  const customFieldsToGroup = [];
+    function generateSQL() {
+      const dateClause = getDateRangeClause();
+      const metrics = Array.from(selectedMetrics);
+      const dimensions = Array.from(selectedDimensions);
 
-  dimensions.forEach(dim => {
-    selectLines.push(`${indent}<span class="sql-column">${dim}</span>`);
-    plainSelectLines.push(`    ${dim}`);
-  });
+      const indent = '<span style="display:inline-block; width:1em"></span>';
+      const selectLines = [];
+      const plainSelectLines = [];
+      const customFieldsToGroup = [];
 
-  if (metrics.includes('Clicks')) {
-    selectLines.push(`${indent}<span class="sql-function">SUM(Clicks)</span> AS <span class="sql-alias">clicks</span>`);
-    plainSelectLines.push(`    SUM(Clicks) AS clicks`);
-  }
-  if (metrics.includes('Impressions')) {
-    selectLines.push(`${indent}<span class="sql-function">SUM(Impressions)</span> AS <span class="sql-alias">impressions</span>`);
-    plainSelectLines.push(`    SUM(Impressions) AS impressions`);
-  }
-  if (metrics.includes('CTR')) {
-    selectLines.push(`${indent}<span class="sql-expression">SUM(Clicks) / SUM(Impressions)</span> AS <span class="sql-alias">ctr</span>`);
-    plainSelectLines.push(`    SUM(Clicks) / SUM(Impressions) AS ctr`);
-  }
-  if (metrics.includes('Position')) {
-    selectLines.push(`${indent}((<span class="sql-function">SUM(sum_position)</span> / <span class="sql-function">SUM(Impressions)</span>) + 1.0) AS <span class="sql-alias">avg_position</span>`);
-    plainSelectLines.push(`    ((SUM(sum_position) / SUM(Impressions)) + 1.0) AS avg_position`);
-  }
+      dimensions.forEach(dim => {
+        selectLines.push(`${indent}<span class="sql-column">${dim}</span>`);
+        plainSelectLines.push(`    ${dim}`);
+      });
 
-  // CUSTOM FIELDS
-  const customFieldGroups = document.querySelectorAll('#customFieldGroups > div');
-  let customFieldIndex = 1;
-
-  customFieldGroups.forEach((group, groupIndex) => {
-    const conditionBlocks = group.querySelectorAll('.custom-condition-group > div');
-    const elseRow = group.querySelector('input[placeholder="Non-Brand"], input[placeholder="Non-Brand2"], input[placeholder="Else"]');
-    const elseValue = elseRow ? elseRow.value.trim() : '';
-    const cases = [];
-
-    console.log(`Custom Field Group ${groupIndex + 1}: Found ${conditionBlocks.length} condition blocks`);
-
-    conditionBlocks.forEach((block, blockIndex) => {
-      const selects = block.querySelectorAll('select');
-      const valueInput = block.querySelector('input[type="text"]');
-      const thenInput = block.parentElement.nextElementSibling?.querySelector('input[type="text"]');
-
-      const field = selects[0]?.value;
-      const operator = selects[1]?.value;
-      const value = valueInput?.value.trim();
-      const thenValue = thenInput?.value.trim();
-
-      console.log(`Condition ${blockIndex + 1}: field=${field}, operator=${operator}, value=${value}, then=${thenValue}`);
-
-      if (!field || !operator || !value || !thenValue) {
-        console.warn(`Skipping incomplete condition in block ${blockIndex + 1}`);
-        return;
+      if (metrics.includes('Clicks')) {
+        selectLines.push(`${indent}<span class="sql-function">SUM(Clicks)</span> AS <span class="sql-alias">clicks</span>`);
+        plainSelectLines.push(`    SUM(Clicks) AS clicks`);
+      }
+      if (metrics.includes('Impressions')) {
+        selectLines.push(`${indent}<span class="sql-function">SUM(Impressions)</span> AS <span class="sql-alias">impressions</span>`);
+        plainSelectLines.push(`    SUM(Impressions) AS impressions`);
+      }
+      if (metrics.includes('CTR')) {
+        selectLines.push(`${indent}<span class="sql-expression">SUM(Clicks) / SUM(Impressions)</span> AS <span class="sql-alias">ctr</span>`);
+        plainSelectLines.push(`    SUM(Clicks) / SUM(Impressions) AS ctr`);
+      }
+      if (metrics.includes('Position')) {
+        selectLines.push(`${indent}((<span class="sql-function">SUM(sum_position)</span> / <span class="sql-function">SUM(Impressions)</span>) + 1.0) AS <span class="sql-alias">avg_position</span>`);
+        plainSelectLines.push(`    ((SUM(sum_position) / SUM(Impressions)) + 1.0) AS avg_position`);
       }
 
-      let condition = '';
-      switch (operator) {
-        case 'EQUALS': condition = `${field} = '${value}'`; break;
-        case 'NOT EQUALS': condition = `${field} != '${value}'`; break;
-        case 'CONTAINS': condition = `${field} LIKE '%${value}%'`; break;
-        case 'NOT CONTAINS': condition = `${field} NOT LIKE '%${value}%'`; break;
-        case 'REGEX CONTAINS': condition = `REGEXP_CONTAINS(${field}, '${value}')`; break;
-        case 'REGEX NOT CONTAINS': condition = `NOT REGEXP_CONTAINS(${field}, '${value}')`; break;
-      }
-      cases.push(`WHEN ${condition} THEN '${thenValue}'`);
-    });
+      // CUSTOM FIELDS
+      const customFieldGroups = document.querySelectorAll('#customFieldGroups > div');
+      let customFieldIndex = 1;
 
-    if (cases.length > 0 || elseValue) {
-      const alias = `custom_field_${customFieldIndex++}`;
-      const caseSQL = `CASE\n    ${cases.join('\n    ')}\n    ELSE '${elseValue}'\nEND AS ${alias}`;
-      const visualCaseSQL = caseSQL.replace(/\n/g, '<br>' + indent);
+      customFieldGroups.forEach((group, groupIndex) => {
+        const conditionBlocks = group.querySelectorAll('.custom-condition-group > div');
+        const elseRow = group.querySelector('input[placeholder="Non-Brand"], input[placeholder="Non-Brand2"], input[placeholder="Else"]');
+        const elseValue = elseRow ? elseRow.value.trim() : '';
+        const cases = [];
 
-      console.log(`Generated CASE for ${alias}:\n${caseSQL}`);
+        console.log(`Custom Field Group ${groupIndex + 1}: Found ${conditionBlocks.length} condition blocks`);
 
-      selectLines.push(`${indent}${visualCaseSQL}`);
-      plainSelectLines.push(`    ${caseSQL}`);
-      customFieldsToGroup.push(alias);
+        conditionBlocks.forEach((block, blockIndex) => {
+          const selects = block.querySelectorAll('select');
+          const valueInput = block.querySelector('input[type="text"]');
+          const thenInput = block.parentElement.nextElementSibling?.querySelector('input[type="text"]');
+
+          const field = selects[0]?.value;
+          const operator = selects[1]?.value;
+          const value = valueInput?.value.trim();
+          const thenValue = thenInput?.value.trim();
+
+          console.log(`Condition ${blockIndex + 1}: field=${field}, operator=${operator}, value=${value}, then=${thenValue}`);
+
+          if (!field || !operator || !value || !thenValue) {
+            console.warn(`Skipping incomplete condition in block ${blockIndex + 1}`);
+            return;
+          }
+
+          let condition = '';
+          switch (operator) {
+            case 'EQUALS': condition = `${field} = '${value}'`; break;
+            case 'NOT EQUALS': condition = `${field} != '${value}'`; break;
+            case 'CONTAINS': condition = `${field} LIKE '%${value}%'`; break;
+            case 'NOT CONTAINS': condition = `${field} NOT LIKE '%${value}%'`; break;
+            case 'REGEX CONTAINS': condition = `REGEXP_CONTAINS(${field}, '${value}')`; break;
+            case 'REGEX NOT CONTAINS': condition = `NOT REGEXP_CONTAINS(${field}, '${value}')`; break;
+          }
+          cases.push(`WHEN ${condition} THEN '${thenValue}'`);
+        });
+
+        if (cases.length > 0 || elseValue) {
+          const alias = `custom_field_${customFieldIndex++}`;
+          const caseSQL = `CASE\n    ${cases.join('\n    ')}\n    ELSE '${elseValue}'\nEND AS ${alias}`;
+          const visualCaseSQL = caseSQL.replace(/\n/g, '<br>' + indent);
+
+          console.log(`Generated CASE for ${alias}:\n${caseSQL}`);
+
+          selectLines.push(`${indent}${visualCaseSQL}`);
+          plainSelectLines.push(`    ${caseSQL}`);
+          customFieldsToGroup.push(alias);
+        }
+      });
+
+      const selectClause = `<span class="sql-keyword">SELECT</span><br>${selectLines.join(',<br>')}`;
+      const plainSelectClause = `SELECT\n${plainSelectLines.join(',\n')}`;
+
+      const fromTable = dimensions.includes('URL')
+        ? '`searchconsole.searchdata_url_impression`'
+        : '`searchconsole.searchdata_site_impression`';
+
+      const fromClause = `<br><span class="sql-keyword">FROM</span><br>${indent}<span class="sql-table">${fromTable}</span>`;
+      const plainFromClause = `FROM\n    ${fromTable}`;
+
+      const whereClause = `<br><span class="sql-keyword">WHERE</span><br>${indent}<span class="sql-column">data_date</span> <span class="sql-keyword">BETWEEN</span> ${dateClause}`;
+      const plainWhereClause = `WHERE\n    data_date BETWEEN ${dateClause}`;
+
+      const groupItems = [...dimensions, ...customFieldsToGroup];
+      const groupByClause = groupItems.length
+        ? `<br><span class="sql-keyword">GROUP BY</span><br>${indent}${groupItems.map(d => `<span class="sql-column">${d}</span>`).join(', ')}`
+        : '';
+      const plainGroupByClause = groupItems.length
+        ? `GROUP BY\n    ${groupItems.join(', ')}`
+        : '';
+
+      const sql = `${selectClause}${fromClause}${whereClause}${groupByClause}`;
+      const plainSQL = `${plainSelectClause}\n${plainFromClause}\n${plainWhereClause}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}`;
+
+      document.getElementById('sqlOutput').innerHTML = sql;
+      document.getElementById('sqlOutputFormated').textContent = plainSQL;
     }
-  });
-
-  const selectClause = `<span class="sql-keyword">SELECT</span><br>${selectLines.join(',<br>')}`;
-  const plainSelectClause = `SELECT\n${plainSelectLines.join(',\n')}`;
-
-  const fromTable = dimensions.includes('URL')
-    ? '`searchconsole.searchdata_url_impression`'
-    : '`searchconsole.searchdata_site_impression`';
-
-  const fromClause = `<br><span class="sql-keyword">FROM</span><br>${indent}<span class="sql-table">${fromTable}</span>`;
-  const plainFromClause = `FROM\n    ${fromTable}`;
-
-  const whereClause = `<br><span class="sql-keyword">WHERE</span><br>${indent}<span class="sql-column">data_date</span> <span class="sql-keyword">BETWEEN</span> ${dateClause}`;
-  const plainWhereClause = `WHERE\n    data_date BETWEEN ${dateClause}`;
-
-  const groupItems = [...dimensions, ...customFieldsToGroup];
-  const groupByClause = groupItems.length
-    ? `<br><span class="sql-keyword">GROUP BY</span><br>${indent}${groupItems.map(d => `<span class="sql-column">${d}</span>`).join(', ')}`
-    : '';
-  const plainGroupByClause = groupItems.length
-    ? `GROUP BY\n    ${groupItems.join(', ')}`
-    : '';
-
-  const sql = `${selectClause}${fromClause}${whereClause}${groupByClause}`;
-  const plainSQL = `${plainSelectClause}\n${plainFromClause}\n${plainWhereClause}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}`;
-
-  document.getElementById('sqlOutput').innerHTML = sql;
-  document.getElementById('sqlOutputFormated').textContent = plainSQL;
-}
 
     function copySQL() {
       navigator.clipboard.writeText(plainSQL).then(() => {
@@ -1235,16 +1236,16 @@ function generateSQL() {
     /* copy to  clipboard script ends here */
 
     /* query generated tooltip - starts here*/
-function handleGenerateSQL() {
-  generateSQL(); // run original logic
+    function handleGenerateSQL() {
+      generateSQL(); // run original logic
 
-  // trigger tooltip
-  document.body.classList.add('show-generated');
-  setTimeout(() => {
-    document.body.classList.remove('show-generated');
-  }, 3000);
-}
-/* query generated tooltip - ends here */
+      // trigger tooltip
+      document.body.classList.add('show-generated');
+      setTimeout(() => {
+        document.body.classList.remove('show-generated');
+      }, 3000);
+    }
+    /* query generated tooltip - ends here */
 
     function toggleSortBy() {
       const section = document.getElementById('sortSection');
@@ -1436,7 +1437,6 @@ function handleGenerateSQL() {
     });
 
 
-    // function addCustomFieldGroup() {
     //   const groupContainer = document.createElement('div');
     //   groupContainer.className = 'space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
 
@@ -1550,114 +1550,114 @@ function handleGenerateSQL() {
     //   document.getElementById('customFieldGroups').appendChild(groupContainer);
     // }
 
-function addCustomFieldGroup() {
-  const groupContainer = document.createElement('div');
-  groupContainer.className = 'relative space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
+    function addCustomFieldGroup() {
+      const groupContainer = document.createElement('div');
+      groupContainer.className = 'relative space-y-4 p-4 border border-gray-700 rounded-lg bg-gray-800';
 
-  const isFirstGroup = document.querySelectorAll('#customFieldGroups > div').length > 0;
+      const isFirstGroup = document.querySelectorAll('#customFieldGroups > div').length > 0;
 
-  // ✨ Add a close "×" button only if this is NOT the first group
-  if (isFirstGroup) {
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '&times;';
-    closeBtn.className = 'absolute top-2 right-2 text-white text-lg w-[20px] h-[20px] font-bold hover:text-red-500 font-extralight rounded-[5px] leading-[100%]';
-    closeBtn.onclick = () => groupContainer.remove();
-    groupContainer.appendChild(closeBtn);
-  }
+      // ✨ Add a close "×" button only if this is NOT the first group
+      if (isFirstGroup) {
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.className = 'absolute top-2 right-2 text-white text-lg w-[20px] h-[20px] font-bold hover:text-red-500 font-extralight rounded-[5px] leading-[100%]';
+        closeBtn.onclick = () => groupContainer.remove();
+        groupContainer.appendChild(closeBtn);
+      }
 
-  const conditionsWrapper = document.createElement('div');
-  conditionsWrapper.className = 'space-y-4 custom-condition-group';
+      const conditionsWrapper = document.createElement('div');
+      conditionsWrapper.className = 'space-y-4 custom-condition-group';
 
-  const conditionRow = document.createElement('div');
-  conditionRow.className = 'space-y-2';
+      const conditionRow = document.createElement('div');
+      conditionRow.className = 'space-y-2';
 
-  const inputRow = document.createElement('div');
-  inputRow.className = 'flex items-center gap-2 flex-wrap';
+      const inputRow = document.createElement('div');
+      inputRow.className = 'flex items-center gap-2 flex-wrap';
 
-  const whenLabel = document.createElement('label');
-  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-  whenLabel.textContent = 'When';
+      const whenLabel = document.createElement('label');
+      whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+      whenLabel.textContent = 'When';
 
-  inputRow.appendChild(whenLabel);
+      inputRow.appendChild(whenLabel);
 
-  const fieldSelect = document.createElement('select');
-  fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
-  fieldSelect.innerHTML = `<option value="" disabled selected hidden>Select Field</option>` +
-    fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+      const fieldSelect = document.createElement('select');
+      fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+      fieldSelect.innerHTML = `<option value="" disabled selected hidden>Select Field</option>` +
+        fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
-  const operatorSelect = document.createElement('select');
-  operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
-  operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
-    operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+      const operatorSelect = document.createElement('select');
+      operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
+      operatorSelect.innerHTML = `<option value="" disabled selected>Operator</option>` +
+        operatorOptionsCustomFields.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
-  const valueInput = document.createElement('input');
-  valueInput.type = 'text';
-  valueInput.placeholder = 'My Website Name';
-  valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+      const valueInput = document.createElement('input');
+      valueInput.type = 'text';
+      valueInput.placeholder = 'My Website Name';
+      valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
-  inputRow.appendChild(fieldSelect);
-  inputRow.appendChild(operatorSelect);
-  inputRow.appendChild(valueInput);
-  conditionRow.appendChild(inputRow);
-  conditionsWrapper.appendChild(conditionRow);
+      inputRow.appendChild(fieldSelect);
+      inputRow.appendChild(operatorSelect);
+      inputRow.appendChild(valueInput);
+      conditionRow.appendChild(inputRow);
+      conditionsWrapper.appendChild(conditionRow);
 
-  // Then row
-  const thenRow = document.createElement('div');
-  thenRow.className = 'flex items-center gap-2';
+      // Then row
+      const thenRow = document.createElement('div');
+      thenRow.className = 'flex items-center gap-2';
 
-  const thenLabel = document.createElement('label');
-  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-  thenLabel.textContent = 'Then';
+      const thenLabel = document.createElement('label');
+      thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+      thenLabel.textContent = 'Then';
 
-  const thenInput = document.createElement('input');
-  thenInput.type = 'text';
-  thenInput.placeholder = 'Brand';
-  thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+      const thenInput = document.createElement('input');
+      thenInput.type = 'text';
+      thenInput.placeholder = 'Brand';
+      thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
-  const addConditionBtn = document.createElement('button');
-  addConditionBtn.textContent = '+ Condition';
-  addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto initial-add-btn';
-  addConditionBtn.onclick = () => {
-    const newGroup = createConditionGroupWrapper(groupContainer);
-    const elseRow = Array.from(groupContainer.children).find(child => {
-      const label = child.querySelector('label');
-      return label && label.textContent.trim().toLowerCase() === 'else';
-    });
+      const addConditionBtn = document.createElement('button');
+      addConditionBtn.textContent = '+ Condition';
+      addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto initial-add-btn';
+      addConditionBtn.onclick = () => {
+        const newGroup = createConditionGroupWrapper(groupContainer);
+        const elseRow = Array.from(groupContainer.children).find(child => {
+          const label = child.querySelector('label');
+          return label && label.textContent.trim().toLowerCase() === 'else';
+        });
 
-    if (elseRow) {
-      groupContainer.insertBefore(newGroup, elseRow);
-    } else {
-      groupContainer.appendChild(newGroup);
+        if (elseRow) {
+          groupContainer.insertBefore(newGroup, elseRow);
+        } else {
+          groupContainer.appendChild(newGroup);
+        }
+        updateConditionButtonsVisibility(groupContainer);
+      };
+
+      thenRow.appendChild(thenLabel);
+      thenRow.appendChild(thenInput);
+      thenRow.appendChild(addConditionBtn);
+
+      // Else row
+      const elseRow = document.createElement('div');
+      elseRow.className = 'flex items-center gap-2';
+
+      const elseLabel = document.createElement('label');
+      elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
+      elseLabel.textContent = 'Else';
+
+      const elseInput = document.createElement('input');
+      elseInput.type = 'text';
+      elseInput.placeholder = 'Non-Brand';
+      elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
+
+      elseRow.appendChild(elseLabel);
+      elseRow.appendChild(elseInput);
+
+      groupContainer.appendChild(conditionsWrapper);
+      groupContainer.appendChild(thenRow);
+      groupContainer.appendChild(elseRow);
+
+      document.getElementById('customFieldGroups').appendChild(groupContainer);
     }
-    updateConditionButtonsVisibility(groupContainer);
-  };
-
-  thenRow.appendChild(thenLabel);
-  thenRow.appendChild(thenInput);
-  thenRow.appendChild(addConditionBtn);
-
-  // Else row
-  const elseRow = document.createElement('div');
-  elseRow.className = 'flex items-center gap-2';
-
-  const elseLabel = document.createElement('label');
-  elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
-  elseLabel.textContent = 'Else';
-
-  const elseInput = document.createElement('input');
-  elseInput.type = 'text';
-  elseInput.placeholder = 'Non-Brand';
-  elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
-
-  elseRow.appendChild(elseLabel);
-  elseRow.appendChild(elseInput);
-
-  groupContainer.appendChild(conditionsWrapper);
-  groupContainer.appendChild(thenRow);
-  groupContainer.appendChild(elseRow);
-
-  document.getElementById('customFieldGroups').appendChild(groupContainer);
-}
 
     function updateConditionButtonsVisibility(groupContainer) {
       const addedGroups = Array.from(groupContainer.querySelectorAll('.added-custom-condition-group'));
