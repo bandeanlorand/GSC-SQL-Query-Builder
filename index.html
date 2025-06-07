@@ -11,302 +11,302 @@
 </head>
 
 <body class="min-h-screen flex flex-col">
-  
+
   <main class="flex-1">
-  <div id="global-tooltip"
-    class="fixed z-50 pointer-events-none bg-gray-900 text-xs text-white p-2 rounded shadow-lg max-w-xs hidden">
-  </div>
-  <header class="bg-color-[#1f2937] px-8 py-4 text-left flex row items-center justify-between flex-row shadow-lg">
-    <div class="items-start justify-start flex-col">
-      <h1 class="text-3xl font-bold mb-1 text-xl">Google Search Console SQL Query Builder</h1>
-      <p class="mb-1 text-sm">Build your SQL queries for Google Search Console data easily.</p>
+    <div id="global-tooltip"
+      class="fixed z-50 pointer-events-none bg-gray-900 text-xs text-white p-2 rounded shadow-lg max-w-xs hidden">
     </div>
-    <div class="flex items-center">
-      <p class="text-sm">powered by</p>
-      <a href="#" class="max-w-[120px] block">
-        <img src="search-analyzer-logo-1024x341.png" alt="" />
-      </a>
-    </div>
-  </header>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 max-w-[1440px] mx-auto">
-    <div class="space-y-4">
+    <header class="bg-color-[#1f2937] px-8 py-4 text-left flex row items-center justify-between flex-row shadow-lg">
+      <div class="items-start justify-start flex-col">
+        <h1 class="text-3xl font-bold mb-1 text-xl">Google Search Console SQL Query Builder</h1>
+        <p class="mb-1 text-sm">Build your SQL queries for Google Search Console data easily.</p>
+      </div>
+      <div class="flex items-center">
+        <p class="text-sm">powered by</p>
+        <a href="#" class="max-w-[120px] block">
+          <img src="search-analyzer-logo-1024x341.png" alt="" />
+        </a>
+      </div>
+    </header>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 max-w-[1440px] mx-auto">
+      <div class="space-y-4">
+
+
+        <div>
+          <label for="dateRange">Date Range</label>
+          <div id="dateRangeContainer" class="relative w-full  ">
+            <div class="relative group focus-within:ring-0 w-full">
+              <!-- Subtle glow layer -->
+              <div
+                class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+              </div>
+
+              <!-- Input field -->
+              <div id="selectedDateRange" tabindex="0" data-toggle="dropdown" data-target="#dateRangeDropdown"
+                data-arrow="#dateRangeArrow"
+                class="relative bg-gray-800 border border-gray-600 p-2 rounded-[8px] h-[50px] flex items-center justify-between cursor-pointer focus:outline-none">
+                <span id="dateRangeLabel">Select date range</span>
+
+
+                <svg id="dateRangeArrow" class="w-4 h-4 transition-transform duration-300" fill="none"
+                  stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+            </div>
+            <div id="dateRangeDropdown" data-open="false"
+              class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all mt-[8px]">
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Yesterday">Yesterday</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last Week">Last Week</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last month">Last month</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Month to yesterday">Month to
+                yesterday</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 7 days">Last 7 days</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 14 days">Last 14 days
+              </div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 30 days">Last 30 days
+              </div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Year to yesterday">Year to
+                yesterday</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last year">Last year</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Custom date range">Custom date
+                range</div>
+            </div>
+          </div>
+
+          <!-- Custom date inputs start -->
+          <!-- Hidden by default, shown when "Custom date range" is selected -->
+          <div id="customDateInputs" class="hidden mt-2">
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Start Date -->
+              <div>
+                <label for="startDate" class="mb-1 block">Start Date</label>
+                <div class="relative group w-full">
+                  <!-- Glow layer -->
+                  <div
+                    class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+                  </div>
+                  <!-- Input -->
+                  <input
+                    class="relative z-10 bg-gray-800 border border-gray-600 p-2 h-[50px] w-full rounded-[8px] focus:outline-none"
+                    type="date" id="startDate" />
+                </div>
+              </div>
+
+              <!-- End Date -->
+              <div>
+                <label for="endDate" class="mb-1 block">End Date</label>
+                <div class="relative group w-full">
+                  <!-- Glow layer -->
+                  <div
+                    class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+                  </div>
+                  <!-- Input -->
+                  <input
+                    class="relative z-10 bg-gray-800 border border-gray-600 p-2 h-[50px] w-full rounded-[8px] focus:outline-none"
+                    type="date" id="endDate" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- Custom date inputs end -->
+
+
+          <!-- Metrics starts here -->
+          <div class="flex items-center justify-between">
+            <label for="metrics">Metrics</label>
+            <button id="clearMetricsBtn"
+              class="text-sm text-red-100 hover:underline flex items-center space-x-1 w-auto border-none hidden"
+              onclick="clearAllMetrics()">
+              <i class="fa-regular fa-circle-xmark"></i>
+              <span>Clear all</span>
+            </button>
+          </div>
+          <div id="metricsContainer" class="relative w-full group focus-within:ring-0">
+            <!-- Subtle glowing border -->
+            <div
+              class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-lg blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+            </div>
+
+            <!-- Selected metrics box -->
+            <div id="selectedMetrics" tabindex="0"
+              class="relative bg-gray-800 border border-gray-600 p-2 rounded-[8px] h-[50px] flex items-center justify-between cursor-pointer focus:outline-none">
+              <div id="metricsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto">
+                <span id="metricsPlaceholder" class="text-gray-400">Select metrics</span>
+              </div>
+              <svg id="metricsArrow" class="w-4 h-4 transition-transform duration-300 ml-2 flex-shrink-0" fill="none"
+                stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+
+            <!-- Dropdown items -->
+            <div id="metricsDropdown" data-open="false"
+              class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all mt-[8px]">
+              <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Impressions')">Impressions</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Clicks')">Clicks</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('CTR')">CTR</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Position')">Position</div>
+            </div>
+          </div>
+
+          <!-- Metrics ends here -->
+
+          <!-- Dimensions starts here -->
+          <div class="flex items-center justify-between">
+            <label for="dimensions">Dimensions</label>
+            <button id="clearDimensionsBtn"
+              class="text-sm text-red-100 hover:underline flex items-center space-x-1 w-auto border-none hidden"
+              onclick="clearAllDimensions()">
+              <i class="fa-regular fa-circle-xmark"></i>
+              <span>Clear all</span>
+            </button>
+          </div>
+          <div id="dimensionsContainer" class="relative w-full group focus-within:ring-0">
+            <!-- Glow when focused -->
+            <div
+              class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-lg blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+            </div>
+
+            <!-- Selected Dimensions -->
+            <div id="selectedDimensions" tabindex="0"
+              class="relative bg-gray-800 border border-gray-600 p-2 rounded-[8px] min-h-[50px] flex items-center justify-between cursor-pointer focus:outline-none">
+              <div id="dimensionsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto"><span
+                  id="dimensionsPlaceholder" class="text-gray-400">Select dimensions</span></div>
+              <svg id="dimensionsArrow" class="w-4 h-4 transition-transform duration-300 ml-2 flex-shrink-0" fill="none"
+                stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+
+            <!-- Dimensions dropdown -->
+            <div id="dimensionsDropdown"
+              class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all max-h-[400px] overflow-y-auto w-full mt-[8px] h-auto">
+            </div>
+
+
+          </div>
+
+          <!-- Dimensions ends here -->
+
+          <!-- Filters section starts here -->
+          <!-- Filters Header (inside gray box) -->
+          <div class="w-full max-w-4xl mx-auto mt-4">
+            <div
+              class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition transition-all"
+              onclick="toggleFilters()">
+              <span class="font-bold">Filters</span>
+              <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+
+            <!-- Filters Form Section (outside the gray box) -->
+            <!-- filter input and dropdown row starts here -->
+            <div id="filterSection" class="hidden bg-transparent px-0 py-4 space-y-2">
+              <div id="filterRows" class="space-y-2">
+                <!--Filter Row gets injected here -->
+              </div>
+              <!-- Add/Remove Buttons -->
+              <div class="flex gap-2 mt-2">
+                <button onclick="addFilterRow()"
+                  class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">
+                  +
+                </button>
+                <button onclick="removeFilterRow()"
+                  class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">
+                  −
+                </button>
+              </div>
+            </div>
+
+          </div>
+          <!-- Filters section ends here -->
+          <!-- Sort by section starts -->
+          <!-- Sort By Section -->
+          <div class="w-full max-w-4xl mx-auto mt-4">
+            <div
+              class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition-all"
+              onclick="toggleSortBy()">
+              <span class="font-bold">Sort by</span>
+              <svg id="sortArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+
+            <div id="sortSection" class="hidden bg-transparent px-0 py-4 space-y-2">
+              <div id="sortRows" class="space-y-2"></div>
+              <div class="flex gap-2 mt-2">
+                <button onclick="addSortRow()"
+                  class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">+</button>
+                <button onclick="removeSortRow()"
+                  class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">−</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sort by section ends -->
+
+          <!-- Custom Fields section starts -->
+          <div class="w-full max-w-4xl mx-auto mt-4">
+            <div
+              class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition-all"
+              onclick="toggleCustomFields()">
+              <span class="font-bold">Custom Fields</span>
+              <span class="relative group">
+                <i class="fas fa-question-circle text-sm text-gray-300 cursor-pointer"></i>
+                <div
+                  class="absolute hidden group-hover:block bg-gray-900 text-white text-xs w-[250px] rounded px-2 py-1 shadow-lg top-full left-1/2 transform -translate-x-1/2 mt-1 whitespace-pre-wrap max-w-xs z-10">
+                  Create your own fields. For example, group branded vs non-branded keywords. When query contains your
+                  brand name, the field will show "Brand", else "Non-Brand".
+                </div>
+              </span>
+            </div>
+
+            <div id="customFieldsSection" class="hidden bg-transparent px-0 py-4 space-y-4">
+              <div id="customFieldGroups" class="space-y-4"></div>
+
+              <button onclick="addCustomFieldGroup()"
+                class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-full w-auto">+ Custom
+                Field</button>
+            </div>
+          </div>
+          <!-- Custom Fields section ends -->
+
+
+
+
+
+          <button type="submit" onclick="handleGenerateSQL()"
+            class="block w-auto mt-[24px]  m-auto bg-blue-800 text-white border-none px-10 py-2 text-center rounded-[8px] text-[1.25rem] leading-[2rem] ">Generate
+            SQL</button>
+        </div>
+      </div>
 
 
       <div>
-        <label for="dateRange">Date Range</label>
-        <div id="dateRangeContainer" class="relative w-full  ">
-          <div class="relative group focus-within:ring-0 w-full">
-            <!-- Subtle glow layer -->
-            <div
-              class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
-            </div>
 
-            <!-- Input field -->
-            <div id="selectedDateRange" tabindex="0" data-toggle="dropdown" data-target="#dateRangeDropdown"
-              data-arrow="#dateRangeArrow"
-              class="relative bg-gray-800 border border-gray-600 p-2 rounded-[8px] h-[50px] flex items-center justify-between cursor-pointer focus:outline-none">
-              <span id="dateRangeLabel">Select date range</span>
-
-
-              <svg id="dateRangeArrow" class="w-4 h-4 transition-transform duration-300" fill="none"
-                stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </div>
-          </div>
-          <div id="dateRangeDropdown" data-open="false"
-            class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all mt-[8px]">
-            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Yesterday">Yesterday</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last Week">Last Week</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last month">Last month</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Month to yesterday">Month to
-              yesterday</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 7 days">Last 7 days</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 14 days">Last 14 days
-            </div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 30 days">Last 30 days
-            </div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Year to yesterday">Year to
-              yesterday</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last year">Last year</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Custom date range">Custom date
-              range</div>
-          </div>
-        </div>
-
-        <!-- Custom date inputs start -->
-        <!-- Hidden by default, shown when "Custom date range" is selected -->
-        <div id="customDateInputs" class="hidden mt-2">
-          <div class="grid grid-cols-2 gap-4">
-            <!-- Start Date -->
-            <div>
-              <label for="startDate" class="mb-1 block">Start Date</label>
-              <div class="relative group w-full">
-                <!-- Glow layer -->
-                <div
-                  class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
-                </div>
-                <!-- Input -->
-                <input
-                  class="relative z-10 bg-gray-800 border border-gray-600 p-2 h-[50px] w-full rounded-[8px] focus:outline-none"
-                  type="date" id="startDate" />
-              </div>
-            </div>
-
-            <!-- End Date -->
-            <div>
-              <label for="endDate" class="mb-1 block">End Date</label>
-              <div class="relative group w-full">
-                <!-- Glow layer -->
-                <div
-                  class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
-                </div>
-                <!-- Input -->
-                <input
-                  class="relative z-10 bg-gray-800 border border-gray-600 p-2 h-[50px] w-full rounded-[8px] focus:outline-none"
-                  type="date" id="endDate" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <!-- Custom date inputs end -->
-
-
-        <!-- Metrics starts here -->
-        <div class="flex items-center justify-between">
-          <label for="metrics">Metrics</label>
-          <button id="clearMetricsBtn"
-            class="text-sm text-red-100 hover:underline flex items-center space-x-1 w-auto border-none hidden"
-            onclick="clearAllMetrics()">
-            <i class="fa-regular fa-circle-xmark"></i>
-            <span>Clear all</span>
-          </button>
-        </div>
-        <div id="metricsContainer" class="relative w-full group focus-within:ring-0">
-          <!-- Subtle glowing border -->
-          <div
-            class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-lg blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
-          </div>
-
-          <!-- Selected metrics box -->
-          <div id="selectedMetrics" tabindex="0"
-            class="relative bg-gray-800 border border-gray-600 p-2 rounded-[8px] h-[50px] flex items-center justify-between cursor-pointer focus:outline-none">
-            <div id="metricsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto">
-              <span id="metricsPlaceholder" class="text-gray-400">Select metrics</span>
-            </div>
-            <svg id="metricsArrow" class="w-4 h-4 transition-transform duration-300 ml-2 flex-shrink-0" fill="none"
-              stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-
-          <!-- Dropdown items -->
-          <div id="metricsDropdown" data-open="false"
-            class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all mt-[8px]">
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Impressions')">Impressions</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Clicks')">Clicks</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('CTR')">CTR</div>
-            <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Position')">Position</div>
-          </div>
-        </div>
-
-        <!-- Metrics ends here -->
-
-        <!-- Dimensions starts here -->
-        <div class="flex items-center justify-between">
-          <label for="dimensions">Dimensions</label>
-          <button id="clearDimensionsBtn"
-            class="text-sm text-red-100 hover:underline flex items-center space-x-1 w-auto border-none hidden"
-            onclick="clearAllDimensions()">
-            <i class="fa-regular fa-circle-xmark"></i>
-            <span>Clear all</span>
-          </button>
-        </div>
-        <div id="dimensionsContainer" class="relative w-full group focus-within:ring-0">
-          <!-- Glow when focused -->
-          <div
-            class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-lg blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
-          </div>
-
-          <!-- Selected Dimensions -->
-          <div id="selectedDimensions" tabindex="0"
-            class="relative bg-gray-800 border border-gray-600 p-2 rounded-[8px] min-h-[50px] flex items-center justify-between cursor-pointer focus:outline-none">
-            <div id="dimensionsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto"><span
-                id="dimensionsPlaceholder" class="text-gray-400">Select dimensions</span></div>
-            <svg id="dimensionsArrow" class="w-4 h-4 transition-transform duration-300 ml-2 flex-shrink-0" fill="none"
-              stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-
-          <!-- Dimensions dropdown -->
-          <div id="dimensionsDropdown"
-            class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all max-h-[400px] overflow-y-auto w-full mt-[8px] h-auto">
-          </div>
-
-
-        </div>
-
-        <!-- Dimensions ends here -->
-
-        <!-- Filters section starts here -->
-        <!-- Filters Header (inside gray box) -->
-        <div class="w-full max-w-4xl mx-auto mt-4">
-          <div
-            class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition transition-all"
-            onclick="toggleFilters()">
-            <span class="font-bold">Filters</span>
-            <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
-              stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-
-          <!-- Filters Form Section (outside the gray box) -->
-          <!-- filter input and dropdown row starts here -->
-          <div id="filterSection" class="hidden bg-transparent px-0 py-4 space-y-2">
-            <div id="filterRows" class="space-y-2">
-              <!--Filter Row gets injected here -->
-            </div>
-            <!-- Add/Remove Buttons -->
-            <div class="flex gap-2 mt-2">
-              <button onclick="addFilterRow()"
-                class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">
-                +
-              </button>
-              <button onclick="removeFilterRow()"
-                class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">
-                −
-              </button>
-            </div>
-          </div>
-
-        </div>
-        <!-- Filters section ends here -->
-        <!-- Sort by section starts -->
-        <!-- Sort By Section -->
-        <div class="w-full max-w-4xl mx-auto mt-4">
-          <div
-            class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition-all"
-            onclick="toggleSortBy()">
-            <span class="font-bold">Sort by</span>
-            <svg id="sortArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
-              stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-
-          <div id="sortSection" class="hidden bg-transparent px-0 py-4 space-y-2">
-            <div id="sortRows" class="space-y-2"></div>
-            <div class="flex gap-2 mt-2">
-              <button onclick="addSortRow()"
-                class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">+</button>
-              <button onclick="removeSortRow()"
-                class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">−</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sort by section ends -->
-
-        <!-- Custom Fields section starts -->
-        <div class="w-full max-w-4xl mx-auto mt-4">
-          <div
-            class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition-all"
-            onclick="toggleCustomFields()">
-            <span class="font-bold">Custom Fields</span>
-            <span class="relative group">
-              <i class="fas fa-question-circle text-sm text-gray-300 cursor-pointer"></i>
-              <div
-                class="absolute hidden group-hover:block bg-gray-900 text-white text-xs w-[250px] rounded px-2 py-1 shadow-lg top-full left-1/2 transform -translate-x-1/2 mt-1 whitespace-pre-wrap max-w-xs z-10">
-                Create your own fields. For example, group branded vs non-branded keywords. When query contains your
-                brand name, the field will show "Brand", else "Non-Brand".
-              </div>
-            </span>
-          </div>
-
-          <div id="customFieldsSection" class="hidden bg-transparent px-0 py-4 space-y-4">
-            <div id="customFieldGroups" class="space-y-4"></div>
-
-            <button onclick="addCustomFieldGroup()"
-              class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-full w-auto">+ Custom
-              Field</button>
-          </div>
-        </div>
-        <!-- Custom Fields section ends -->
-
-
-
-
-
-        <button type="submit" onclick="handleGenerateSQL()"
-          class="block w-auto mt-[24px]  m-auto bg-blue-800 text-white border-none px-10 py-2 text-center rounded-[8px] text-[1.25rem] leading-[2rem] ">Generate
-          SQL</button>
-      </div>
-    </div>
-
-
-    <div>
-
-      <div class="flex justify-between items-center mb-2">
-        <h2 class="text-xl font-semibold">Generated SQL</h2>
-        <!-- <button onclick="copySQL()" onclick="copyToTheClipboard(document.getElementById('sqlOutput').textContent)"
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-xl font-semibold">Generated SQL</h2>
+          <!-- <button onclick="copySQL()" onclick="copyToTheClipboard(document.getElementById('sqlOutput').textContent)"
           class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded w-auto">
           Copy SQL
         </button> -->
-        <button onclick="copySQL()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded w-auto">
-          Copy SQL
-        </button>
-      </div>
-      <pre id="sqlOutput" class="overflow-auto rounded bg-gray-900 p-4 text-sm whitespace-pre-wrap"></pre>
-      <pre id="sqlOutputFormated"
-        class="overflow-auto rounded bg-gray-900 p-4 text-sm whitespace-pre-wrap mt-2 h-1 opacity-0"></pre>
+          <button onclick="copySQL()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded w-auto">
+            Copy SQL
+          </button>
+        </div>
+        <pre id="sqlOutput" class="overflow-auto rounded bg-gray-900 p-4 text-sm whitespace-pre-wrap"></pre>
+        <pre id="sqlOutputFormated"
+          class="overflow-auto rounded bg-gray-900 p-4 text-sm whitespace-pre-wrap mt-2 h-1 opacity-0"></pre>
 
+      </div>
     </div>
-  </div>
-</main>
+  </main>
 
   <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.7rem] text-right">v2.0.1.07.06.2025</footer>
   <script>
@@ -363,198 +363,210 @@
 
     /*  generateSQL function starts here */
     let plainSQL = "";
+function updateFilterAndSortClauses() {
+  // FILTERS
+  const filters = [];
+  document.querySelectorAll('#filterRows > div').forEach(filter => {
+    const selects = filter.querySelectorAll('select');
+    const input = filter.querySelector('input');
+    const field = selects[0]?.value;
+    const operator = selects[1]?.value;
+    const value = input?.value.trim();
+    const logic = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
 
-
-
-    function generateSQL() {
-      const dateClause = getDateRangeClause();
-      const metrics = Array.from(selectedMetrics);
-      const dimensions = Array.from(selectedDimensions);
-
-      const indent = '<span style="display:inline-block; width:1em"></span>';
-      const selectLines = [];
-      const plainSelectLines = [];
-      const customFieldsToGroup = [];
-
-      dimensions.forEach(dim => {
-        selectLines.push(`${indent}<span class="sql-column">${dim}</span>`);
-        plainSelectLines.push(`    ${dim}`);
-      });
-
-      if (metrics.includes('Clicks')) {
-        selectLines.push(`${indent}<span class="sql-function">SUM(Clicks)</span> AS <span class="sql-alias">clicks</span>`);
-        plainSelectLines.push(`    SUM(Clicks) AS clicks`);
+    if (field && operator && (value || operator.includes('NULL'))) {
+      let clause = '';
+      switch (operator) {
+        case 'EQUALS': clause = `${field} = '${value}'`; break;
+        case 'NOT EQUALS': clause = `${field} != '${value}'`; break;
+        case 'CONTAINS': clause = `${field} LIKE '%${value}%'`; break;
+        case 'NOT CONTAINS': clause = `${field} NOT LIKE '%${value}%'`; break;
+        case 'GREATER THAN': clause = `${field} > '${value}'`; break;
+        case 'LESS THAN': clause = `${field} < '${value}'`; break;
+        case 'IS NULL': clause = `${field} IS NULL`; break;
+        case 'IS NOT NULL': clause = `${field} IS NOT NULL`; break;
       }
-      if (metrics.includes('Impressions')) {
-        selectLines.push(`${indent}<span class="sql-function">SUM(Impressions)</span> AS <span class="sql-alias">impressions</span>`);
-        plainSelectLines.push(`    SUM(Impressions) AS impressions`);
-      }
-      if (metrics.includes('CTR')) {
-        selectLines.push(`${indent}<span class="sql-expression">SUM(Clicks) / SUM(Impressions)</span> AS <span class="sql-alias">ctr</span>`);
-        plainSelectLines.push(`    SUM(Clicks) / SUM(Impressions) AS ctr`);
-      }
-      if (metrics.includes('Position')) {
-        selectLines.push(`${indent}((<span class="sql-function">SUM(sum_position)</span> / <span class="sql-function">SUM(Impressions)</span>) + 1.0) AS <span class="sql-alias">avg_position</span>`);
-        plainSelectLines.push(`    ((SUM(sum_position) / SUM(Impressions)) + 1.0) AS avg_position`);
-      }
-
-      // CUSTOM FIELDS
-      const customFieldGroups = document.querySelectorAll('#customFieldGroups > div');
-      let customFieldIndex = 1;
-
-      customFieldGroups.forEach((group, groupIndex) => {
-
-        const conditionBlocks = group.querySelectorAll('.custom-condition-group > div, .added-custom-condition-group');
-
-        const elseRow = group.querySelector('input[placeholder="Non-Brand"], input[placeholder="Non-Brand2"], input[placeholder="Else"]');
-        const elseValue = elseRow ? elseRow.value.trim() : '';
-        const cases = [];
-
-        console.log(`Custom Field Group ${groupIndex + 1}: Found ${conditionBlocks.length} condition blocks`);
-
-        conditionBlocks.forEach((block, blockIndex) => {
-          const selects = block.querySelectorAll('select');
-          const valueInput = block.querySelector('input[type="text"]');
-
-
-          let thenInput;
-
-          if (block.classList.contains('added-custom-condition-group')) {
-            console.log(`Added condition block detected: ${blockIndex + 1}`);
-            thenInput = block.querySelector('input[placeholder="Brand"]');
-          } else {
-            const thenRow = group.querySelectorAll('div.flex.items-center.gap-2')[1];
-            thenInput = thenRow?.querySelector('input[type="text"]');
-          }
-
-
-          const field = selects[0]?.value;
-          const operator = selects[1]?.value;
-          const value = valueInput?.value.trim();
-          const thenValue = thenInput?.value.trim();
-
-          console.log(`Condition ${blockIndex + 1}: field=${field}, operator=${operator}, value=${value}, then=${thenValue}`);
-
-          // if (!field || !operator || !value || !thenValue) {
-          //   console.warn(`Skipping incomplete condition in block ${blockIndex + 1}`);
-          //   return;
-          // }
-
-          let hasError = false;
-
-          // Helper function to mark invalid inputs
-          function markInvalid(el) {
-            if (!el) return;
-            el.classList.add('border-red-500');
-            el.setAttribute('title', 'Please complete this field');
-            hasError = true;
-            el.addEventListener('input', () => {
-              el.classList.remove('border-red-500');
-              el.removeAttribute('title');
-            }, { once: true });
-          }
-
-          // Validate each field
-          if (!field) markInvalid(selects[0]);
-          if (!operator) markInvalid(selects[1]);
-          if (!value) markInvalid(valueInput);
-          if (!thenValue) markInvalid(thenInput);
-
-          if (hasError) {
-            console.warn(`Skipping incomplete condition in block ${blockIndex + 1}`);
-            return;
-          }
-
-
-          let condition = '';
-          switch (operator) {
-            case 'EQUALS': condition = `${field} = '${value}'`; break;
-            case 'NOT EQUALS': condition = `${field} != '${value}'`; break;
-            case 'CONTAINS': condition = `${field} LIKE '%${value}%'`; break;
-            case 'NOT CONTAINS': condition = `${field} NOT LIKE '%${value}%'`; break;
-            case 'REGEX CONTAINS': condition = `REGEXP_CONTAINS(${field}, '${value}')`; break;
-            case 'REGEX NOT CONTAINS': condition = `NOT REGEXP_CONTAINS(${field}, '${value}')`; break;
-          }
-          cases.push(`WHEN ${condition} THEN '${thenValue}'`);
-        });
-
-        if (cases.length > 0 || elseValue) {
-          const alias = `custom_field_${customFieldIndex++}`;
-          const caseSQL = `CASE\n    ${cases.join('\n    ')}\n    ELSE '${elseValue}'\nEND AS ${alias}`;
-          const visualCaseSQL = caseSQL.replace(/\n/g, '<br>' + indent);
-
-          console.log(`Generated CASE for ${alias}:\n${caseSQL}`);
-
-          selectLines.push(`${indent}${visualCaseSQL}`);
-          plainSelectLines.push(`    ${caseSQL}`);
-          customFieldsToGroup.push(alias);
-        }
-      });
-
-      const selectClause = `<span class="sql-keyword">SELECT</span><br>${selectLines.join(',<br>')}`;
-      const plainSelectClause = `SELECT\n${plainSelectLines.join(',\n')}`;
-
-      const fromTable = dimensions.includes('URL')
-        ? '`searchconsole.searchdata_url_impression`'
-        : '`searchconsole.searchdata_site_impression`';
-
-      const fromClause = `<br><span class="sql-keyword">FROM</span><br>${indent}<span class="sql-table">${fromTable}</span>`;
-      const plainFromClause = `FROM\n    ${fromTable}`;
-
-      const whereClause = `<br><span class="sql-keyword">WHERE</span><br>${indent}<span class="sql-column">data_date</span> <span class="sql-keyword">BETWEEN</span> ${dateClause}`;
-      const plainWhereClause = `WHERE\n    data_date BETWEEN ${dateClause}`;
-
-      const groupItems = [...dimensions, ...customFieldsToGroup];
-      const groupByClause = groupItems.length
-        ? `<br><span class="sql-keyword">GROUP BY</span><br>${indent}${groupItems.map(d => `<span class="sql-column">${d}</span>`).join(', ')}`
-        : '';
-      const plainGroupByClause = groupItems.length
-        ? `GROUP BY\n    ${groupItems.join(', ')}`
-        : '';
-
-      const sql = `${selectClause}${fromClause}${whereClause}${groupByClause}`;
-      const plainSQL = `${plainSelectClause}\n${plainFromClause}\n${plainWhereClause}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}`;
-
-      document.getElementById('sqlOutput').innerHTML = sql;
-      document.getElementById('sqlOutputFormated').textContent = plainSQL;
-
-
-      const body = document.body;
-      const sqlStatus = document.getElementById('sqlStatus');
-      body.classList.remove('show-generated', 'show-generated-incomplete');
-
-      const hasErrors = document.querySelectorAll('#customFieldGroups .border-red-500').length > 0;
-      let customFieldsUsed = false;
-
-      document.querySelectorAll('#customFieldGroups > div').forEach(group => {
-        const inputs = group.querySelectorAll('input[type="text"]');
-        // const selects = group.querySelectorAll('select');
-
-        for (const input of inputs) {
-          const val = input.value?.trim();
-          const placeholder = input.getAttribute('placeholder')?.trim() || '';
-          const isUsed = val && val !== placeholder && val !== '';
-          if (isUsed) {
-            customFieldsUsed = true;
-            break;
-          }
-        }
-
-
-      });
-
-      if (customFieldsUsed && hasErrors) {
-        void body.offsetHeight; // reflow to retrigger animation
-        body.classList.add('show-generated-incomplete');
-        if (sqlStatus) sqlStatus.setAttribute('title', 'There are incomplete fields in – SQL Generated!');
-      } else {
-        body.classList.add('show-generated');
-        if (sqlStatus) sqlStatus.removeAttribute('title');
-      }
-
-
+      if (clause) filters.push({ clause, logic });
     }
+  });
 
+  // SORT
+  const sorts = [];
+  document.querySelectorAll('#sortRows > div').forEach(row => {
+    const select = row.querySelector('select');
+    const direction = row.querySelector('input[type="radio"]:checked')?.value || 'ASC';
+    if (select && select.value) {
+      sorts.push(`${select.value} ${direction}`);
+    }
+  });
+
+  window._filterClauses = filters;
+  window._sortClauses = sorts;
+}
+
+
+function generateSQL() {
+  updateFilterAndSortClauses();
+  const dateClause = getDateRangeClause();
+  const metrics = Array.from(selectedMetrics);
+  const dimensions = Array.from(selectedDimensions);
+
+  const indent = '<span style="display:inline-block; width:1em"></span>';
+  const selectLines = [];
+  const plainSelectLines = [];
+  const customFieldsToGroup = [];
+
+  dimensions.forEach(dim => {
+    selectLines.push(`${indent}<span class="sql-column">${dim}</span>`);
+    plainSelectLines.push(`    ${dim}`);
+  });
+
+  if (metrics.includes('Clicks')) {
+    selectLines.push(`${indent}<span class="sql-function">SUM(Clicks)</span> AS <span class="sql-alias">clicks</span>`);
+    plainSelectLines.push(`    SUM(Clicks) AS clicks`);
+  }
+  if (metrics.includes('Impressions')) {
+    selectLines.push(`${indent}<span class="sql-function">SUM(Impressions)</span> AS <span class="sql-alias">impressions</span>`);
+    plainSelectLines.push(`    SUM(Impressions) AS impressions`);
+  }
+  if (metrics.includes('CTR')) {
+    selectLines.push(`${indent}<span class="sql-expression">SUM(Clicks) / SUM(Impressions)</span> AS <span class="sql-alias">ctr</span>`);
+    plainSelectLines.push(`    SUM(Clicks) / SUM(Impressions) AS ctr`);
+  }
+  if (metrics.includes('Position')) {
+    selectLines.push(`${indent}((<span class="sql-function">SUM(sum_position)</span> / <span class="sql-function">SUM(Impressions)</span>) + 1.0) AS <span class="sql-alias">avg_position</span>`);
+    plainSelectLines.push(`    ((SUM(sum_position) / SUM(Impressions)) + 1.0) AS avg_position`);
+  }
+
+  // CUSTOM FIELDS
+  const customFieldGroups = document.querySelectorAll('#customFieldGroups > div');
+  let customFieldIndex = 1;
+
+  customFieldGroups.forEach((group) => {
+    const conditionBlocks = group.querySelectorAll('.custom-condition-group > div, .added-custom-condition-group');
+    const elseRow = group.querySelector('input[placeholder="Non-Brand"], input[placeholder="Non-Brand2"], input[placeholder="Else"]');
+    const elseValue = elseRow ? elseRow.value.trim() : '';
+    const cases = [];
+
+    conditionBlocks.forEach((block) => {
+      const selects = block.querySelectorAll('select');
+      const valueInput = block.querySelector('input[type="text"]');
+      let thenInput;
+
+      if (block.classList.contains('added-custom-condition-group')) {
+        thenInput = block.querySelector('input[placeholder="Brand"]');
+      } else {
+        const thenRow = group.querySelectorAll('div.flex.items-center.gap-2')[1];
+        thenInput = thenRow?.querySelector('input[type="text"]');
+      }
+
+      const field = selects[0]?.value;
+      const operator = selects[1]?.value;
+      const value = valueInput?.value.trim();
+      const thenValue = thenInput?.value.trim();
+
+      if (!field || !operator || !value || !thenValue) return;
+
+      let condition = '';
+      switch (operator) {
+        case 'EQUALS': condition = `${field} = '${value}'`; break;
+        case 'NOT EQUALS': condition = `${field} != '${value}'`; break;
+        case 'CONTAINS': condition = `${field} LIKE '%${value}%'`; break;
+        case 'NOT CONTAINS': condition = `${field} NOT LIKE '%${value}%'`; break;
+        case 'REGEX CONTAINS': condition = `REGEXP_CONTAINS(${field}, '${value}')`; break;
+        case 'REGEX NOT CONTAINS': condition = `NOT REGEXP_CONTAINS(${field}, '${value}')`; break;
+      }
+      cases.push(`WHEN ${condition} THEN '${thenValue}'`);
+    });
+
+    if (cases.length > 0 || elseValue) {
+      const alias = `custom_field_${customFieldIndex++}`;
+      const caseSQL = `CASE\n    ${cases.join('\n    ')}\n    ELSE '${elseValue}'\nEND AS ${alias}`;
+      const visualCaseSQL = caseSQL.replace(/\n/g, '<br>' + indent);
+      selectLines.push(`${indent}${visualCaseSQL}`);
+      plainSelectLines.push(`    ${caseSQL}`);
+      customFieldsToGroup.push(alias);
+    }
+  });
+
+  const selectClause = `<span class="sql-keyword">SELECT</span><br>${selectLines.join(',<br>')}`;
+  const plainSelectClause = `SELECT\n${plainSelectLines.join(',\n')}`;
+
+  const fromTable = dimensions.includes('URL')
+    ? '`searchconsole.searchdata_url_impression`'
+    : '`searchconsole.searchdata_site_impression`';
+
+  const fromClause = `<br><span class="sql-keyword">FROM</span><br>${indent}<span class="sql-table">${fromTable}</span>`;
+  const plainFromClause = `FROM\n    ${fromTable}`;
+
+  const baseWhereClause = `<br><span class="sql-keyword">WHERE</span><br>${indent}<span class="sql-column">data_date</span> <span class="sql-keyword">BETWEEN</span> ${dateClause}`;
+  const basePlainWhereClause = `WHERE\n    data_date BETWEEN ${dateClause}`;
+
+  const groupItems = [...dimensions, ...customFieldsToGroup];
+  const groupByClause = groupItems.length
+    ? `<br><span class="sql-keyword">GROUP BY</span><br>${indent}${groupItems.map(d => `<span class="sql-column">${d}</span>`).join(', ')}`
+    : '';
+  const plainGroupByClause = groupItems.length
+    ? `GROUP BY\n    ${groupItems.join(', ')}`
+    : '';
+
+  const filterClauses = window._filterClauses || [];
+  const sortClauses = window._sortClauses || [];
+
+  const extraWhere = filterClauses.length
+    ? filterClauses.map((item, index) => `${index > 0 ? item.logic + ' ' : ''}${item.clause}`).join(' ')
+    : '';
+  const whereHTML = filterClauses.length ? `<br>${indent}${extraWhere}` : '';
+  const whereText = filterClauses.length ? `\n    ${extraWhere}` : '';
+
+  const orderHTML = sortClauses.length
+    ? `<br><span class="sql-keyword">ORDER BY</span><br>${indent}${sortClauses.map(cl => `<span class="sql-column">${cl}</span>`).join(', ')}`
+    : '';
+  const orderText = sortClauses.length
+    ? `\nORDER BY\n    ${sortClauses.join(', ')}`
+    : '';
+
+  const sql = `${selectClause}${fromClause}${baseWhereClause}${whereHTML}${groupByClause}${orderHTML}`;
+  const plainSQL = `${plainSelectClause}\n${plainFromClause}\n${basePlainWhereClause}${whereText}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}${orderText}`;
+
+  document.getElementById('sqlOutput').innerHTML = sql;
+  document.getElementById('sqlOutputFormated').textContent = plainSQL;
+
+  document.querySelectorAll('#customFieldGroups input[type="text"]').forEach(input => {
+    input.addEventListener('input', () => {
+      if (input.value.trim() !== '') {
+        input.classList.add('user-started');
+      } else {
+        input.classList.remove('user-started');
+      }
+    });
+  });
+
+  const body = document.body;
+  const sqlStatus = document.getElementById('sqlStatus');
+
+  body.classList.remove('show-generated', 'show-generated-incomplete');
+  const hasErrors = document.querySelectorAll('#customFieldGroups .border-red-500').length > 0;
+  const userTouchedInputs = document.querySelectorAll('#customFieldGroups input.user-started').length > 0;
+
+  if (userTouchedInputs && hasErrors) {
+    void body.offsetHeight;
+    body.classList.add('show-generated-incomplete');
+    if (sqlStatus) sqlStatus.setAttribute('title', 'There are incomplete fields – SQL Generated!');
+  } else {
+    body.classList.add('show-generated');
+    if (sqlStatus) sqlStatus.removeAttribute('title');
+  }
+}
+
+    
+
+
+    document.querySelectorAll('#customFieldGroups input[type="text"]').forEach(input => {
+      input.addEventListener('input', () => {
+        input.classList.add('user-started');
+      });
+    });
     function copySQL() {
       navigator.clipboard.writeText(plainSQL).then(() => {
         document.body.classList.add('show-copied');
