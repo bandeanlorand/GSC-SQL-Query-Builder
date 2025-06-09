@@ -1,3 +1,52 @@
+/*  generateSQL function starts here */
+    let plainSQL = "";
+function updateFilterAndSortClauses() {
+  const filters = [];
+
+  document.querySelectorAll('#filterRows > div').forEach(filter => {
+    const selects = filter.querySelectorAll('select');
+    const input = filter.querySelector('input[type="text"]');
+    const field = selects[0]?.value?.trim();
+    const operator = selects[1]?.value?.trim();
+    const value = input?.value?.trim();
+    const logic = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
+
+    if (field && operator && (value || operator.includes('NULL'))) {
+      let clause = '';
+      switch (operator) {
+        case 'EQUALS': clause = `${field} = '${value}'`; break;
+        case 'NOT EQUALS': clause = `${field} != '${value}'`; break;
+        case 'CONTAINS': clause = `${field} LIKE '%${value}%'`; break;
+        case 'NOT CONTAINS': clause = `${field} NOT LIKE '%${value}%'`; break;
+        case 'GREATER THAN': clause = `${field} > '${value}'`; break;
+        case 'LESS THAN': clause = `${field} < '${value}'`; break;
+        case 'IS NULL': clause = `${field} IS NULL`; break;
+        case 'IS NOT NULL': clause = `${field} IS NOT NULL`; break;
+      }
+
+      // Only push valid clauses
+      if (clause) {
+        filters.push({ clause, logic });
+      }
+    }
+  });
+
+  // SORTS
+  const sorts = [];
+  document.querySelectorAll('#sortRows > div').forEach(row => {
+    const select = row.querySelector('select');
+    const direction = row.querySelector('input[type="radio"]:checked')?.value || 'ASC';
+    if (select?.value) {
+      sorts.push(`${select.value} ${direction}`);
+    }
+  });
+
+  window._filterClauses = filters;
+  window._sortClauses = sorts;
+}
+
+
+
 function generateSQL() {
   updateFilterAndSortClauses();
   const dateClause = getDateRangeClause();
@@ -31,6 +80,7 @@ function generateSQL() {
     plainSelectLines.push(`    ((SUM(sum_position) / SUM(Impressions)) + 1.0) AS avg_position`);
   }
 
+  // CUSTOM FIELDS
   const customFieldGroups = document.querySelectorAll('#customFieldGroups > div');
   let customFieldIndex = 1;
 
@@ -61,8 +111,8 @@ function generateSQL() {
 
       let condition = '';
       switch (operator) {
-        case 'EQUALS': condition = field.startsWith('Is ') ? `${field} = ${value}` : `${field} = '${value}'`; break;
-        case 'NOT EQUALS': condition = field.startsWith('Is ') ? `${field} != ${value}` : `${field} != '${value}'`; break;
+        case 'EQUALS': condition = `${field} = '${value}'`; break;
+        case 'NOT EQUALS': condition = `${field} != '${value}'`; break;
         case 'CONTAINS': condition = `${field} LIKE '%${value}%'`; break;
         case 'NOT CONTAINS': condition = `${field} NOT LIKE '%${value}%'`; break;
         case 'REGEX CONTAINS': condition = `REGEXP_CONTAINS(${field}, '${value}')`; break;
@@ -97,36 +147,21 @@ function generateSQL() {
   const filterClauses = window._filterClauses || [];
   const sortClauses = window._sortClauses || [];
 
-  const extraWhere = (() => {
-    if (!filterClauses.length) return '';
+  const extraWhereHTML = filterClauses.length
+    ? filterClauses.map(item => `${item.logic} ${item.clause}`).join(`<br>${indent}`)
+    : '';
 
-    const grouped = [];
-    let currentGroup = [];
-    let currentLogic = filterClauses[0].logic || 'AND';
+  const extraWhereText = filterClauses.length
+    ? filterClauses.map(item => `${item.logic} ${item.clause}`).join(`\n    `)
+    : '';
 
-    filterClauses.forEach((item, index) => {
-      if (index === 0 || item.logic === currentLogic) {
-        currentGroup.push(item.clause);
-      } else {
-        grouped.push({ logic: currentLogic, clauses: [...currentGroup] });
-        currentGroup = [item.clause];
-        currentLogic = item.logic;
-      }
-    });
+  const fullWhereHTML = filterClauses.length
+    ? `${baseWhereClause}<br>${indent}${extraWhereHTML}`
+    : baseWhereClause;
 
-    if (currentGroup.length) {
-      grouped.push({ logic: currentLogic, clauses: [...currentGroup] });
-    }
-
-    return grouped.map((group, i) => {
-      const prefix = i === 0 ? '' : ` ${group.logic} `;
-      const content = group.clauses.length > 1 ? `(${group.clauses.join(` ${group.logic} `)})` : group.clauses[0];
-      return prefix + content;
-    }).join('');
-  })();
-
-  const whereHTML = extraWhere ? `<br>${indent}${extraWhere}` : '';
-  const whereText = extraWhere ? `\n    ${extraWhere}` : '';
+  const fullWhereText = filterClauses.length
+    ? `${basePlainWhereClause}\n    ${extraWhereText}`
+    : basePlainWhereClause;
 
   const groupItems = [...dimensions, ...customFieldsToGroup];
   const groupByClause = groupItems.length
@@ -143,8 +178,8 @@ function generateSQL() {
     ? `\nORDER BY\n    ${sortClauses.join(', ')}`
     : '';
 
-  const sql = `${selectClause}${fromClause}${baseWhereClause}${whereHTML}${groupByClause}${orderHTML}`;
-  const plainSQL = `${plainSelectClause}\n${plainFromClause}\n${basePlainWhereClause}${whereText}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}${orderText}`;
+  const sql = `${selectClause}${fromClause}${fullWhereHTML}${groupByClause}${orderHTML}`;
+  const plainSQL = `${plainSelectClause}\n${plainFromClause}\n${fullWhereText}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}${orderText}`;
 
   document.getElementById('sqlOutput').innerHTML = sql;
   document.getElementById('sqlOutputFormated').textContent = plainSQL;
@@ -176,50 +211,9 @@ function generateSQL() {
   }
 }
 
-function updateFilterAndSortClauses() {
-  const filters = [];
-  document.querySelectorAll('#filterRows > div').forEach(filter => {
-    const selects = filter.querySelectorAll('select');
-    const field = selects[0]?.value;
-    const operator = selects[1]?.value;
-    const logic = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
+    
 
-    let value;
-    const textInput = filter.querySelector('input[type="text"]');
-    const allSelects = filter.querySelectorAll('select');
-    const possibleBooleanSelect = allSelects.length === 3 ? allSelects[2] : null;
 
-    if (field?.startsWith('Is ') && possibleBooleanSelect) {
-      value = possibleBooleanSelect.value?.trim();
-    } else if (textInput) {
-      value = textInput.value.trim();
-    }
-
-    if (field && operator && (value || operator.includes('NULL'))) {
-      let clause = '';
-      switch (operator) {
-        case 'EQUALS': clause = field.startsWith('Is ') ? `${field} = ${value}` : `${field} = '${value}'`; break;
-        case 'NOT EQUALS': clause = field.startsWith('Is ') ? `${field} != ${value}` : `${field} != '${value}'`; break;
-        case 'CONTAINS': clause = `${field} LIKE '%${value}%'`; break;
-        case 'NOT CONTAINS': clause = `${field} NOT LIKE '%${value}%'`; break;
-        case 'GREATER THAN': clause = `${field} > '${value}'`; break;
-        case 'LESS THAN': clause = `${field} < '${value}'`; break;
-        case 'IS NULL': clause = `${field} IS NULL`; break;
-        case 'IS NOT NULL': clause = `${field} IS NOT NULL`; break;
-      }
-      if (clause) filters.push({ clause, logic });
-    }
-  });
-
-  const sorts = [];
-  document.querySelectorAll('#sortRows > div').forEach(row => {
-    const select = row.querySelector('select');
-    const direction = row.querySelector('input[type="radio"]:checked')?.value || 'ASC';
-    if (select && select.value) {
-      sorts.push(`${select.value} ${direction}`);
-    }
-  });
-
-  window._filterClauses = filters;
-  window._sortClauses = sorts;
-}
+    
+    
+    /*  generateSQL function ends here */
