@@ -233,3 +233,12 @@ body.show-generated-incomplete::after {
 select option[value=""] {
   color: #9ca3af; /* Tailwind's text-gray-400 */
 }
+
+pre.resizable {
+  resize: vertical; /* or 'both' */
+  overflow: auto;
+  min-height: 100px;
+  padding: 1rem;
+  border: 1px solid #666;
+  background: #1a1a1a;
+}
