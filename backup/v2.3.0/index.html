@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="css/styles.css">
 
-
+  
 
 </head>
 
@@ -121,7 +121,8 @@
           <div class="flex items-center justify-between">
             <label for="metrics">Metrics</label>
             <button id="clearMetricsBtn"
-              class="text-sm text-red-100 hover:underline flex items-center space-x-1 w-auto border-none hidden">
+              class="text-sm text-red-100 hover:underline flex items-center space-x-1 w-auto border-none hidden"
+              onclick="clearAllMetrics()">
               <i class="fa-regular fa-circle-xmark"></i>
               <span>Clear all</span>
             </button>
@@ -147,10 +148,10 @@
             <!-- Dropdown items -->
             <div id="metricsDropdown" data-open="false"
               class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all mt-[8px]">
-              <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="Impressions">Impressions</div>
-              <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="Clicks">Clicks</div>
-              <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="CTR">CTR</div>
-              <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="Position">Position</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Impressions')">Impressions</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Clicks')">Clicks</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('CTR')">CTR</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" onclick="selectMetric('Position')">Position</div>
             </div>
           </div>
 
@@ -160,7 +161,8 @@
           <div class="flex items-center justify-between">
             <label for="dimensions">Dimensions</label>
             <button id="clearDimensionsBtn"
-              class="text-sm text-red-100 hover:underline flex items-center space-x-1 w-auto border-none hidden">
+              class="text-sm text-red-100 hover:underline flex items-center space-x-1 w-auto border-none hidden"
+              onclick="clearAllDimensions()">
               <i class="fa-regular fa-circle-xmark"></i>
               <span>Clear all</span>
             </button>
@@ -197,7 +199,7 @@
           <div class="w-full max-w-4xl mx-auto mt-4">
             <div
               class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition transition-all"
-              id="toggleFiltersHeader">
+              onclick="toggleFilters()">
               <span class="font-bold">Filters</span>
               <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
                 stroke-width="2" viewBox="0 0 24 24">
@@ -213,11 +215,11 @@
               </div>
               <!-- Add/Remove Buttons -->
               <div class="flex gap-2 mt-2">
-                <button id="addFilterRowBtn"
+                <button onclick="addFilterRow()"
                   class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">
                   +
                 </button>
-                <button id="removeFilterRowBtn"
+                <button onclick="removeFilterRow()"
                   class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">
                   −
                 </button>
@@ -231,7 +233,7 @@
           <div class="w-full max-w-4xl mx-auto mt-4">
             <div
               class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition-all"
-              id="toggleSortByHeader">
+              onclick="toggleSortBy()">
               <span class="font-bold">Sort by</span>
               <svg id="sortArrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
                 stroke-width="2" viewBox="0 0 24 24">
@@ -242,9 +244,9 @@
             <div id="sortSection" class="hidden bg-transparent px-0 py-4 space-y-2">
               <div id="sortRows" class="space-y-2"></div>
               <div class="flex gap-2 mt-2">
-                <button id="addSortRowBtn"
+                <button onclick="addSortRow()"
                   class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">+</button>
-                <button id="removeSortRowBtn"
+                <button onclick="removeSortRow()"
                   class="w-6 h-6 flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white rounded-full text-sm font-bold">−</button>
               </div>
             </div>
@@ -256,7 +258,7 @@
           <div class="w-full max-w-4xl mx-auto mt-4">
             <div
               class="bg-[#185e70] hover:bg-gray-800 border border-gray-700 rounded-t-lg p-4 text-white flex justify-between items-center cursor-pointer transition-all"
-              id="toggleCustomFieldsHeader">
+              onclick="toggleCustomFields()">
               <span class="font-bold">Custom Fields</span>
               <span class="relative group">
                 <i class="fas fa-question-circle text-sm text-gray-300 cursor-pointer"></i>
@@ -271,7 +273,8 @@
             <div id="customFieldsSection" class="hidden bg-transparent px-0 py-4 space-y-4">
               <div id="customFieldGroups" class="space-y-4"></div>
 
-              <button id="addCustomFieldGroupBtn" class=" text-gray-300 text-sm px-4 py-2 rounded-full w-auto">+ Custom
+              <button onclick="addCustomFieldGroup()"
+                class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-full w-auto">+ Custom
                 Field</button>
             </div>
           </div>
@@ -281,7 +284,7 @@
 
 
 
-          <button type="submit" id="generateSQLButton"
+          <button type="submit" onclick="handleGenerateSQL()"
             class="block w-auto mt-[24px]  m-auto bg-blue-800 text-white border-none px-10 py-2 text-center rounded-[8px] text-[1.25rem] leading-[2rem] ">Generate
             SQL</button>
         </div>
@@ -292,7 +295,7 @@
 
         <div class="flex justify-between items-center mb-2">
           <h2 class="text-xl font-semibold">Generated SQL</h2>
-          <button id="copySQLButton" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded w-auto">
+          <button onclick="copySQL()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded w-auto">
             Copy SQL
           </button>
         </div>
@@ -302,73 +305,14 @@
 
       </div>
     </div>
-
-    <section class="max-w-7xl mx-auto px-4 py-12 text-white grid grid-cols-1 md:grid-cols-2 gap-8">
-  <!-- About Section -->
-  <div>
-    <h2 class="text-2xl font-bold mb-4">About GSC SQL Query Builder</h2>
-    <p class="mb-4">
-      <strong>GSC SQL Query Builder</strong> is a tool designed to simplify the process of generating SQL queries for 
-      <strong>Google Search Console (GSC)</strong> data stored in <strong>BigQuery</strong>. This tool is tailored specifically to work with GSC datasets, allowing users to construct custom queries visually, without needing deep SQL expertise.
-    </p>
-    <ul class="list-disc pl-6 space-y-2 text-sm">
-      <li><strong>Select metrics and dimensions</strong> from curated dropdowns based on the GSC schema.</li>
-      <li><strong>Set a date range</strong> using preset options or custom values.</li>
-      <li><strong>Apply filters and sorting</strong> using intuitive logic blocks that support AND/OR conditions.</li>
-      <li><strong>Create custom fields</strong> using conditional <code>CASE WHEN</code> logic with fallback values.</li>
-      <li><strong>Generate your SQL</strong> and copy the formatted or raw output directly into BigQuery.</li>
-    </ul>
-    <p class="mt-4 text-sm">
-      The generated queries use <code>SAFE_DIVIDE()</code> and other protective logic to ensure stability, even with sparse or zero-value data.
-    </p>
-  </div>
-
-  <!-- FAQ + Contact Section -->
-  <div>
-    <h2 class="text-2xl font-bold mb-4">FAQ & Suggestions</h2>
-    
-    <div class="space-y-4 text-sm">
-      <div>
-        <h3 class="font-semibold text-base">What is this tool for?</h3>
-        <p>This builder helps you create SQL queries to analyze Google Search Console data within BigQuery — without having to write SQL manually.</p>
-      </div>
-
-      <div>
-        <h3 class="font-semibold text-base">Do I need SQL knowledge?</h3>
-        <p>Nope. The interface is built so that even non-technical users can create valid BigQuery SQL queries.</p>
-      </div>
-       <div>
-        <h3 class="font-semibold text-base">Is this tool free to use?</h3>
-        <p>Yes! TheQuery Builder is completely free and designed to help marketers and analysts work faster.</p>
-      </div>
-       <div>
-      <h3 class="font-semibold text-base">What if I generate an invalid SQL query?</h3>
-      <p>
-        We’ve done our best to cover most edge cases and prevent illogical SQL output. However, it's still possible that certain combinations may generate queries that are not valid.
-        If you encounter such an issue, please send us the broken query so we can investigate and improve the logic.
-        <br><br>
-        Some non-logical input combinations (e.g. incorrect data types or conflicting filters) are not yet fully handled — but we’re working on expanding coverage to prevent them in future versions.
-      </p>
-    </div>
-
-      <div>
-        <h3 class="font-semibold text-base">Where can I give feedback or suggest improvements?</h3>
-        <p>
-          We’d love your input! Please send any ideas, feature requests, or bug reports to  
-          <a href="mailto:support@example.com" class="text-blue-400 underline hover:text-blue-300">support@example.com</a>.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
   </main>
 
-  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.7rem] text-right">v2.3.3.23.06.2025</footer>
-
-
-  <script type="module" src="js/main.js"></script>
-
+  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.7rem] text-right">v2.3.0.23.06.2025</footer>
+  <script src="utils.js"></script>
+  <script src="predefinedCountries.js"></script>
+  
+  <script src="main.js"></script>
+  <script src="scriptsql.js"></script>
 </body>
 
 </html>
