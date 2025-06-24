@@ -1,7 +1,5 @@
 import { copySQL, setupEnterKeyTrigger } from './utils.js';
 import { predefinedCountries } from './predefinedCountries.js';
-import { getDateRangeClause } from './utils/dateClause.js';
-import { renderDimensionsDropdown } from './components/renderDimensionsDropdown.js';
 // import { generateSQL  } from './scriptsql.js';
     // Function to toggle the visibility of the filter section
     // and rotate the arrow icon  
@@ -9,7 +7,19 @@ import { renderDimensionsDropdown } from './components/renderDimensionsDropdown.
 console.log('Loaded countries:', predefinedCountries);
 
 
+// document.addEventListener('DOMContentLoaded', () => {
+//   const copyBtn = document.querySelector('#copySQLButton') || document.querySelector('button[onclick="copySQL()"]');
+//   if (copyBtn) {
+//     copyBtn.addEventListener('click', copySQL);
+//   }
 
+//   const genBtn = document.querySelector('#generateSQLButton') || document.querySelector('button[onclick="generateSQL()"]');
+//   if (genBtn) {
+//     genBtn.addEventListener('click', generateSQL);
+//   }
+
+//   setupEnterKeyTrigger(generateSQL);
+// }); 
 
     const filterOperatorMap = {
       string: ["EQUALS", "NOT EQUALS", "CONTAINS", "NOT CONTAINS"], /* Query */
@@ -24,7 +34,42 @@ console.log('Loaded countries:', predefinedCountries);
       return "string";
     }
 
-    
+    export function getDateRangeClause() {
+
+      const range = selectedDateRange;
+
+      switch (range) {
+        case 'Yesterday':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)';
+        case 'Last Week':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)';
+        case 'Last month':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)';
+        case 'Month to yesterday':
+          return 'DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), MONTH) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)';
+        case 'Last 7 days':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY) AND CURRENT_DATE()';
+        case 'Last 14 days':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 13 DAY) AND CURRENT_DATE()';
+        case 'Last 30 days':
+          return 'DATE_SUB(CURRENT_DATE(), INTERVAL 29 DAY) AND CURRENT_DATE()';
+        case 'Year to yesterday':
+          return 'DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), YEAR) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)';
+        case 'Last year':
+          return 'DATE_SUB(DATE_TRUNC(CURRENT_DATE(), YEAR), INTERVAL 1 YEAR) AND DATE_SUB(DATE_TRUNC(CURRENT_DATE(), YEAR), INTERVAL 1 DAY)';
+        case 'Custom date range':
+          const startDate = document.getElementById('startDate').value;
+          const endDate = document.getElementById('endDate').value;
+          if (startDate && endDate) {
+            return `DATE('${startDate}') AND DATE('${endDate}')`;
+          } else {
+            return 'DATE1 AND DATE2 -- replace with actual dates';
+          }
+        default:
+          return '... AND ...';
+      }
+      
+    }
     
 
 
@@ -123,89 +168,89 @@ console.log('Loaded countries:', predefinedCountries);
 
 
 
-    // // Populate dimensions dropdown
-    // const dimensionEntries = [
-    //   ["Query", "The user query. When is_anonymized_query is true, this will be a zero-length string."],
-    //   ["URL", "The fully-qualified URL where the user eventually lands when they click the search result or Discover story."],
-    //   ["Country", "Country from where the query was made, in ISO-3166-1-Alpha-3 format (for example, “USA”)."],
-    //   ["Search Type", "The type of search (web, image, video, or news)."],
-    //   ["Device", "The device type (desktop, tablet, or mobile)."],
-    //   ["Site URL", "URL of the property. For domain-level properties, this will be sc-domain:property-name. For URL-prefix properties, it will be the full URL of the property definition."],
-    //   ["Date", "The day on which the data in this row was generated (Pacific Time)."],
-    //   ["Month", "The month (YYYY-MM) of the data in this row."],
-    //   ["Year", "The year (YYYY) of the data in this row."],
-    //   ["Is Anonymized Query", "Rare queries (called anonymized queries) are marked with this bool. The query field will be null when it’s true to protect the privacy of users making the query."],
-    //   ["Is Anonymized Discover", "Whether the data row is under the Discover anonymization threshold. When under the threshold, some other fields (like URL and country) will be missing to protect user privacy."],
-    //   ["Is AMP Top Stories", "Whether the URL is an AMP Top Story."],
-    //   ["Is AMP Blue Link", "Whether the URL is an AMP Blue Link."],
-    //   ["Is Job Listing", "Whether the URL is a job listing."],
-    //   ["Is Job Details", "Whether the URL is a job details page."],
-    //   ["Is TPF QA", "Whether the URL is a top places for a query."],
-    //   ["Is TPF FAQ", "Whether the URL is a top places faq."],
-    //   ["Is TPF HowTo", "Whether the URL is a top places how-to."],
-    //   ["Is Weblite", "Whether the URL is a weblite."],
-    //   ["Is Action", "Whether the URL is an action."],
-    //   ["Is Events Listing", "Whether the URL is an events listing."],
-    //   ["Is Events Details", "Whether the URL is an events details page."],
-    //   ["Is Search Appearance Android App", "Whether the URL is a search appearance android app."],
-    //   ["Is AMP Story", "Whether the URL is an AMP story."],
-    //   ["Is AMP Image Result", "Whether the URL is an AMP image result."],
-    //   ["Is Video", "Whether the URL is a video."],
-    //   ["Is Organc Shopping", "Whether the URL is an organic shopping result."],
-    //   ["Is Review Snippet", "Whether the URL is a review snippet."],
-    //   ["Is Special Announcement", "Whether the URL is a special announcement."],
-    //   ["Is Recipe Feature", "Whether the URL is a recipe feature."],
-    //   ["Is Recipe Rich Snippet", "Whether the URL is a recipe rich snippet."],
-    //   ["Is Subscribed Content", "Whether the URL is subscribed content."],
-    //   ["Is Page Experience", "Whether the URL is a page experience."],
-    //   ["Is Practice Problems", "Whether the URL is a practice problem."],
-    //   ["Is Math Solvers", "Whether the URL is a math solver."],
-    //   ["Is Translated Result", "Whether the URL is a translated result."],
-    //   ["Is Product Snippets", "Whether the URL is a product snippet."],
-    //   ["Is Merchant Listings", "Whether the URL is a merchant listing."]
-    // ];
+    // Populate dimensions dropdown
+    const dimensionEntries = [
+      ["Query", "The user query. When is_anonymized_query is true, this will be a zero-length string."],
+      ["URL", "The fully-qualified URL where the user eventually lands when they click the search result or Discover story."],
+      ["Country", "Country from where the query was made, in ISO-3166-1-Alpha-3 format (for example, “USA”)."],
+      ["Search Type", "The type of search (web, image, video, or news)."],
+      ["Device", "The device type (desktop, tablet, or mobile)."],
+      ["Site URL", "URL of the property. For domain-level properties, this will be sc-domain:property-name. For URL-prefix properties, it will be the full URL of the property definition."],
+      ["Date", "The day on which the data in this row was generated (Pacific Time)."],
+      ["Month", "The month (YYYY-MM) of the data in this row."],
+      ["Year", "The year (YYYY) of the data in this row."],
+      ["Is Anonymized Query", "Rare queries (called anonymized queries) are marked with this bool. The query field will be null when it’s true to protect the privacy of users making the query."],
+      ["Is Anonymized Discover", "Whether the data row is under the Discover anonymization threshold. When under the threshold, some other fields (like URL and country) will be missing to protect user privacy."],
+      ["Is AMP Top Stories", "Whether the URL is an AMP Top Story."],
+      ["Is AMP Blue Link", "Whether the URL is an AMP Blue Link."],
+      ["Is Job Listing", "Whether the URL is a job listing."],
+      ["Is Job Details", "Whether the URL is a job details page."],
+      ["Is TPF QA", "Whether the URL is a top places for a query."],
+      ["Is TPF FAQ", "Whether the URL is a top places faq."],
+      ["Is TPF HowTo", "Whether the URL is a top places how-to."],
+      ["Is Weblite", "Whether the URL is a weblite."],
+      ["Is Action", "Whether the URL is an action."],
+      ["Is Events Listing", "Whether the URL is an events listing."],
+      ["Is Events Details", "Whether the URL is an events details page."],
+      ["Is Search Appearance Android App", "Whether the URL is a search appearance android app."],
+      ["Is AMP Story", "Whether the URL is an AMP story."],
+      ["Is AMP Image Result", "Whether the URL is an AMP image result."],
+      ["Is Video", "Whether the URL is a video."],
+      ["Is Organc Shopping", "Whether the URL is an organic shopping result."],
+      ["Is Review Snippet", "Whether the URL is a review snippet."],
+      ["Is Special Announcement", "Whether the URL is a special announcement."],
+      ["Is Recipe Feature", "Whether the URL is a recipe feature."],
+      ["Is Recipe Rich Snippet", "Whether the URL is a recipe rich snippet."],
+      ["Is Subscribed Content", "Whether the URL is subscribed content."],
+      ["Is Page Experience", "Whether the URL is a page experience."],
+      ["Is Practice Problems", "Whether the URL is a practice problem."],
+      ["Is Math Solvers", "Whether the URL is a math solver."],
+      ["Is Translated Result", "Whether the URL is a translated result."],
+      ["Is Product Snippets", "Whether the URL is a product snippet."],
+      ["Is Merchant Listings", "Whether the URL is a merchant listing."]
+    ];
 
-    // const dimensionsDropdown = document.getElementById("dimensionsDropdown");
-    // dimensionsDropdown.innerHTML = '<div id="dimensionsScrollArea" class="max-h-[400px] overflow-y-auto pr-2"></div>';
-    // const scrollArea = document.getElementById("dimensionsScrollArea");
-
-
-    // const tooltipBox = document.getElementById("global-tooltip");
-
-    // dimensionEntries.forEach(([name, tooltip]) => {
-    //   const item = document.createElement("div");
-    //   item.className = "relative cursor-pointer p-1 hover:bg-gray-700 flex items-center justify-between";
-    //   item.setAttribute("onclick", `selectDimension('${name}')`);
-
-    //   const span = document.createElement("span");
-    //   span.textContent = name;
-
-    //   // Icon setup
-    //   const icon = document.createElement("i");
-    //   icon.className = "far fa-question-circle text-gray-400";
-    //   icon.style.cursor = "pointer";
-
-    //   // Tooltip logic
-    //   icon.addEventListener("mouseenter", (e) => {
-    //     tooltipBox.textContent = tooltip;
-    //     tooltipBox.classList.remove("hidden");
-
-    //     const rect = e.target.getBoundingClientRect();
-    //     tooltipBox.style.top = `${rect.top + window.scrollY}px`;
-    //     tooltipBox.style.left = `${rect.right + 8 + window.scrollX}px`;
-    //   });
-
-    //   icon.addEventListener("mouseleave", () => {
-    //     tooltipBox.classList.add("hidden");
-    //   });
-
-    //   item.appendChild(span);
-    //   item.appendChild(icon);
-    //   dimensionsDropdown.appendChild(item);
-    // });
+    const dimensionsDropdown = document.getElementById("dimensionsDropdown");
+    dimensionsDropdown.innerHTML = '<div id="dimensionsScrollArea" class="max-h-[400px] overflow-y-auto pr-2"></div>';
+    const scrollArea = document.getElementById("dimensionsScrollArea");
 
 
-    // // dimensions dropdown items end
+    const tooltipBox = document.getElementById("global-tooltip");
+
+    dimensionEntries.forEach(([name, tooltip]) => {
+      const item = document.createElement("div");
+      item.className = "relative cursor-pointer p-1 hover:bg-gray-700 flex items-center justify-between";
+      item.setAttribute("onclick", `selectDimension('${name}')`);
+
+      const span = document.createElement("span");
+      span.textContent = name;
+
+      // Icon setup
+      const icon = document.createElement("i");
+      icon.className = "far fa-question-circle text-gray-400";
+      icon.style.cursor = "pointer";
+
+      // Tooltip logic
+      icon.addEventListener("mouseenter", (e) => {
+        tooltipBox.textContent = tooltip;
+        tooltipBox.classList.remove("hidden");
+
+        const rect = e.target.getBoundingClientRect();
+        tooltipBox.style.top = `${rect.top + window.scrollY}px`;
+        tooltipBox.style.left = `${rect.right + 8 + window.scrollX}px`;
+      });
+
+      icon.addEventListener("mouseleave", () => {
+        tooltipBox.classList.add("hidden");
+      });
+
+      item.appendChild(span);
+      item.appendChild(icon);
+      dimensionsDropdown.appendChild(item);
+    });
+
+
+    // dimensions dropdown items end
 
 
     function selectDimension(dimension) {
@@ -2024,7 +2069,6 @@ function updateFilterAndSortClauses() {
   window._sortClauses = sorts;
 }
 document.addEventListener('DOMContentLoaded', () => {
-  renderDimensionsDropdown();
   setupEventListeners();
 });
 
