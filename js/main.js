@@ -1066,7 +1066,7 @@ function updateSortRemoveButton() {
 
 function toggleCustomFields() {
   const section = document.getElementById('customFieldsSection');
-  const arrow = document.getElementById('filterArrow');
+  const arrow = document.getElementById('customFilterArrow');
   section.classList.toggle('hidden');
   arrow.classList.toggle('rotate-180');
 }
