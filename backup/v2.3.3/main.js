@@ -997,14 +997,6 @@ console.log('Loaded countries:', predefinedCountries);
       return input; // So you can still access input.dataset.code
     }
 
-    /* country filter script ends here */
-
-//     document.addEventListener('DOMContentLoaded', () => {
-//   const addSortRowBtn = document.getElementById('addSortRowBtn');
-//   if (addSortRowBtn) {
-//     addSortRowBtn.addEventListener('click', addSortRow);
-//   }
-// });
 
     function addSortRow() {
       const container = document.getElementById('sortRows');
