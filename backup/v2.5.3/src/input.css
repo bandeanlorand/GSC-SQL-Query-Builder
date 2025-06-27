@@ -1,0 +1,7 @@
+/* @import "../css/styles.css"; */
+@import "tailwindcss" ;
+@import "../css/custom.css"; 
+@source "./public/*.{html,js}";
+@plugin "daisyui";
+
+

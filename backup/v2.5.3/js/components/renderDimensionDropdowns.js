@@ -42,41 +42,41 @@ export function renderDimensionsDropdown() {
     ["Is Merchant Listings", "Whether the URL is a merchant listing."]
   ];
 
-//   const dimensionsDropdown = document.getElementById("dimensionsDropdown");
-//   if (!dimensionsDropdown) return;
+  const dimensionsDropdown = document.getElementById("dimensionsDropdown");
+  if (!dimensionsDropdown) return;
 
-//   dimensionsDropdown.innerHTML = '<div id="dimensionsScrollArea" class="max-h-[400px] overflow-y-auto pr-2"></div>';
-//   const scrollArea = document.getElementById("dimensionsScrollArea");
-//   const tooltipBox = document.getElementById("global-tooltip");
+  dimensionsDropdown.innerHTML = '<div id="dimensionsScrollArea" class="max-h-[400px] overflow-y-auto pr-2"></div>';
+  const scrollArea = document.getElementById("dimensionsScrollArea");
+  const tooltipBox = document.getElementById("global-tooltip");
 
-//   dimensionEntries.forEach(([name, tooltip]) => {
-//     const item = document.createElement("div");
-//     item.className = "relative cursor-pointer p-1 hover:bg-gray-700 flex items-center justify-between";
+  dimensionEntries.forEach(([name, tooltip]) => {
+    const item = document.createElement("div");
+    item.className = "relative cursor-pointer p-1 hover:bg-gray-700 flex items-center justify-between";
 
-//     const span = document.createElement("span");
-//     span.textContent = name;
+    const span = document.createElement("span");
+    span.textContent = name;
 
-//     const icon = document.createElement("i");
-//     icon.className = "far fa-question-circle text-gray-400";
-//     icon.style.cursor = "pointer";
+    const icon = document.createElement("i");
+    icon.className = "far fa-question-circle text-gray-400";
+    icon.style.cursor = "pointer";
 
-//     icon.addEventListener("mouseenter", (e) => {
-//       tooltipBox.textContent = tooltip;
-//       tooltipBox.classList.remove("hidden");
+    icon.addEventListener("mouseenter", (e) => {
+      tooltipBox.textContent = tooltip;
+      tooltipBox.classList.remove("hidden");
 
-//       const rect = e.target.getBoundingClientRect();
-//       tooltipBox.style.top = `${rect.top + window.scrollY}px`;
-//       tooltipBox.style.left = `${rect.right - 8 + window.scrollX}px`;
-//     });
+      const rect = e.target.getBoundingClientRect();
+      tooltipBox.style.top = `${rect.top + window.scrollY}px`;
+      tooltipBox.style.left = `${rect.right - 8 + window.scrollX}px`;
+    });
 
-//     icon.addEventListener("mouseleave", () => {
-//       tooltipBox.classList.add("hidden");
-//     });
+    icon.addEventListener("mouseleave", () => {
+      tooltipBox.classList.add("hidden");
+    });
 
-//     item.addEventListener("click", () => selectDimension(name));
+    item.addEventListener("click", () => selectDimension(name));
 
-//     item.appendChild(span);
-//     item.appendChild(icon);
-//     scrollArea.appendChild(item);
-//   });
+    item.appendChild(span);
+    item.appendChild(icon);
+    scrollArea.appendChild(item);
+  });
 }

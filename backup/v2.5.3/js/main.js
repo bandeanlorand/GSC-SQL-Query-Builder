@@ -1,9 +1,11 @@
 import { copySQL, setupEnterKeyTrigger } from './utils.js';
-import { predefinedCountries } from './components/predefinedCountries.js';
-import { dimensionEntries } from './components/dimensionsData.js';
+import { predefinedCountries } from './predefinedCountries.js';
+
 
 // Function to toggle the visibility of the filter section
 // and rotate the arrow icon  
+
+console.log('Loaded countries:', predefinedCountries);
 
 const filterOperatorMap = {
   string: ["EQUALS", "NOT EQUALS", "CONTAINS", "NOT CONTAINS"], /* Query */
@@ -140,10 +142,59 @@ function toggleCustomDateInputs(range) {
     customInputs.classList.add('hidden');
   }
 }
+// function toggleCustomDateInputs() {
+//       // const dateRange = document.getElementById('dateRange').value;
+//       const customInputs = document.getElementById('customDateInputs');
+//       if (dateRange === 'Custom date range') {
+//         customInputs.classList.remove('hidden');
+//       } else {
+//         customInputs.classList.add('hidden');
+//       }
+//     }
 
 
 
 // Populate dimensions dropdown
+const dimensionEntries = [
+  ["Query", "The user query. When is_anonymized_query is true, this will be a zero-length string."],
+  ["URL", "The fully-qualified URL where the user eventually lands when they click the search result or Discover story."],
+  ["Country", "Country from where the query was made, in ISO-3166-1-Alpha-3 format (for example, “USA”)."],
+  ["Search Type", "The type of search (web, image, video, or news)."],
+  ["Device", "The device type (desktop, tablet, or mobile)."],
+  ["Site URL", "URL of the property. For domain-level properties, this will be sc-domain:property-name. For URL-prefix properties, it will be the full URL of the property definition."],
+  ["Date", "The day on which the data in this row was generated (Pacific Time)."],
+  ["Month", "The month (YYYY-MM) of the data in this row."],
+  ["Year", "The year (YYYY) of the data in this row."],
+  ["Is Anonymized Query", "Rare queries (called anonymized queries) are marked with this bool. The query field will be null when it’s true to protect the privacy of users making the query."],
+  ["Is Anonymized Discover", "Whether the data row is under the Discover anonymization threshold. When under the threshold, some other fields (like URL and country) will be missing to protect user privacy."],
+  ["Is AMP Top Stories", "Whether the URL is an AMP Top Story."],
+  ["Is AMP Blue Link", "Whether the URL is an AMP Blue Link."],
+  ["Is Job Listing", "Whether the URL is a job listing."],
+  ["Is Job Details", "Whether the URL is a job details page."],
+  ["Is TPF QA", "Whether the URL is a top places for a query."],
+  ["Is TPF FAQ", "Whether the URL is a top places faq."],
+  ["Is TPF HowTo", "Whether the URL is a top places how-to."],
+  ["Is Weblite", "Whether the URL is a weblite."],
+  ["Is Action", "Whether the URL is an action."],
+  ["Is Events Listing", "Whether the URL is an events listing."],
+  ["Is Events Details", "Whether the URL is an events details page."],
+  ["Is Search Appearance Android App", "Whether the URL is a search appearance android app."],
+  ["Is AMP Story", "Whether the URL is an AMP story."],
+  ["Is AMP Image Result", "Whether the URL is an AMP image result."],
+  ["Is Video", "Whether the URL is a video."],
+  ["Is Organc Shopping", "Whether the URL is an organic shopping result."],
+  ["Is Review Snippet", "Whether the URL is a review snippet."],
+  ["Is Special Announcement", "Whether the URL is a special announcement."],
+  ["Is Recipe Feature", "Whether the URL is a recipe feature."],
+  ["Is Recipe Rich Snippet", "Whether the URL is a recipe rich snippet."],
+  ["Is Subscribed Content", "Whether the URL is subscribed content."],
+  ["Is Page Experience", "Whether the URL is a page experience."],
+  ["Is Practice Problems", "Whether the URL is a practice problem."],
+  ["Is Math Solvers", "Whether the URL is a math solver."],
+  ["Is Translated Result", "Whether the URL is a translated result."],
+  ["Is Product Snippets", "Whether the URL is a product snippet."],
+  ["Is Merchant Listings", "Whether the URL is a merchant listing."]
+];
 
 const dimensionsDropdown = document.getElementById("dimensionsDropdown");
 dimensionsDropdown.innerHTML = '<div id="dimensionsScrollArea" class="max-h-[400px] overflow-y-auto pr-2"></div>';
@@ -251,6 +302,33 @@ function removeDimension(dimension) {
   refreshDropdownHeight(dimensionsDropdown);
 }
 window.removeDimension = removeDimension;
+
+// function removeDimension(dimension) {
+//   selectedDimensions.delete(dimension);
+
+//   // Remove tag
+//   const tag = document.getElementById(`tag-dimension-${dimension}`);
+//   if (tag) tag.remove();
+
+//   // Show item in dropdown again
+//   const dropdownItems = document.querySelectorAll("#dimensionsDropdown > div");
+//   dropdownItems.forEach(item => {
+//     const label = item.querySelector("span");
+//     if (label && label.textContent === dimension) {
+//       item.style.display = "flex";
+//     }
+//   });
+
+//   // Show placeholder if empty
+//   if (selectedDimensions.size === 0) {
+//     const placeholder = document.getElementById("dimensionsPlaceholder");
+//     if (placeholder) placeholder.classList.remove("hidden");
+//   }
+
+//   updateClearDimensionsButton();
+//   refreshDropdownHeight(dimensionsDropdown);
+// }
+
 
 function updateClearMetricsButton() {
   const clearBtn = document.getElementById("clearMetricsBtn");
@@ -701,19 +779,19 @@ function addFilterRow() {
   bottomRow.className = "flex flex-nowrap items-center gap-2 overflow-x-auto1";
 
   const fieldSelect = document.createElement('select');
-  fieldSelect.className = 'w-[calc(48%-22px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  fieldSelect.className = 'h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 w-[140px]';
   fieldSelect.required = true;
   fieldSelect.innerHTML =
     `<option value="" disabled selected hidden>Select Field</option>` +
     filterFieldOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
   const operatorSelect = document.createElement('select');
-  operatorSelect.className = "w-[calc(25%-22px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm";
+  operatorSelect.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 w-[140px]";
 
   const textInput = document.createElement('input');
   textInput.type = "text";
   textInput.placeholder = "Type value";
-  textInput.className = "input w-[calc(50%-22px)] input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm";
+  textInput.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 text-white w-[400px]";
 
   const radioWrapper = document.createElement('div');
   radioWrapper.className = "flex gap-4 items-center text-white hidden";
@@ -809,49 +887,49 @@ const sortFieldOptions = ["Query", "Impressions"];
 
 /* country filter script stars here */
 
-// function enableCountrySearch(selectElement) {
-//   const container = document.createElement('div');
-//   container.className = 'relative w-full';
+function enableCountrySearch(selectElement) {
+  const container = document.createElement('div');
+  container.className = 'relative w-full';
 
-//   const input = document.createElement('input');
-//   input.type = 'text';
-//   input.placeholder = 'Type to search country...';
-//   input.className = 'w-full h-10 px-3 rounded border border-gray-600 bg-gray-700 text-white mb-2';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Type to search country...';
+  input.className = 'w-full h-10 px-3 rounded border border-gray-600 bg-gray-700 text-white mb-2';
 
-//   const dropdown = document.createElement('select');
-//   dropdown.className = selectElement.className;
-//   dropdown.style.width = '100%';
+  const dropdown = document.createElement('select');
+  dropdown.className = selectElement.className;
+  dropdown.style.width = '100%';
 
-//   // Initial population
-//   function populateDropdown(filteredList) {
-//     dropdown.innerHTML = '';
-//     filteredList.forEach(c => {
-//       const opt = document.createElement('option');
-//       opt.value = c.code;
-//       opt.textContent = c.name;
-//       dropdown.appendChild(opt);
-//     });
-//   }
+  // Initial population
+  function populateDropdown(filteredList) {
+    dropdown.innerHTML = '';
+    filteredList.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = c.name;
+      dropdown.appendChild(opt);
+    });
+  }
 
-//   // Initial full list
-//   populateDropdown(window.predefinedCountries);
+  // Initial full list
+  populateDropdown(window.predefinedCountries);
 
-//   // Filter as user types
-//   input.addEventListener('input', () => {
-//     const term = input.value.trim().toLowerCase();
-//     const filtered = window.predefinedCountries.filter(c =>
-//       c.name.toLowerCase().startsWith(term)
-//     );
-//     populateDropdown(filtered);
-//   });
+  // Filter as user types
+  input.addEventListener('input', () => {
+    const term = input.value.trim().toLowerCase();
+    const filtered = window.predefinedCountries.filter(c =>
+      c.name.toLowerCase().startsWith(term)
+    );
+    populateDropdown(filtered);
+  });
 
-//   // Insert new structure into the DOM
-//   selectElement.replaceWith(container);
-//   container.appendChild(input);
-//   container.appendChild(dropdown);
+  // Insert new structure into the DOM
+  selectElement.replaceWith(container);
+  container.appendChild(input);
+  container.appendChild(dropdown);
 
-//   return dropdown;
-// }
+  return dropdown;
+}
 
 
 
@@ -863,7 +941,7 @@ function enableCountrySearchStyled(idPrefix, countries, parentElement) {
   const input = document.createElement('input');
   input.type = 'text';
   input.placeholder = 'Type to search country...';
-  input.className = 'input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(100%-0px)] text-sm';
+  input.className = 'w-full h-10 px-3 rounded border border-gray-600 bg-gray-700 text-white mb-2';
   input.autocomplete = 'off';
 
   input.classList.add('country-search-input'); // Adding class to the serach-dropdown-input 
@@ -938,7 +1016,7 @@ function addSortRow() {
   wrapper.className = "flex items-center gap-4";
 
   const fieldSelect = document.createElement('select');
-  fieldSelect.className = "w-[calc(50%-0px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm";
+  fieldSelect.className = "h-10 px-3 border border-gray-700 rounded-[8px] bg-gray-800 w-[240px]";
   fieldSelect.innerHTML = `<option value="" disabled selected hidden>Select Field</option>` +
     sortFieldOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
@@ -1003,23 +1081,23 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   inputRow.className = 'flex items-center gap-2 flex-wrap ';
 
   const whenLabel = document.createElement('label');
-  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold font-semibold';
+  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
   whenLabel.textContent = 'When';
   inputRow.appendChild(whenLabel);
 
   const fieldSelect = document.createElement('select');
-  fieldSelect.className = 'w-[calc(48%-22px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
   fieldSelect.innerHTML =
     `<option value="" disabled ${!defaultField ? 'selected hidden' : ''}>Select Field</option>` +
     fieldOptionsCustomField.map(opt => `<option value="${opt}" ${opt === defaultField ? 'selected' : ''}>${opt}</option>`).join('');
 
   const operatorSelect = document.createElement('select');
-  operatorSelect.className = 'w-[calc(48%-22px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
 
   const valueInput = document.createElement('input');
   valueInput.type = 'text';
   valueInput.placeholder = 'My Website Name';
-  valueInput.className = 'input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
   const valueSelectWrapper = document.createElement('div');
   valueSelectWrapper.className = 'hidden w-full flex-1';
@@ -1084,13 +1162,13 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   thenRow.className = 'flex items-center gap-2';
 
   const thenLabel = document.createElement('label');
-  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold font-semibold';
+  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
   thenLabel.textContent = 'Then';
 
   const thenInput = document.createElement('input');
   thenInput.type = 'text';
   thenInput.placeholder = 'Brand';
-  thenInput.className = 'input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(65%-22px)] text-sm';
+  thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
   thenRow.appendChild(thenLabel);
   thenRow.appendChild(thenInput);
@@ -1098,7 +1176,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   if (addButtons) {
     const removeBtn = document.createElement('button');
     removeBtn.textContent = '−';
-    removeBtn.className = 'btn btn-md btn-ghost ';
+    removeBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
     removeBtn.onclick = () => {
       wrapper.remove();
       updateConditionButtonsVisibility(groupContainer);
@@ -1106,7 +1184,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
 
     const addConditionBtn = document.createElement('button');
     addConditionBtn.textContent = '+ Condition';
-    addConditionBtn.className = 'btn btn-md btn-ghost' ;
+    addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto';
     addConditionBtn.onclick = () => {
       if (!groupContainer) return;
       const newGroup = createConditionRow(true, true, groupContainer, '', 'EQUALS');
@@ -1169,14 +1247,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function addCustomFieldGroup() {
   const groupContainer = document.createElement('div');
-  groupContainer.className = 'card bg-base-100 card-border border-base-300 card-sm gap-4 p-4 pt-[24px]';
+  groupContainer.className = 'card bg-base-100 card-border border-base-300 card-sm gap-4 p-4';
 
   const isFirstGroup = document.querySelectorAll('#customFieldGroups > div').length > 0;
 
   if (isFirstGroup) {
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '&times;';
-    closeBtn.className = 'absolute top-1 right-1 text-white text-lg w-[20px] h-[20px] font-bold hover:text-red-500 font-extralight rounded-[5px] leading-[100%]';
+    closeBtn.className = 'absolute top-2 right-2 text-white text-lg w-[20px] h-[20px] font-bold hover:text-red-500 font-extralight rounded-[5px] leading-[100%]';
     closeBtn.onclick = () => groupContainer.remove();
     groupContainer.appendChild(closeBtn);
   }
@@ -1191,21 +1269,21 @@ function addCustomFieldGroup() {
   inputRow.className = 'flex items-center gap-2 flex-wrap';
 
   const whenLabel = document.createElement('label');
-  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold font-semibold';
+  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
   whenLabel.textContent = 'When';
 
   const fieldSelect = document.createElement('select');
-  fieldSelect.className = 'w-[calc(48%-22px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  fieldSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
   fieldSelect.innerHTML = `<option value="" disabled selected hidden>Select Field</option>` +
     fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
   const operatorSelect = document.createElement('select');
-  operatorSelect.className = 'w-[calc(48%-22px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  operatorSelect.className = 'w-[180px] h-10 px-2 rounded border border-gray-600 bg-gray-700 text-white';
 
   const valueInput = document.createElement('input');
   valueInput.type = 'text';
   valueInput.placeholder = 'My Website Name';
-  valueInput.className = 'input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  valueInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
   const valueSelect = document.createElement('select');
   valueSelect.className = 'hidden flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
@@ -1291,17 +1369,17 @@ function addCustomFieldGroup() {
   thenRow.className = 'flex items-center gap-2';
 
   const thenLabel = document.createElement('label');
-  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold font-semibold';
+  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
   thenLabel.textContent = 'Then';
 
   const thenInput = document.createElement('input');
   thenInput.type = 'text';
   thenInput.placeholder = 'Brand';
-  thenInput.className = 'input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(72%-8px)] text-sm';
+  thenInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
   const addConditionBtn = document.createElement('button');
   addConditionBtn.textContent = '+ Condition';
-  addConditionBtn.className = 'btn btn-md btn-ghost ';
+  addConditionBtn.className = 'ml-2 inline-block border border-white text-white text-sm px-4 py-1 rounded-full hover:bg-gray-700 transition w-auto initial-add-btn';
   addConditionBtn.onclick = () => {
     const newGroup = createConditionGroupWrapper(groupContainer);
     const elseRow = Array.from(groupContainer.children).find(child => {
@@ -1326,13 +1404,13 @@ function addCustomFieldGroup() {
   elseRow.className = 'flex items-center gap-2';
 
   const elseLabel = document.createElement('label');
-  elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(55px)] font-semibold';
+  elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0';
   elseLabel.textContent = 'Else';
 
   const elseInput = document.createElement('input');
   elseInput.type = 'text';
   elseInput.placeholder = 'Non-Brand';
-  elseInput.className = 'input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  elseInput.className = 'flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
 
   elseRow.appendChild(elseLabel);
   elseRow.appendChild(elseInput);

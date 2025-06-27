@@ -52,7 +52,7 @@
               <!-- Input field -->
               <div id="selectedDateRange" tabindex="0" data-toggle="dropdown" data-target="#dateRangeDropdown"
                 data-arrow="#dateRangeArrow"
-                class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm">
+                class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none">
                 <span id="dateRangeLabel" class="text-gray-400">Select date range</span>
 
                 <svg id="dateRangeArrow" class="w-4 h-4 transition-transform duration-300" fill="none"
@@ -137,7 +137,7 @@
 
             <!-- Selected metrics box -->
             <div id="selectedMetrics" tabindex="0"
-              class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm">
+              class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none">
               <div id="metricsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto">
                 <span id="metricsPlaceholder" class="text-gray-400">Select metrics</span>
               </div>
@@ -175,7 +175,7 @@
 
             <!-- Selected Dimensions -->
             <div id="selectedDimensions" tabindex="0"
-              class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm">
+              class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px]">
               <div id="dimensionsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto"><span
                   id="dimensionsPlaceholder" class="text-gray-400">Select dimensions</span></div>
               <svg id="dimensionsArrow" class="w-4 h-4 transition-transform duration-300 ml-2 flex-shrink-0" fill="none"
@@ -268,7 +268,11 @@
                   stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
                 </svg>
-
+                <!-- <div
+                  class="absolute hidden group-hover:block bg-gray-900 text-white text-xs w-[250px] rounded px-2 py-1 shadow-lg top-full left-1/2 transform -translate-x-1/2 mt-1 whitespace-pre-wrap max-w-xs z-10">
+                  Create your own fields. For example, group branded vs non-branded keywords. When query contains your
+                  brand name, the field will show "Brand", else "Non-Brand".
+                </div> -->
               </span>
             </div>
 
@@ -281,7 +285,7 @@
           </div>
           <!-- Custom Fields section ends -->
           <div class="my-6 flex flex-wrap gap-3 justify-center w-full">
-            <button type="submit" id="generateSQLButton" class="btn  btn-xl block w-auto">Generate SQL</button>
+            <button type="submit" id="generateSQLButton" class="btn  btn-xl block w-auto ">Generate SQL</button>
           </div>
         </div>
       </div>
@@ -295,7 +299,7 @@
             Copy SQL
           </button>
         </div>
-        <div class="mockup-code mockup-code !h-auto pb-0 mt-[12px]">
+        <div class="mockup-code mockup-code !h-auto pb-0">
           <pre id="sqlOutput"
             class="resize-y overflow-auto rounded p-4 text-sm whitespace-pre-wrap min-h-[400px] w-full"></pre>
         </div>
@@ -377,7 +381,7 @@
 
   </main>
 
-  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.7rem] text-right">v2.5.4.27.06.2025</footer>
+  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.7rem] text-right">v2.5.3.27.06.2025</footer>
   <script type="module" src="js/main.js"></script>
   <div id="global-tooltip"
     class=" z-50 pointer-events-none bg-gray-900 text-xs text-white p-2 rounded shadow-lg max-w-xs hidden absolute">
