@@ -8,14 +8,22 @@ import { getDateRangeClause } from './components/dateRangeHelper.js';
 
 const filterOperatorMap = {
   string: ["EQUALS", "NOT EQUALS", "CONTAINS", "NOT CONTAINS"], /* Query */
+  regex: ["EQUALS", "NOT EQUALS", "CONTAINS", "NOT CONTAINS", "REGEXP CONTAINS", "NOT REGEXP CONTAINS"],
   numeric: ["EQUALS", "NOT EQUALS", "GREATER THAN", "LESS THAN", "IS NULL", "IS NOT NULL"],
   boolean: ["EQUALS", "NOT EQUALS"], // limited to true/false via radio buttons
   country: ["EQUALS", "NOT EQUALS"]
 };
+// function getOperatorType(field) {
+//   if (field.startsWith("Is ")) return "boolean";
+//   if (field === "Country") return "country";
+//   if (["Impressions", "Position", "Clicks", "CTR", "Avg Position"].includes(field)) return "numeric";
+//   return "string";
+// }
 function getOperatorType(field) {
   if (field.startsWith("Is ")) return "boolean";
   if (field === "Country") return "country";
   if (["Impressions", "Position", "Clicks", "CTR", "Avg Position"].includes(field)) return "numeric";
+  if (["Query", "URL"].includes(field)) return "regex"; // allow REGEXP for Query & URL only
   return "string";
 }
 
@@ -285,11 +293,11 @@ function selectMetric(metric) {
 
 
   document.querySelectorAll("#metricsDropdown > div").forEach(item => {
-  const span = item.querySelector("span");
-  if (span && span.textContent === metric) {
-    item.style.display = "none";
-  }
-});
+    const span = item.querySelector("span");
+    if (span && span.textContent === metric) {
+      item.style.display = "none";
+    }
+  });
 
 
   const tag = document.createElement("div");
@@ -342,11 +350,11 @@ function removeMetric(metric) {
 
 
   document.querySelectorAll("#metricsDropdown > div").forEach(item => {
-  const span = item.querySelector("span");
-  if (span && span.textContent === metric) {
-    item.style.display = "block";
-  }
-});
+    const span = item.querySelector("span");
+    if (span && span.textContent === metric) {
+      item.style.display = "block";
+    }
+  });
 
 
   if (selectedMetrics.size === 0) {
@@ -646,7 +654,7 @@ function clearAllDimensions() {
 /* add filter row script starts here */
 
 const filterFieldOptions = [
-  "Query", "URL", "Country", "Search Type", "Device", "Site URL", "Date", "Month", "Year",
+  "Query", "URL", "Country", "Page", "Search Type", "Device", "Site URL", "Date", "Month", "Year",
   "Is Anonymized Query", "Is Anonymized Discover", "Is AMP Top Stories", "Is AMP Blue Link", "Is Job Listing",
   "Is Job Details", "Is TPF QA", "Is TPF FAQ", "Is TPF HowTo", "Is Weblite", "Is Action", "Is Events Listing",
   "Is Events Details", "Is Search Appearance Android App", "Is AMP Story", "Is AMP Image Result", "Is Video",
@@ -655,10 +663,10 @@ const filterFieldOptions = [
   "Is Product Snippets", "Is Merchant Listings", "Impressions"
 ];
 
-const operatorOptions = [
-  "EQUALS", "NOT EQUALS", "CONTAINS", "NOT CONTAINS", "GREATER THAN",
-  "LESS THAN", "IS NULL", "IS NOT NULL"
-];
+// const operatorOptions = [
+//   "EQUALS", "NOT EQUALS", "CONTAINS", "NOT CONTAINS", "GREATER THAN",
+//   "LESS THAN", "IS NULL", "IS NOT NULL"
+// ];
 
 
 function addFilterRow() {
@@ -714,6 +722,8 @@ function addFilterRow() {
   fieldSelect.innerHTML =
     `<option value="" disabled selected hidden>Select Field</option>` +
     filterFieldOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+    console.log('Filter fields loaded:', filterFieldOptions);
 
   const operatorSelect = document.createElement('select');
   operatorSelect.className = "w-[calc(25%-22px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm";
@@ -1569,26 +1579,58 @@ export function generateSQL() {
     groupAliases.push(aliasLower);
   });
 
-  
+
 
 
   if (metrics.includes('Clicks')) {
-    selectLines.push(`${indent}<span class="sql-function">SUM(Clicks)</span> AS <span class="sql-alias">clicks</span>`);
-    plainSelectLines.push(`    SUM(Clicks) AS clicks`);
+    selectLines.push(`${indent}<span class="sql-function">SUM(clicks)</span> AS <span class="sql-alias">clicks</span>`);
+    plainSelectLines.push(`    SUM(clicks) AS clicks`);
   }
   if (metrics.includes('Impressions')) {
-    selectLines.push(`${indent}<span class="sql-function">SUM(Impressions)</span> AS <span class="sql-alias">impressions</span>`);
-    plainSelectLines.push(`    SUM(Impressions) AS impressions`);
+    selectLines.push(`${indent}<span class="sql-function">SUM(impressions)</span> AS <span class="sql-alias">impressions</span>`);
+    plainSelectLines.push(`    SUM(impressions) AS impressions`);
   }
   if (metrics.includes('CTR')) {
-    selectLines.push(`${indent}<span class="sql-function">SAFE_DIVIDE</span>(<span class="sql-function">SUM(Clicks)</span>, <span class="sql-function">SUM(Impressions)</span>) AS <span class="sql-alias">ctr</span>`);
-    plainSelectLines.push(`    SAFE_DIVIDE(SUM(Clicks), SUM(Impressions)) AS ctr`);
+    selectLines.push(`${indent}<span class="sql-function">SAFE_DIVIDE</span>(<span class="sql-function">SUM(clicks)</span>, <span class="sql-function">SUM(impressions)</span>) AS <span class="sql-alias">ctr</span>`);
+    plainSelectLines.push(`    SAFE_DIVIDE(SUM(clicks), SUM(impressions)) AS ctr`);
   }
 
-  if (metrics.includes('Position')) {
-    selectLines.push(`${indent}<span class="sql-function">SAFE_DIVIDE</span>(<span class="sql-function">SUM(sum_position)</span>, <span class="sql-function">SUM(Impressions)</span>) + 1.0 AS <span class="sql-alias">avg_position</span>`);
-    plainSelectLines.push(`    SAFE_DIVIDE(SUM(sum_position), SUM(Impressions)) + 1.0 AS avg_position`);
-  }
+ //adding + 1.0 as avg position script commented if needed - starts here
+console.log('Dimensions:', dimensions);
+// if (metrics.includes('Position')) {
+//   const useTopPosition =
+//     dimensions.length === 0 || // No dimensions selected
+//     (dimensions.length === 1 && dimensions[0] === 'URL'); // Only URL selected
+
+//   const positionField = useTopPosition ? 'sum_top_position' : 'sum_position';
+
+//   selectLines.push(
+//     `${indent}<span class="sql-function">SAFE_DIVIDE</span>(<span class="sql-function">SUM(${positionField})</span>, <span class="sql-function">SUM(impressions)</span>) + 1.0 AS <span class="sql-alias">avg_position</span>`
+//   );
+//   plainSelectLines.push(
+//     `    SAFE_DIVIDE(SUM(${positionField}), SUM(impressions)) + 1.0 AS avg_position`
+//   );
+// }
+ //adding + 1.0 as avg position script commented if needed - ends here
+
+if (metrics.includes('Position')) {
+  const useTopPosition =
+    dimensions.length === 0 || // No dimensions selected
+    (dimensions.length === 1 && dimensions[0] === 'URL'); // Only URL selected
+
+  const positionField = useTopPosition ? 'sum_top_position' : 'sum_position';
+
+  selectLines.push(
+    `${indent}<span class="sql-function">SAFE_DIVIDE</span>(<span class="sql-function">SUM(${positionField})</span>, <span class="sql-function">SUM(impressions)</span>) AS <span class="sql-alias">avg_position</span>`
+  );
+  plainSelectLines.push(
+    `    SAFE_DIVIDE(SUM(${positionField}), SUM(impressions)) AS avg_position`
+  );
+}
+
+
+
+
 
   const customFieldGroups = document.querySelectorAll('#customFieldGroups > div');
   let customFieldIndex = 1;
@@ -1676,7 +1718,7 @@ export function generateSQL() {
       plainSelectLines.push(`    ${caseSQL}`);
 
       // customFieldsToGroup.push(alias);
-// GROUP BY clause with the full CASE expressions instead of using aliases
+      // GROUP BY clause with the full CASE expressions instead of using aliases
       const fullCaseExpr = `CASE\n    ${cases.join('\n    ')}\n    ELSE '${elseValue}'\nEND`;
       customFieldsToGroup.push(fullCaseExpr);
     }
@@ -1706,35 +1748,51 @@ export function generateSQL() {
   const sortClauses = window._sortClauses || [];
 
   // Generate the extra WHERE clause based on the filter clauses
+  // const extraWhereText = (() => {
+  //   if (!rawFilterClauses.length) return '';
+
+  //   const globalLogic = document.querySelector('#filterRows input[type="radio"]:checked')?.value || 'AND';
+  //   const clauses = rawFilterClauses.map(f => f.clause);
+
+  //   if (clauses.length === 1) {
+  //     return `${clauses[0]}`;
+  //   }
+
+  //   return `(${clauses.join(` ${globalLogic} `)})`;
+  // })();
   const extraWhereText = (() => {
-    if (!rawFilterClauses.length) return '';
+  if (!rawFilterClauses.length) return '';
+  const logic = window._filterLogic || 'AND';
+  const clauses = rawFilterClauses.map(f => f.clause);
+  return clauses.length === 1 ? clauses[0] : `(${clauses.join(` ${logic} `)})`;
+})();
 
-    const globalLogic = document.querySelector('#filterRows input[type="radio"]:checked')?.value || 'AND';
-    const clauses = rawFilterClauses.map(f => f.clause);
-
-    if (clauses.length === 1) {
-      return `${clauses[0]}`;
-    }
-
-    return `(${clauses.join(` ${globalLogic} `)})`;
-  })();
 
   // Generate the extra WHERE HTML based on the highlighted filter clauses
+  // const extraWhereHTML = (() => {
+  //   if (!highlightedFilterClauses.length) return '';
+
+  //   const globalLogic = document.querySelector('#filterRows input[type="radio"]:checked')?.value || 'AND';
+  //   const keyword = `<span class="sql-keyword">${globalLogic}</span>`;
+  //   const clauses = highlightedFilterClauses.map(f => f.clause);
+
+  //   if (clauses.length === 1) {
+  //     return clauses[0];
+  //   }
+
+  //   return `(${clauses.join(` ${keyword} `)})`;
+  // })();
   const extraWhereHTML = (() => {
-    if (!highlightedFilterClauses.length) return '';
+  if (!highlightedFilterClauses.length) return '';
+  const logic = window._filterLogic || 'AND';
+  const keyword = `<span class="sql-keyword">${logic}</span>`;
+  const clauses = highlightedFilterClauses.map(f => f.clause);
+  return clauses.length === 1 ? clauses[0] : `(${clauses.join(` ${keyword} `)})`;
+})();
 
-    const globalLogic = document.querySelector('#filterRows input[type="radio"]:checked')?.value || 'AND';
-    const keyword = `<span class="sql-keyword">${globalLogic}</span>`;
-    const clauses = highlightedFilterClauses.map(f => f.clause);
 
-    if (clauses.length === 1) {
-      return clauses[0];
-    }
 
-    return `(${clauses.join(` ${keyword} `)})`;
-  })();
 
- 
   const whereHTML = extraWhereHTML ? `<br>${indent}<span class="sql-keyword">AND</span> ${extraWhereHTML}` : '';
 
 
@@ -1876,17 +1934,24 @@ function updateFilterAndSortClauses() {
           clause = `${normalizedField} IS NOT NULL`;
           break;
 
-        case 'REGEX CONTAINS':
-          clause = `REGEXP_CONTAINS(${normalizedField}, '${value}')`;
+        case 'REGEXP CONTAINS':
+          if (['query', 'url'].includes(normalizedField)) {
+            clause = `REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+          }
           break;
 
-        case 'REGEX NOT CONTAINS':
-          clause = `NOT REGEXP_CONTAINS(${normalizedField}, '${value}')`;
+        case 'NOT REGEXP CONTAINS':
+          if (['query', 'url'].includes(normalizedField)) {
+            clause = `NOT REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+          }
           break;
       }
 
       if (clause) filters.push({ clause, logic });
     }
+    // Save the global filter logic (AND/OR) for SQL generation
+    const globalLogicInput = document.querySelector('#filterRows input[type="radio"]:checked');
+window._filterLogic = globalLogicInput ? globalLogicInput.value : 'AND';
   });
 
   const sorts = [];
