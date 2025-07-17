@@ -40,6 +40,7 @@ export async function logQuery({ query, source_page }) {
     {
       query,
       source_page: source_page || window.location.href,
+      created_at: new Date().toISOString(),
     },
   ]);
 

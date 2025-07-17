@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Logged SQL Queries</title>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
 
   <script type="module">
     import { supabase } from './js/components/logQuery.js';
@@ -14,11 +15,33 @@
     let perPage = 10;
     let selectedIndex = -1;
 
+//     function formatDate(raw) {
+//   const { DateTime } = luxon;
+
+//   const dt = DateTime.fromISO(raw, { zone: 'utc' });
+//   return dt.isValid ? dt.toFormat('dd/MM/yyyy HH:mm:ss') : 'Invalid Date';
+// }
+function formatDate(raw) {
+  const d = new Date(raw);
+  if (isNaN(d)) return 'Invalid Date';
+  return d.toLocaleString('en-GB', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+}
+
+
+
+
     async function loadQueries() {
       const { data, error } = await supabase
         .from('logged_queries')
         .select('id, query, created_at, source_page')
-        .not('source_page', 'eq', '/gscbigquery/')
+        // .not('source_page', 'eq', '/gscbigquery/')
         .order('created_at', { ascending: false });
 
       if (error || !data) {
@@ -70,7 +93,10 @@
         const div = document.createElement('div');
         div.className = 'query-item';
         div.innerHTML = `
-          <div class="timestamp">${row.created_at || 'No Date'}</div>
+
+          <div class="timestamp">${formatDate(row.created_at)}</div>
+
+
           <div class="truncated-sql">${row.query.slice(0, 100)}...</div>
         `;
         div.onclick = () => selectItem(globalIndex, div, row);
