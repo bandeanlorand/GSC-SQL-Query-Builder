@@ -148,25 +148,25 @@
             </div>
 
             <!-- Dropdown items -->
-           <div id="metricsDropdown" data-open="false"
-  class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all mt-[8px] hidden ">
+            <div id="metricsDropdown" data-open="false"
+              class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 transition-all mt-[8px] hidden ">
 
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="Impressions">
-    <span>Impressions</span> <i class="far fa-question-circle text-gray-400" style="cursor: pointer;"></i>
-  </div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="Impressions">
+                <span>Impressions</span> <i class="far fa-question-circle text-gray-400" style="cursor: pointer;"></i>
+              </div>
 
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="Clicks">
-    <span>Clicks</span> <i class="far fa-question-circle text-gray-400" style="cursor: pointer;"></i>
-  </div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="Clicks">
+                <span>Clicks</span> <i class="far fa-question-circle text-gray-400" style="cursor: pointer;"></i>
+              </div>
 
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="CTR">
-    <span>CTR</span> <i class="far fa-question-circle text-gray-400" style="cursor: pointer;"></i>
-  </div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="CTR">
+                <span>CTR</span> <i class="far fa-question-circle text-gray-400" style="cursor: pointer;"></i>
+              </div>
 
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="Position">
-    <span>Position</span> <i class="far fa-question-circle text-gray-400" style="cursor: pointer;"></i>
-  </div>
-</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-metric="Position">
+                <span>Position</span> <i class="far fa-question-circle text-gray-400" style="cursor: pointer;"></i>
+              </div>
+            </div>
           </div>
 
           <!-- Metrics ends here -->
@@ -186,7 +186,8 @@
             </div>
 
             <!-- Selected Dimensions -->
-            <div id="selectedDimensions" tabindex="0"  class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm h-auto min-h-[48px] p-[9px]">
+            <div id="selectedDimensions" tabindex="0"
+              class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm h-auto min-h-[48px] p-[9px]">
               <div id="dimensionsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto"><span
                   id="dimensionsPlaceholder" class="text-gray-400">Select dimensions</span></div>
               <svg id="dimensionsArrow" class="w-4 h-4 transition-transform duration-300 ml-2 flex-shrink-0" fill="none"
@@ -271,8 +272,8 @@
           <div class="w-full max-w-4xl mx-auto mt-4">
             <div class="bg-[#185e70] alert w-full alert-info  flex justify-between text-white border-[#185e70]"
               id="toggleCustomFieldsHeader">
-              <span class="font-bold">Custom Fields <i
-                 id="custom-fields-tooltip-icon" class="fas fa-question-circle text-sm text-gray-300 cursor-pointer transition-colors duration-300 ease-in-out"></i></span>
+              <span class="font-bold">Custom Fields <i id="custom-fields-tooltip-icon"
+                  class="fas fa-question-circle text-sm text-gray-300 cursor-pointer transition-colors duration-300 ease-in-out"></i></span>
               <span class="relative group">
 
                 <svg id="customFilterArrow" class="w-4 h-4 transition-transform duration-300" fill="none"
@@ -293,14 +294,22 @@
           <!-- Custom Fields section ends -->
 
           <!-- Limit input starts here-->
-          <label class="block text-sm font-medium text-white mt-2">
-            Limit (optional):
-            <input id="limitInput" type="number" class="input input-sm mt-1 w-24 text-black" placeholder="100" min="1">
-          </label>
+           <div>
+           <div class="flex items-center justify-between w-full mt-2">
+          <label class="text-md font-semibold text-white">
+            Limit <i id="limit-tooltip-icon" class="fas fa-question-circle text-xs text-gray-400 cursor-pointer"></i> <span class="text-sm font-light">(optional)</span>:
+            </label>
+            
+            </div>
+            <div class="relative w-full group focus-within:ring-0 mt-2">
+            <input id="limitInput" type="number" class="input input-lg relative items-center justify-between cursor-pointer focus:outline-none  h-auto p-[9px] w-[calc(100%-0px)] text-sm" placeholder="100" min="1">
+              </div>
+          </div>
           <!-- Limit input ends here -->
 
           <div class="my-6 flex flex-wrap gap-3 justify-center w-full">
-            <button type="submit" id="generateSQLButton" class="btn btn-xl block w-auto  bg-[#187069] border-[#18705a] text-white">Generate SQL</button>
+            <button type="submit" id="generateSQLButton"
+              class="btn btn-xl block w-auto  bg-[#187069] border-[#18705a] text-white">Generate SQL</button>
           </div>
         </div>
       </div>
@@ -343,13 +352,15 @@
           <li><strong>Create custom fields</strong> using conditional <code>CASE WHEN</code> logic with fallback values.
           </li>
           <li><strong>Generate your SQL</strong> and copy the formatted or raw output directly into BigQuery.</li>
-           <li>The data used in queries reflects Google Search Console’s standard 2-day reporting delay, so the most recent data may not include today or yesterday. </li>
+          <li>The data used in queries reflects Google Search Console’s standard 2-day reporting delay, so the most
+            recent data may not include today or yesterday. </li>
         </ul>
         <p class="mt-4 text-sm">
           The generated queries use <code>SAFE_DIVIDE()</code> and other protective logic to ensure stability, even with
           sparse or zero-value data.
         </p>
-        <p class="mt-4 text-sm">This tool logs and stores the generated SQL queries to help us analyze usage patterns and improve the product experience. No personal data is collected or stored as part of this process.</p>
+        <p class="mt-4 text-sm">This tool logs and stores the generated SQL queries to help us analyze usage patterns
+          and improve the product experience. No personal data is collected or stored as part of this process.</p>
       </div>
 
       <!-- FAQ + Contact Section -->
@@ -404,4 +415,5 @@
     class=" z-50 pointer-events-none bg-gray-900 text-xs text-white p-2 rounded shadow-lg max-w-xs hidden absolute">
   </div>
 </body>
+
 </html>

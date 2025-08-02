@@ -919,7 +919,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   inputRow.className = 'flex items-center gap-2 flex-wrap ';
 
   const whenLabel = document.createElement('label');
-  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold font-semibold';
+  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
   whenLabel.textContent = 'When';
   inputRow.appendChild(whenLabel);
 
@@ -1000,7 +1000,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   thenRow.className = 'flex items-center gap-2';
 
   const thenLabel = document.createElement('label');
-  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold font-semibold';
+  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
   thenLabel.textContent = 'Then';
 
   const thenInput = document.createElement('input');
@@ -1107,7 +1107,7 @@ function addCustomFieldGroup() {
   inputRow.className = 'flex items-center gap-2 flex-wrap';
 
   const whenLabel = document.createElement('label');
-  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold font-semibold';
+  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
   whenLabel.textContent = 'When';
 
   const fieldSelect = document.createElement('select');
@@ -1207,7 +1207,7 @@ function addCustomFieldGroup() {
   thenRow.className = 'flex items-center gap-2';
 
   const thenLabel = document.createElement('label');
-  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold font-semibold';
+  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
   thenLabel.textContent = 'Then';
 
   const thenInput = document.createElement('input');
@@ -1876,6 +1876,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const customFieldsTooltipIcon = document.getElementById("custom-fields-tooltip-icon");
   const tooltipBox = document.getElementById("global-tooltip");
 
+  // Tooltip: Limit input field
+  const limitTooltipIcon = document.getElementById("limit-tooltip-icon");
+
   if (customFieldsTooltipIcon && tooltipBox) {
     const customTooltipText = `Create your own fields. For example, group branded vs non-branded keywords. When query contains your brand name, the field will show "Brand", else "Non-Brand".`;
 
@@ -1892,7 +1895,29 @@ document.addEventListener("DOMContentLoaded", () => {
       tooltipBox.classList.add("hidden");
     });
   }
+
+  if (limitTooltipIcon && tooltipBox) {
+    const limitTooltipText = "Limits the number of rows returned in the SQL query. If left empty, all results will be returned.";
+
+    limitTooltipIcon.addEventListener("mouseenter", (e) => {
+      tooltipBox.textContent = limitTooltipText;
+      tooltipBox.classList.remove("hidden");
+
+      const rect = e.target.getBoundingClientRect();
+      tooltipBox.style.top = `${rect.top - 8 + window.scrollY}px`;
+      tooltipBox.style.left = `${rect.right + 4 + window.scrollX}px`;
+    });
+
+    limitTooltipIcon.addEventListener("mouseleave", () => {
+      tooltipBox.classList.add("hidden");
+    });
+  }
 });
+
+
+
+
+
 
 document.getElementById('generateSQLButton').addEventListener('click', () => {
   const sql = generateSQL();
