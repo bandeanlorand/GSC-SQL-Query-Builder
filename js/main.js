@@ -66,10 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
 window.selectedDimensions = new Set();
 window.selectedMetrics = new Set();
 
-// const selectedMetrics = new Set();
 let isDropdownOpen = false;
-
-// const selectedDimensions = new Set();
 
 
 let selectedDateRange = '';

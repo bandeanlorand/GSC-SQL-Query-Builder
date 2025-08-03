@@ -62,19 +62,21 @@
               </div>
             </div>
             <div id="dateRangeDropdown" data-open="false"
-              class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10  mt-[8px] hidden max-h-[350px] z-10">
+              class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10  mt-[8px] hidden max-h-[450px] z-10">
               <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Yesterday">Yesterday</div>
               <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last Week">Last Week</div>
               <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last month">Last month</div>
-              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Month to yesterday">Month to
-                yesterday</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Month to yesterday">Month to last available date</div>
               <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 7 days">Last 7 days</div>
               <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 14 days">Last 14 days
               </div>
               <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 30 days">Last 30 days
               </div>
-              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Year to yesterday">Year to
-                yesterday</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Year to yesterday">Year
+                to last available date</div>
+                <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last quarter">Last quarter</div>
+<div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Quarter to last available date">Quarter to last available date</div>
+
               <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last year">Last year</div>
               <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Custom date range">Custom date
                 range</div>
@@ -308,8 +310,18 @@
           <!-- Limit input ends here -->
 
           <div class="my-6 flex flex-wrap gap-3 justify-center w-full">
-            <button type="submit" id="generateSQLButton"
-              class="btn btn-xl block w-auto  bg-[#187069] border-[#18705a] text-white">Generate SQL</button>
+            <button
+  type="submit"
+  id="generateSQLButton"
+  class="btn btn-xl block w-auto bg-[#187069] border-[#18705a] text-white
+         transition duration-100 ease-in-out
+         hover:bg-[#1e8579] hover:shadow-lg
+         active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm
+         focus:outline-none"
+>
+  Generate SQL
+</button>
+
           </div>
         </div>
       </div>
@@ -319,9 +331,16 @@
 
         <div class="flex justify-between items-center mb-2">
           <h2 class="text-xl font-semibold text-white">Generated SQL</h2>
-          <button id="copySQLButton" class="btn btn-md  bg-[#187069] border-[#18705a] text-white">
-            Copy SQL
-          </button>
+          <button
+  id="copySQLButton"
+  class="btn btn-md bg-[#187069] border-[#18705a] text-white transition duration-100 ease
+         hover:bg-[#1e8579] hover:shadow-lg
+         active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm
+         focus:outline-none"
+>
+  Copy SQL
+</button>
+
         </div>
         <div class=" mockup-code !h-auto pb-0 mt-[12px]">
           <pre id="sqlOutput"
@@ -385,20 +404,20 @@
           <div>
             <h3 class="font-semibold text-base">What if I generate an invalid SQL query?</h3>
             <p>
-              We’ve done our best to cover most edge cases and prevent illogical SQL output. However, it's still
+              We've done our best to cover most edge cases and prevent illogical SQL output. However, it's still
               possible that certain combinations may generate queries that are not valid.
               If you encounter such an issue, please send us the broken query so we can investigate and improve the
               logic.
               <br><br>
               Some non-logical input combinations (e.g. incorrect data types or conflicting filters) are not yet fully
-              handled — but we’re working on expanding coverage to prevent them in future versions.
+              handled — but we're working on expanding coverage to prevent them in future versions.
             </p>
           </div>
 
           <div>
             <h3 class="font-semibold text-base">Where can I give feedback or suggest improvements?</h3>
             <p>
-              We’d love your input! Please send any ideas, feature requests, or bug reports to
+              We'd love your input! Please send any ideas, feature requests, or bug reports to
               <a href="mailto:support@example.com"
                 class="text-blue-400 underline hover:text-blue-300">support@example.com</a>.
             </p>
@@ -409,7 +428,7 @@
 
   </main>
 
-  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.7rem] text-right">v3.0.12.02.08.2025</footer>
+  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.6rem] text-right">v3.0.14.03.08.2025</footer>
   <script type="module" src="js/main.js"></script>
   <div id="global-tooltip"
     class=" z-50 pointer-events-none bg-gray-900 text-xs text-white p-2 rounded shadow-lg max-w-xs hidden absolute">
