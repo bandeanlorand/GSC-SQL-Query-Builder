@@ -1,26 +1,31 @@
 // integration.js — URL-hash + query-param ingestion + postMessage listener
-// Works with your existing UI functions: selectMetric, clearAllMetrics,
-// selectDimension, clearAllDimensions, addFilterRow, addSortRow,
-// addCustomFieldGroup, and generateSQL.
-
 (function () {
+  // ---------- tiny DOM helpers ----------
+  const qs = (s, r = document) => r.querySelector(s);
+  const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+  function openSection(sectionId, headerId) {
+    const section = qs(`#${sectionId}`);
+    const header  = qs(`#${headerId}`);
+    if (!section || !header) return;
+    // Your headers already toggle on click
+    if (section.classList.contains('hidden')) header.click();
+  }
+
   // ---------- decode helpers ----------
   function tryDecode(str) {
-    // Preferred: LZString (encodedURIComponent)
     if (window.LZString) {
       try {
         const json = window.LZString.decompressFromEncodedURIComponent(str);
         if (json) return JSON.parse(json);
       } catch (e) {}
     }
-    // Fallback: base64url → JSON
     try {
       const b64 = str.replace(/-/g, '+').replace(/_/g, '/');
       const pad = b64.length % 4 ? 4 - (b64.length % 4) : 0;
       const json = atob(b64 + '='.repeat(pad));
       return JSON.parse(json);
     } catch (e) {}
-    // Fallback: decodeURIComponent(JSON)
     try {
       return JSON.parse(decodeURIComponent(str));
     } catch (e) {}
@@ -37,22 +42,18 @@
     const qp = new URLSearchParams(location.search);
     if (![...qp.keys()].length) return null;
 
-    // Metrics map to your UI labels
     const metricsMap = { CLICKS:'Clicks', IMPRESSIONS:'Impressions', CTR:'CTR', POSITION:'Avg Position' };
     const metrics = (qp.get('metrics') || '')
       .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
       .map(m => metricsMap[m] || m);
 
-    // Breakdown → single dimension
     const dimMap = { page:'URL', query:'Query', country:'Country', device:'Device', search_type:'Search Type' };
     const breakdown = (qp.get('breakdown') || '').toLowerCase();
     const dimensions = breakdown ? [dimMap[breakdown] || breakdown] : [];
 
-    // Date from num_of_months
     const months = parseInt(qp.get('num_of_months') || '0', 10);
     const date = months > 0 ? { months } : null;
 
-    // Filters
     const filters = [];
     const device = qp.get('device');
     if (device) filters.push({ field:'Device', op:'EQUALS', value: device.toUpperCase() });
@@ -62,7 +63,7 @@
 
     const page = qp.get('page');
     if (page) {
-      const val = page.replace(/\*/g, '');       // treat *xxx → LIKE %xxx%
+      const val = page.replace(/\*/g, ''); // "*tipps" → CONTAINS "tipps"
       filters.push({ field:'URL', op:'CONTAINS', value: val });
     }
 
@@ -84,48 +85,33 @@
   // ---------- UI setters ----------
   function setDate(date) {
     if (!date) return;
-    const dropdown = document.getElementById('dateRangeDropdown');
+    const dropdown = qs('#dateRangeDropdown');
     if (!dropdown) return;
 
-    // Handle months shortcut (e.g., num_of_months=3)
+    // months shortcut
     if (date.months) {
-      const toISO = d => d.toISOString().slice(0, 10);
-      const end = new Date();           // today
+      const toISO = d => d.toISOString().slice(0,10);
+      const end = new Date();
       const start = new Date();
       start.setMonth(start.getMonth() - Number(date.months));
-
-      const custom = [...dropdown.querySelectorAll('[data-range]')]
-        .find(el => el.getAttribute('data-range') === 'Custom date range');
+      const custom = qsa('[data-range]', dropdown).find(el => el.getAttribute('data-range') === 'Custom date range');
       custom?.click();
-
-      const startEl = document.getElementById('startDate');
-      const endEl = document.getElementById('endDate');
-      if (startEl && endEl) {
-        startEl.value = toISO(start);
-        endEl.value = toISO(end);
-      }
+      const startEl = qs('#startDate');
+      const endEl = qs('#endDate');
+      if (startEl && endEl) { startEl.value = toISO(start); endEl.value = toISO(end); }
       return;
     }
 
-    // Preset
     if (date.preset) {
-      const opt = [...dropdown.querySelectorAll('[data-range]')]
-        .find(el => el.getAttribute('data-range') === date.preset);
-      opt?.click();
+      qsa('[data-range]', dropdown).find(el => el.getAttribute('data-range') === date.preset)?.click();
       return;
     }
 
-    // Explicit range
     if (date.from && date.to) {
-      const custom = [...dropdown.querySelectorAll('[data-range]')]
-        .find(el => el.getAttribute('data-range') === 'Custom date range');
-      custom?.click();
-      const startEl = document.getElementById('startDate');
-      const endEl = document.getElementById('endDate');
-      if (startEl && endEl) {
-        startEl.value = date.from;
-        endEl.value = date.to;
-      }
+      qsa('[data-range]', dropdown).find(el => el.getAttribute('data-range') === 'Custom date range')?.click();
+      const startEl = qs('#startDate');
+      const endEl = qs('#endDate');
+      if (startEl && endEl) { startEl.value = date.from; endEl.value = date.to; }
     }
   }
 
@@ -139,17 +125,17 @@
     list.forEach(d => typeof window.selectDimension === 'function' && window.selectDimension(d));
   }
 
-  function clearFiltersUI() {
-    const c = document.getElementById('filterRows');
-    if (c) c.innerHTML = '';
-  }
-
   function setFilters(filters = [], logic = 'AND') {
-    clearFiltersUI();
-    const cont = document.getElementById('filterRows');
+    if (!filters.length) return;
+    openSection('filterSection', 'toggleFiltersHeader');
+
+    const cont = qs('#filterRows');
+    if (!cont) return;
+
+    cont.innerHTML = '';
     filters.forEach((f, idx) => {
       if (typeof window.addFilterRow === 'function') window.addFilterRow();
-      const row = cont?.lastElementChild; if (!row) return;
+      const row = cont.lastElementChild; if (!row) return;
 
       const selects = row.querySelectorAll('select');
       const fieldSelect = selects[0];
@@ -177,26 +163,26 @@
 
       if (idx > 0) {
         const radios = row.querySelectorAll('input[type="radio"][name^="filter-logic"]');
-        const target = [...radios].find(r => r.value === (logic || 'AND'));
+        const target = Array.from(radios).find(r => r.value === (logic || 'AND'));
         if (target) target.checked = true;
       }
     });
   }
 
-  function clearSortUI() {
-    const c = document.getElementById('sortRows');
-    if (c) c.innerHTML = '';
-  }
-
   function setSort(sort = []) {
-    clearSortUI();
-    const cont = document.getElementById('sortRows');
+    if (!sort.length) return;
+    openSection('sortSection', 'toggleSortByHeader');
+
+    const cont = qs('#sortRows');
+    if (!cont) return;
+
+    cont.innerHTML = '';
     sort.forEach(s => {
       if (typeof window.addSortRow === 'function') window.addSortRow();
-      const row = cont?.lastElementChild; if (!row) return;
+      const row = cont.lastElementChild; if (!row) return;
 
       const fieldSelect = row.querySelector('select');
-      const radios = [...row.querySelectorAll('input[type="radio"]')];
+      const radios = Array.from(row.querySelectorAll('input[type="radio"]'));
 
       if (fieldSelect && s.field) {
         const fieldMap = { clicks:'Clicks', impressions:'Impressions', ctr:'CTR', position:'Avg Position' };
@@ -208,24 +194,23 @@
     });
   }
 
-  function clearCustomFieldsUI() {
-    const c = document.getElementById('customFieldGroups');
-    if (c) c.innerHTML = '';
-  }
-
   function setCustomFields(groups = []) {
-    clearCustomFieldsUI();
-    const cont = document.getElementById('customFieldGroups');
+    if (!groups.length) return;
+    openSection('customFieldsSection', 'toggleCustomFieldsHeader');
+
+    const cont = qs('#customFieldGroups');
+    if (!cont) return;
+
+    cont.innerHTML = '';
     groups.forEach(g => {
       if (typeof window.addCustomFieldGroup === 'function') window.addCustomFieldGroup();
-      const group = cont?.lastElementChild; if (!group) return;
+      const group = cont.lastElementChild; if (!group) return;
 
       const nameInput = group.querySelector('input[type="text"][placeholder="e.g. Brand bucket"]');
       if (nameInput && g.name) nameInput.value = g.name;
 
       const wrapper = group.querySelector('.custom-condition-group');
       if (Array.isArray(g.conditions)) {
-        // ensure row count
         let rows = wrapper.querySelectorAll('.custom-condition-row');
         for (let i = rows.length; i < g.conditions.length; i++) {
           group.querySelector('button.add-condition-btn')?.click();
@@ -279,21 +264,35 @@
 
   // ---------- boot sequence ----------
   function boot() {
-    // Priority: query params (Stephan’s links) → then hash → then postMessage
     const q = getQueryParamPayload();
     if (q) { applyState(q); return; }
-
     const h = getHashPayload();
     if (h) { applyState(h); return; }
   }
 
-  document.addEventListener('DOMContentLoaded', boot);
+  // Wait for your app to finish building dropdowns/options.
+  // Prefer custom event; fall back to a short wait loop.
+  let booted = false;
+  function bootOnce() { if (!booted) { booted = true; boot(); } }
+
+  document.addEventListener('gscql:ui-ready', bootOnce);
+  document.addEventListener('DOMContentLoaded', () => {
+    // Fallback in case the custom event isn't fired
+    let tries = 0;
+    const iv = setInterval(() => {
+      // wait until critical nodes exist
+      const ok = qs('#metricsDropdown') && qs('#dimensionsDropdown');
+      if (ok || ++tries > 20) { clearInterval(iv); bootOnce(); }
+    }, 100);
+  });
+
+  // Hash changes (shareable links)
   window.addEventListener('hashchange', () => {
     const h = getHashPayload();
     if (h) applyState(h);
   });
 
-  // Also support postMessage for very large payloads
+  // postMessage (very large payloads / live)
   window.addEventListener('message', (evt) => {
     const { type, payload } = evt.data || {};
     if (type === 'GSC_HELPER_STATE') applyState(payload);
