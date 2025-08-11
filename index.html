@@ -17,6 +17,9 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png" />
   <link rel="manifest" href="site.webmanifest" />
 
+
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+
 </head>
 
 <body class="min-h-screen flex flex-col">
@@ -24,9 +27,9 @@
   <main class="flex-1">
 
     <header
-      class="bg-[#1f2937] px-8 py-4 text-left flex row items-center justify-between flex-row shadow-lg fixed w-full navbar z-10">
+      class="bg-[#000307] px-8 py-4 text-left flex row items-center justify-between flex-row shadow-lg fixed w-full navbar z-10">
       <div class="items-start justify-start flex-col">
-        <h1 class="font-bold mb-1 text-xl text-white">Google Search Console SQL Query Builder</h1>
+        <h1 class="font-bold mb-1 text-xl text-white">Google Search Console SQL Query Builder - <sub>URL Hash version</sub></h1>
         <p class="mb-1 text-sm text-white">Build your SQL queries for Google Search Console data easily.</p>
       </div>
       <div class="flex items-center">
@@ -425,8 +428,9 @@
 
   </main>
 
-  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.6rem] text-right">v3.0.14.03.08.2025</footer>
+  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.6rem] text-right">v.4.0.2</footer>
   <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/integration.js"></script>
   <div id="global-tooltip"
     class=" z-50 pointer-events-none bg-gray-900 text-xs text-white p-2 rounded shadow-lg max-w-xs hidden absolute">
   </div>

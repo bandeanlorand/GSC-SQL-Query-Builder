@@ -1949,3 +1949,20 @@ document.getElementById('generateSQLButton').addEventListener('click', () => {
   logQuery({ query: sql, source_page: window.location.pathname });
 });
 
+
+
+// Make the UI API accessible to integration.js
+window.selectMetric = window.selectMetric || selectMetric;
+window.clearAllMetrics = window.clearAllMetrics || clearAllMetrics;
+
+window.selectDimension = window.selectDimension || selectDimension;
+window.clearAllDimensions = window.clearAllDimensions || clearAllDimensions;
+
+window.addFilterRow = window.addFilterRow || addFilterRow;
+window.addSortRow = window.addSortRow || addSortRow;
+window.addCustomFieldGroup = window.addCustomFieldGroup || addCustomFieldGroup;
+
+window.generateSQL = window.generateSQL || generateSQL;
+
+
+document.dispatchEvent(new Event('gscql:ui-ready'));
