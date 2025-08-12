@@ -1,14 +1,22 @@
 // integration.js — URL-hash + query-param ingestion + postMessage listener
 (function () {
   // ---------- tiny DOM helpers ----------
-  const qs = (s, r = document) => r.querySelector(s);
+  const qs  = (s, r = document) => r.querySelector(s);
   const qsa = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+  // GSC has a 2-day reporting delay
+  const GSC_LAG_DAYS = 2;
+  const toISO = d => d.toISOString().slice(0, 10);
+  const lastAvailableDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - GSC_LAG_DAYS);
+    return d;
+  };
 
   function openSection(sectionId, headerId) {
     const section = qs(`#${sectionId}`);
     const header  = qs(`#${headerId}`);
     if (!section || !header) return;
-    // Your headers already toggle on click
     if (section.classList.contains('hidden')) header.click();
   }
 
@@ -18,17 +26,15 @@
       try {
         const json = window.LZString.decompressFromEncodedURIComponent(str);
         if (json) return JSON.parse(json);
-      } catch (e) {}
+      } catch {}
     }
     try {
       const b64 = str.replace(/-/g, '+').replace(/_/g, '/');
       const pad = b64.length % 4 ? 4 - (b64.length % 4) : 0;
       const json = atob(b64 + '='.repeat(pad));
       return JSON.parse(json);
-    } catch (e) {}
-    try {
-      return JSON.parse(decodeURIComponent(str));
-    } catch (e) {}
+    } catch {}
+    try { return JSON.parse(decodeURIComponent(str)); } catch {}
     return null;
   }
 
@@ -88,29 +94,31 @@
     const dropdown = qs('#dateRangeDropdown');
     if (!dropdown) return;
 
-    // months shortcut
+    // months shortcut (respect GSC 2‑day lag)
     if (date.months) {
-      const toISO = d => d.toISOString().slice(0,10);
-      const end = new Date();
-      const start = new Date();
+      const end = lastAvailableDate();
+      const start = new Date(end);
       start.setMonth(start.getMonth() - Number(date.months));
-      const custom = qsa('[data-range]', dropdown).find(el => el.getAttribute('data-range') === 'Custom date range');
-      custom?.click();
+
+      qsa('[data-range]', dropdown).find(el => el.getAttribute('data-range') === 'Custom date range')?.click();
+
       const startEl = qs('#startDate');
-      const endEl = qs('#endDate');
+      const endEl   = qs('#endDate');
       if (startEl && endEl) { startEl.value = toISO(start); endEl.value = toISO(end); }
       return;
     }
 
+    // preset handled by main.js
     if (date.preset) {
       qsa('[data-range]', dropdown).find(el => el.getAttribute('data-range') === date.preset)?.click();
       return;
     }
 
+    // explicit custom range
     if (date.from && date.to) {
       qsa('[data-range]', dropdown).find(el => el.getAttribute('data-range') === 'Custom date range')?.click();
       const startEl = qs('#startDate');
-      const endEl = qs('#endDate');
+      const endEl   = qs('#endDate');
       if (startEl && endEl) { startEl.value = date.from; endEl.value = date.to; }
     }
   }
@@ -133,34 +141,45 @@
     if (!cont) return;
 
     cont.innerHTML = '';
+
     filters.forEach((f, idx) => {
       if (typeof window.addFilterRow === 'function') window.addFilterRow();
       const row = cont.lastElementChild; if (!row) return;
 
       const selects = row.querySelectorAll('select');
       const fieldSelect = selects[0];
-      const opSelect = selects[1];
+      const opSelect    = selects[1];
 
+      // 1) Set field and trigger change so main.js builds the right value control (device/country/etc.)
       if (fieldSelect && f.field) {
         const fieldMap = { query:'Query', page:'URL', country:'Country', device:'Device', 'search type':'Search Type' };
         const uiField = fieldMap[(f.field + '').toLowerCase()] || f.field;
         fieldSelect.value = uiField;
         fieldSelect.dispatchEvent(new Event('change', { bubbles: true }));
       }
+
+      // 2) Set operator
       if (opSelect && f.op) {
         opSelect.value = (f.op + '').toUpperCase();
         opSelect.dispatchEvent(new Event('change', { bubbles: true }));
       }
 
-      const countryInput = row.querySelector('input.country-search-input');
-      const textInput = row.querySelector('input[type="text"]');
-      if (countryInput && (fieldSelect?.value === 'Country')) {
+      // 3) Now the correct control exists → set its value
+      const deviceSelect  = row.querySelector('select.device-select');
+      const countryInput  = row.querySelector('input.country-search-input');
+      const textInput     = row.querySelector('input[type="text"]');
+
+      if (deviceSelect && (fieldSelect?.value === 'Device')) {
+        deviceSelect.classList.remove('hidden'); // make sure it's visible
+        deviceSelect.value = (f.value || '').toUpperCase();
+      } else if (countryInput && (fieldSelect?.value === 'Country')) {
         countryInput.dataset.code = f.value || '';
         countryInput.value = f.value || '';
       } else if (textInput && f.value != null) {
         textInput.value = f.value;
       }
 
+      // 4) Logic between rows
       if (idx > 0) {
         const radios = row.querySelectorAll('input[type="radio"][name^="filter-logic"]');
         const target = Array.from(radios).find(r => r.value === (logic || 'AND'));
@@ -220,9 +239,9 @@
           const row = rows[i]; if (!row) return;
           const selects = row.querySelectorAll('select');
           const fieldSelect = selects[0];
-          const opSelect = selects[1];
-          const txt = row.querySelector('input[type="text"]');
-          const countryInput = row.querySelector('input.country-search-input');
+          const opSelect    = selects[1];
+          const txt         = row.querySelector('input[type="text"]');
+          const countryInput= row.querySelector('input.country-search-input');
 
           if (fieldSelect && c.field) {
             const fieldMap = { query:'Query', page:'URL', country:'Country', device:'Device', 'search type':'Search Type' };
@@ -259,7 +278,7 @@
     setFilters(r.filters || [], r.filters_logic || 'AND');
     setSort(r.sort || []);
     setCustomFields(r.customFields || []);
-    if (typeof window.generateSQL === 'function') window.generateSQL();
+    // No auto-generate: user must click "Generate SQL"
   }
 
   // ---------- boot sequence ----------
@@ -270,8 +289,6 @@
     if (h) { applyState(h); return; }
   }
 
-  // Wait for your app to finish building dropdowns/options.
-  // Prefer custom event; fall back to a short wait loop.
   let booted = false;
   function bootOnce() { if (!booted) { booted = true; boot(); } }
 
@@ -280,19 +297,16 @@
     // Fallback in case the custom event isn't fired
     let tries = 0;
     const iv = setInterval(() => {
-      // wait until critical nodes exist
       const ok = qs('#metricsDropdown') && qs('#dimensionsDropdown');
       if (ok || ++tries > 20) { clearInterval(iv); bootOnce(); }
     }, 100);
   });
 
-  // Hash changes (shareable links)
   window.addEventListener('hashchange', () => {
     const h = getHashPayload();
     if (h) applyState(h);
   });
 
-  // postMessage (very large payloads / live)
   window.addEventListener('message', (evt) => {
     const { type, payload } = evt.data || {};
     if (type === 'GSC_HELPER_STATE') applyState(payload);
