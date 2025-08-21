@@ -5,8 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Google Search Console BigQuery SQL Query Builder</title>
-  <meta name="description" content="Do you want to query your Google Search Console data in BigQuery? We help you building the SQL to get your data with ease!">
-	<link rel="canonical" href="https://www.gscbigquery.com/"/>
+  <meta name="description"
+    content="Do you want to query your Google Search Console data in BigQuery? We help you building the SQL to get your data with ease!">
+  <link rel="canonical" href="https://www.gscbigquery.com/" />
 
   <link href="src/output.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -16,15 +17,13 @@
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png" />
   <link rel="manifest" href="site.webmanifest" />
-
-
-
   <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 
-
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-<meta name="googlebot" content="noindex, nofollow">
-<link rel="canonical" href="https://www.gscbigquery.com/">
+  <meta name="googlebot" content="noindex, nofollow">
+
+  <!-- Consolidate signals to the live site -->
+  <link rel="canonical" href="https://www.gscbigquery.com/">
 </head>
 
 <body class="min-h-screen flex flex-col">
@@ -70,19 +69,22 @@
               </div>
             </div>
             <div id="dateRangeDropdown" data-open="false"
-               class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 mt-[8px] hidden max-h-[450px]">
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Yesterday">Yesterday</div>
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last Week">Last Week</div>
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last month">Last month</div>
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Month to last available date">Month to last available date</div>
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 7 days">Last 7 days</div>
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 14 days">Last 14 days</div>
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 30 days">Last 30 days</div>
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Year to last available date">Year to last available date</div>
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last quarter">Last quarter</div>
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Quarter to last available date">Quarter to last available date</div>
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last year">Last year</div>
-  <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Custom date range">Custom date range</div>
+              class="bg-gray-800 border border-gray-600 p-2 rounded absolute z-10 mt-[8px] hidden max-h-[450px]">
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Yesterday">Yesterday</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last Week">Last Week</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last month">Last month</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Month to last available date">Month to last
+                available date</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 7 days">Last 7 days</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 14 days">Last 14 days</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last 30 days">Last 30 days</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Year to last available date">Year to last
+                available date</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last quarter">Last quarter</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Quarter to last available date">Quarter to
+                last available date</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Last year">Last year</div>
+              <div class="cursor-pointer p-1 hover:bg-gray-700" data-range="Custom date range">Custom date range</div>
 
 
             </div>
@@ -219,8 +221,8 @@
             <div class="bg-[#185e70] alert w-full alert-info  flex justify-between text-white border-[#185e70]"
               id="toggleFiltersHeader">
               <span class="font-bold">Filters</span>
-              <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300 rotate-180" fill="none" stroke="currentColor"
-                stroke-width="2" viewBox="0 0 24 24">
+              <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300 rotate-180" fill="none"
+                stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
@@ -301,31 +303,31 @@
           <!-- Custom Fields section ends -->
 
           <!-- Limit input starts here-->
-           <div>
-           <div class="flex items-center justify-between w-full mt-2">
-          <label class="text-md font-semibold text-white">
-            Limit <i id="limit-tooltip-icon" class="fas fa-question-circle text-xs text-gray-400 cursor-pointer"></i> <span class="text-sm font-light">(optional)</span>:
-            </label>
-            
+          <div>
+            <div class="flex items-center justify-between w-full mt-2">
+              <label class="text-md font-semibold text-white">
+                Limit <i id="limit-tooltip-icon"
+                  class="fas fa-question-circle text-xs text-gray-400 cursor-pointer"></i> <span
+                  class="text-sm font-light">(optional)</span>:
+              </label>
+
             </div>
             <div class="relative w-full group focus-within:ring-0 mt-2">
-            <input id="limitInput" type="number" class="input input-lg relative items-center justify-between cursor-pointer focus:outline-none  h-auto p-[9px] w-[calc(100%-0px)] text-sm" placeholder="100" min="1">
-              </div>
+              <input id="limitInput" type="number"
+                class="input input-lg relative items-center justify-between cursor-pointer focus:outline-none  h-auto p-[9px] w-[calc(100%-0px)] text-sm"
+                placeholder="100" min="1">
+            </div>
           </div>
           <!-- Limit input ends here -->
 
           <div class="my-6 flex flex-wrap gap-3 justify-center w-full">
-            <button
-  type="submit"
-  id="generateSQLButton"
-  class="btn btn-xl block w-auto bg-[#187069] border-[#18705a] text-white
+            <button type="submit" id="generateSQLButton" class="btn btn-xl block w-auto bg-[#187069] border-[#18705a] text-white
          transition duration-100 ease-in-out
          hover:bg-[#1e8579] hover:shadow-lg
          active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm
-         focus:outline-none"
->
-  Generate SQL
-</button>
+         focus:outline-none">
+              Generate SQL
+            </button>
 
           </div>
         </div>
@@ -336,15 +338,12 @@
 
         <div class="flex justify-between items-center mb-2">
           <h2 class="text-xl font-semibold text-white">Generated SQL</h2>
-          <button
-  id="copySQLButton"
-  class="btn btn-md bg-[#187069] border-[#18705a] text-white transition duration-100 ease
+          <button id="copySQLButton" class="btn btn-md bg-[#187069] border-[#18705a] text-white transition duration-100 ease
          hover:bg-[#1e8579] hover:shadow-lg
          active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm
-         focus:outline-none"
->
-  Copy SQL
-</button>
+         focus:outline-none">
+            Copy SQL
+          </button>
 
         </div>
         <div class=" mockup-code !h-auto pb-0 mt-[12px]">
@@ -433,7 +432,7 @@
 
   </main>
 
-  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.6rem] text-right">v.4.0.5.21.08.2025</footer>
+  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.6rem] text-right">v.4.0.6.21.08.2025</footer>
   <script type="module" src="js/main.js"></script>
   <script type="module" src="js/integration.js"></script>
   <div id="global-tooltip"
