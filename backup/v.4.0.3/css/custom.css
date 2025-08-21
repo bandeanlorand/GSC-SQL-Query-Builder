@@ -1,0 +1,146 @@
+html{
+  background-color: #05445E;
+}
+body {
+  /* font-family: sans-serif; */
+  height: 100%;
+  /* background: #445569; */
+  width:100%;
+  /* background: #05445E; */
+
+  /* color: #e0e0e0; */
+
+  /* font-family: "Roboto Mono", monospace; */
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+/* colors */
+.sql-keyword,
+.sql-alias-special {
+  color: #fa7268;
+  font-weight: bold;
+}
+
+.sql-date-format,
+.sql-expression {
+  color: #00bfff;
+}
+
+.sql-function {
+  color: #fc9e4c;
+}
+
+.sql-alias {
+  color: #34d399;
+}
+
+.sql-column {
+  color: #facc15;
+}
+
+.sql-current-date {
+  color: #a78bfa;
+}
+
+.sql-table {
+  color: #a78bfa;
+}
+
+.sql-value {
+  color: #f87171;
+}
+
+.sql-boolean {
+  color: #3b82f6;
+  /* Tailwind blue-500 blue */
+}
+
+.badge.badge-lg button{
+  margin: -4px -4px 0 0;
+  font-weight: normal;
+  font-size: 1.2rem;
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+body.show-copied::before {
+  content: "Copied to clipboard";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+  /* Tailwind gray-700 with transparency */
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  /* Large font */
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+body.show-generated::after {
+  content: "SQL Generated!";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+  /* Tailwind gray-700 with transparency */
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  /* Large font */
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+body.show-generated-incomplete::after {
+  content: "SQL Generated! But there are incomplete fields.";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+
+  color: rgba(220, 38, 38, 0.95);
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+@keyframes slideInFadeOut {
+  0% {
+    bottom: 20px;
+    opacity: 0;
+  }
+
+  10% {
+    bottom: 40px;
+    opacity: 1;
+  }
+
+  90% {
+    bottom: 40px;
+    opacity: 1;
+  }
+
+  100% {
+    bottom: 20px;
+    opacity: 0;
+  }
+}

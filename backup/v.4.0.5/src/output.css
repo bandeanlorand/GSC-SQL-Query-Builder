@@ -2430,6 +2430,9 @@
   .border-red-500 {
     border-color: var(--color-red-500);
   }
+  .bg-\[\#1f2937\] {
+    background-color: #1f2937;
+  }
   .bg-\[\#185e70\] {
     background-color: #185e70;
   }

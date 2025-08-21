@@ -1529,20 +1529,6 @@ export function generateSQL() {
   const metrics = Array.from(selectedMetrics);
   const dimensions = Array.from(selectedDimensions);
 
-
-  // PATCH: decide early if URL is used (dimension OR filter) ---
-const _filters = window._filterClauses || [];
-const usesURL =
-  // URL selected as a dimension?
-  dimensions.some(d => String(d).toLowerCase() === 'url') ||
-  // …or any filter targets URL?
-  _filters.some(f =>
-    (f.field && f.field.toLowerCase() === 'url') ||      // preferred: from updateFilterAndSortClauses
-    /\burl\b/i.test(f.clause)                            // fallback: scan clause text
-  );
-// ---------------------------------------------------------------
-
-
   const indent = '<span style="display:inline-block; width:1em"></span>';
   const selectLines = [];
   const plainSelectLines = [];
@@ -1579,8 +1565,11 @@ const usesURL =
   console.log('Dimensions:', dimensions);
 
 
-    if (metrics.includes('Position')) {
-    const positionField = usesURL ? 'sum_position' : 'sum_top_position';
+  if (metrics.includes('Position')) {
+    const normalizedDims = dimensions.map(d => d.toLowerCase());
+    const includesURL = normalizedDims.includes('url');
+
+    const positionField = includesURL ? 'sum_position' : 'sum_top_position';
 
     selectLines.push(
       `${indent}<span class="sql-function">SAFE_DIVIDE</span>(<span class="sql-function">SUM(${positionField})</span>, <span class="sql-function">SUM(impressions)</span>) AS <span class="sql-alias">avg_position</span>`
@@ -1606,6 +1595,7 @@ const usesURL =
       const operator = selects[1]?.value;
 
       const valueInput = block.querySelector('input[type="text"]');
+      // const valueSelect = block.querySelector('select:nth-of-type(3)');
 
       const countryInputStyled = block.querySelector('input.country-search-input');
       const valueSelect = countryInputStyled?.dataset.code;
@@ -1614,6 +1604,7 @@ const usesURL =
 
       let value;
       if (field === 'Country') {
+        // value = valueSelect?.value?.trim();
         value = valueSelect?.trim();
       } else if (field?.startsWith('Is ')) {
         value = radioInput?.value;
@@ -1673,6 +1664,7 @@ const usesURL =
       selectLines.push(`${indent}${visualCaseSQL}`);
       plainSelectLines.push(`    ${caseSQL}`);
 
+      // customFieldsToGroup.push(alias);
       // GROUP BY clause with the full CASE expressions instead of using aliases
       const fullCaseExpr = `CASE\n    ${cases.join('\n    ')}\n    ELSE '${elseValue}'\nEND`;
       customFieldsToGroup.push(fullCaseExpr);
@@ -1682,12 +1674,9 @@ const usesURL =
   const selectClause = `<span class="sql-keyword">SELECT</span><br>${selectLines.join(',<br>')}`;
   const plainSelectClause = `SELECT\n${plainSelectLines.join(',\n')}`;
 
-  const fromTable = usesURL
-   ? '`searchconsole.searchdata_url_impression`'
-   : '`searchconsole.searchdata_site_impression`';
-
-
-
+  const fromTable = dimensions.includes('URL')
+    ? '`searchconsole.searchdata_url_impression`'
+    : '`searchconsole.searchdata_site_impression`';
 
   const fromClause = `<br><span class="sql-keyword">FROM</span><br>${indent}<span class="sql-table">${fromTable}</span>`;
   const plainFromClause = `FROM\n    ${fromTable}`;
@@ -1723,7 +1712,11 @@ const usesURL =
   })();
 
 
+
+
   const whereHTML = extraWhereHTML ? `<br>${indent}<span class="sql-keyword">AND</span> ${extraWhereHTML}` : '';
+
+
   const whereText = extraWhereText ? `\n    AND ${extraWhereText}` : '';
 
   const groupItems = [...groupAliases, ...customFieldsToGroup];
@@ -1742,6 +1735,9 @@ const usesURL =
   const orderText = sortClauses.length
     ? `\nORDER BY\n    ${sortClauses.join(', ')}`
     : '';
+
+  // const sql = `${selectClause}${fromClause}${baseWhereClause}${whereHTML}${groupByClause}${orderHTML}`;
+  // const plainSQL = `${plainSelectClause}\n${plainFromClause}\n${basePlainWhereClause}${whereText}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}${orderText}`;
 
   let limitValue = '';
   let limitClause = '';
@@ -1776,6 +1772,10 @@ const usesURL =
   body.classList.remove('show-generated', 'show-generated-incomplete');
   const hasErrors = document.querySelectorAll('#customFieldGroups .border-red-500').length > 0;
   const userTouchedInputs = document.querySelectorAll('#customFieldGroups input.user-started').length > 0;
+
+  // const limitValue = document.getElementById('limitInput')?.value?.trim();
+  // const limitClause = limitValue ? `\nLIMIT ${limitValue}` : '';
+
 
   if (userTouchedInputs && hasErrors) {
     void body.offsetHeight;
@@ -1855,7 +1855,7 @@ function updateFilterAndSortClauses() {
           if (['query','url'].includes(normalizedField)) clause = `NOT REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
           break;
       }
-      if (clause) filters.push({ clause, logic, field: normalizedField });
+      if (clause) filters.push({ clause, logic });
     }
 
     // store global AND/OR joiner
@@ -1876,6 +1876,9 @@ function updateFilterAndSortClauses() {
   window._filterClauses = filters;
   window._sortClauses   = sorts;
 }
+
+
+
 
 document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
@@ -1954,6 +1957,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
 
 
 
