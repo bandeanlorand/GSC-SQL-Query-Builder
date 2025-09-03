@@ -117,12 +117,26 @@ function getHashPayload() {
   // dates
   const sd  = yyyymmddToISO(hp.get('sd') || hp.get('start_date'));
   const ed  = yyyymmddToISO(hp.get('ed') || hp.get('end_date'));
-
+  const sd2 = yyyymmddToISO(hp.get('sd2'));
+  const ed2 = yyyymmddToISO(hp.get('ed2'));
   const nm  = hp.get('nm') ? parseInt(hp.get('nm'), 10) : null;
-
+  const cmp = (hp.get('cmp') || '').toLowerCase();
 
   let date = sd && ed ? { from: sd, to: ed } : (nm ? { months: nm } : null);
-  
+  if (sd2 && ed2) {
+    date = { from: sd, to: ed, from2: sd2, to2: ed2 };
+  } else if (cmp === 'prev' && sd && ed) {
+    // compute previous period automatically
+    const d1 = new Date(sd), d2 = new Date(ed);
+    const days = Math.round((d2 - d1) / 86400000) + 1;
+    const prevEnd = new Date(d1); prevEnd.setDate(prevEnd.getDate() - 1);
+    const prevStart = new Date(prevEnd); prevStart.setDate(prevStart.getDate() - (days - 1));
+    date = {
+      from: sd, to: ed,
+      from2: prevStart.toISOString().slice(0,10),
+      to2:   prevEnd.toISOString().slice(0,10)
+    };
+  }
 
   const filters = [];
 
