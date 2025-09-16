@@ -40,24 +40,24 @@
       </div>
     </header>
     <section class="max-w-[1640px] mx-auto p-4 md:p-6">
-      <div class="rounded-2xl border border-base-300/60 bg-base-200/40 shadow-xl overflow-hidden">
+      <div class="rounded-2xl border border-base-300/60 bg-base-200/40 shadow-sm overflow-hidden">
 
         <!-- App title bar (the “header” for the box) -->
         <div
           class="flex items-center justify-between px-6 py-4 border-b border-base-300/60  backdrop-blur bg-[#00897b]/60">
           <div class="flex items-center gap-4">
-          <a href="#" class="max-w-[120px] block">
-          <img src="search-analyzer-logo-1024x341.png" alt="" />
-        </a>
-          <div>
-            
-            <h1 class="text-xl font-semibold">Google Search Console SQL Query Builder</h1>
-            <p class="text-sm opacity-80">Build your SQL queries for Google Search Console data easily.</p>
-          </div>
+            <a href="#" class="max-w-[120px] block">
+              <img src="search-analyzer-logo-1024x341.png" alt="" />
+            </a>
+            <div>
+
+              <h1 class="text-xl font-semibold">Google Search Console SQL Query Builder</h1>
+              <p class="text-sm opacity-80">Build your SQL queries for Google Search Console data easily.</p>
+            </div>
 
           </div>
-          
-        
+
+
 
           <div class="flex items-center gap-2">
             <button id="openFaqBtn" class="btn btn-ghost btn-sm">? Help</button>
@@ -67,7 +67,7 @@
           </div>
         </div>
         <!-- Two-column content area -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white">
           <div class="space-y-4">
 
 
@@ -247,7 +247,8 @@
               <!-- Filters section starts here -->
               <!-- Filters Header (inside gray box) -->
               <div class="w-full max-w-4xl mx-auto mt-4">
-                <div class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70" id="toggleFiltersHeader">
+                <div class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70"
+                  id="toggleFiltersHeader">
                   <span class="font-bold">Filters</span>
                   <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300 rotate-180" fill="none"
                     stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -279,7 +280,8 @@
               <!-- Sort by section starts -->
               <!-- Sort By Section -->
               <div class="w-full max-w-4xl mx-auto mt-4">
-                <div class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70" id="toggleSortByHeader">
+                <div class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70"
+                  id="toggleSortByHeader">
                   <span class="font-bold">Sort by</span>
                   <svg id="sortArrow" class="w-4 h-4 transition-transform duration-300" fill="none"
                     stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -306,7 +308,8 @@
 
               <!-- Custom Fields section starts -->
               <div class="w-full max-w-4xl mx-auto mt-4">
-                <div class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70" id="toggleCustomFieldsHeader">
+                <div class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70"
+                  id="toggleCustomFieldsHeader">
                   <span class="font-bold">Custom Fields <i id="custom-fields-tooltip-icon"
                       class="fas fa-question-circle text-sm text-gray-300 cursor-pointer transition-colors duration-300 ease-in-out"></i></span>
                   <span class="relative group">
