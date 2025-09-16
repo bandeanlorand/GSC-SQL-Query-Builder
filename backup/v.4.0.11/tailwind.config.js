@@ -6,7 +6,6 @@ export default {
   },
   plugins: [require("daisyui")],
   daisyui: {
-    daisyui: { themes: ['corporate','garden','bumblebee','light','emerald','forest','dark', { gsc: {/* tokens */} }] }
+    themes: ["dark"], 
   },
 }
-// tailwind.config.js

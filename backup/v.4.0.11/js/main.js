@@ -1,10 +1,9 @@
-import { copySQL, setupEnterKeyTrigger, initSlideInPanel } from './utils.js';
+import { copySQL, setupEnterKeyTrigger } from './utils.js';
 import { predefinedCountries } from './components/predefinedCountries.js';
 import { dimensionEntries } from './components/dimensionsData.js';
 import { logQuery } from './components/logQuery.js';
 import { getDateRangeClause } from './components/dateRangeHelper.js';
 import { addSortRow, toggleSortBy, removeSortRow, updateSortFieldOptions } from './components/sortByControls.js';
-
 
 
 // Function to toggle the visibility of the filter section
@@ -238,7 +237,7 @@ function selectDimension(dimension) {
   const tag = document.createElement("div");
   tag.className = "badge badge-lg badge-primary px-2 flex items-center cursor-default text-sm font-semibold";
   tag.id = `tag-dimension-${safeId}`;
-  tag.innerHTML = `${dimension} <button onclick="removeDimension('${dimension}')" class="ml-2 mt-[-2px] leading-none text-[1.2rem]  font-bold outline-none border-none p-[2px] font-extralight">&times;</button>`;
+  tag.innerHTML = `${dimension} <button onclick="removeDimension('${dimension}')" class="ml-2 mt-[-2px] leading-none text-[1.2rem] text-white font-bold outline-none border-none p-[2px] font-extralight">&times;</button>`;
   document.getElementById("dimensionsTagsContainer").appendChild(tag);
 
   updateClearDimensionsButton();
@@ -302,54 +301,6 @@ function updateMetricsArrowState() {
   }
 }
 
-// Default metrics to keep after Reset
-const DEFAULT_METRICS = ['Clicks', 'Impressions', 'CTR', 'Position'];
-
-// Reset metrics UI & state, then apply defaults
-function resetMetricsToDefault() {
-  // Clear current metrics fully (UI + Set + dropdown items)
-  if (typeof clearAllMetrics === 'function') {
-    clearAllMetrics();
-  } else {
-    // Fallback: best effort clear
-    try { if (window.selectedMetrics) window.selectedMetrics.clear(); } catch { }
-    document.querySelectorAll('#metricsTagsContainer [id^="tag-"]').forEach(n => n.remove());
-    document.querySelectorAll('#metricsDropdown > div').forEach(n => n.style.display = '');
-    const ph = document.getElementById('metricsPlaceholder');
-    if (ph) ph.classList.remove('hidden');
-  }
-
-  // Add defaults (uses your existing selectMetric())
-  DEFAULT_METRICS.forEach(m => { if (typeof selectMetric === 'function') selectMetric(m); });
-
-  // Final polish
-  if (typeof updateClearMetricsButton === 'function') updateClearMetricsButton();
-  if (typeof updateMetricsArrowState === 'function') updateMetricsArrowState();
-  if (typeof updateSortFieldOptions === 'function') updateSortFieldOptions();
-}
-
-// Resets all UI elements to default state, then reapplies presets from URL if any
-function resetToUrlPresets() {
-  // Clear UI but keep query string
-  handleReset({ clearUrl: false });
-
-  if (typeof applyPresetsFromQuery === 'function') {
-    const params = new URLSearchParams(window.location.search);
-    applyPresetsFromQuery(params);
-
-    // ⬇ override whatever the URL had; we want 100 after this reset
-    setLimitDefault();
-  } else {
-    // Fallback: ensure a 100 limit after reload by writing it into the URL
-    const url = new URL(window.location.href);
-    url.searchParams.set('limit', '100');
-    history.replaceState({}, '', url);
-    window.location.reload();
-  }
-  showBodyToast('show-reset-url');
-}
-
-
 
 /* metrics dropdown functions - starts here*/
 
@@ -379,7 +330,7 @@ function selectMetric(metric) {
   label.textContent = metric;
 
   const closeBtn = document.createElement("button");
-  closeBtn.className = "ml-2 mt-[-2px] leading-none text-[1.2rem]  font-bold outline-none border-none p-[2px] font-extralight";
+  closeBtn.className = "ml-2 mt-[-2px] leading-none text-[1.2rem] text-white font-bold outline-none border-none p-[2px] font-extralight";
   closeBtn.textContent = "×";
   closeBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -783,7 +734,7 @@ function addFilterRow() {
     topRow.className = "flex justify-between items-center";
 
     const radioGroup = document.createElement('div');
-    radioGroup.className = "flex items-center gap-4 text-sm ";
+    radioGroup.className = "flex items-center gap-4 text-sm text-white";
     radioGroup.innerHTML = `
       <label class="inline-flex items-center gap-1 m-0 font-semibold">
         <input type="radio" name="logicGroup-${container.children.length}" value="AND" class="radio radio-sm" checked />
@@ -797,7 +748,7 @@ function addFilterRow() {
 
     const removeBtn = document.createElement('button');
     removeBtn.innerHTML = "&times;";
-    removeBtn.className = " text-lg font-bold px-3 hover:text-red-500 flex w-auto pr-0 cursor-pointer transition-colors duration-300 ease-in-out";
+    removeBtn.className = "text-white text-lg font-bold px-3 hover:text-red-500 flex w-auto pr-0 cursor-pointer transition-colors duration-300 ease-in-out";
     removeBtn.onclick = () => {
       wrapper.style.opacity = '0';
       wrapper.style.maxHeight = '0px';
@@ -835,7 +786,7 @@ function addFilterRow() {
 
   // boolean radios (also direct child, hidden by default)
   const radioWrapper = document.createElement('div');
-  radioWrapper.className = "flex gap-4 items-center  hidden";
+  radioWrapper.className = "flex gap-4 items-center text-white hidden";
   radioWrapper.innerHTML = `
     <label class="inline-flex items-center gap-1 m-0 font-semibold">
       <input type="radio" name="bool-val-filter-${Date.now()}" value="TRUE" class="radio radio-sm" />
@@ -957,7 +908,7 @@ function enableCountrySearchStyled(idPrefix, countries, parentElement) {
   input.classList.add('country-search-input'); // Adding class to the serach-dropdown-input 
 
   const dropdown = document.createElement('div');
-  dropdown.className = 'absolute z-50 bg-white border border-gray-600 rounded max-h-[200px] w-full overflow-y-auto hidden';
+  dropdown.className = 'absolute z-50 bg-gray-800 border border-gray-600 rounded max-h-[200px] w-full overflow-y-auto hidden';
   dropdown.style.maxHeight = '200px';
 
   let currentSelection = null;
@@ -966,7 +917,7 @@ function enableCountrySearchStyled(idPrefix, countries, parentElement) {
     dropdown.innerHTML = '';
     filtered.forEach(country => {
       const option = document.createElement('div');
-      option.className = 'px-3 py-2  hover:bg-gray-600 cursor-pointer ';
+      option.className = 'px-3 py-2 text-white hover:bg-gray-600 cursor-pointer ';
       option.textContent = country.name;
       option.dataset.code = country.code;
 
@@ -1032,13 +983,13 @@ function toggleCustomFields() {
 
 function createConditionRow(hasRemove = true, addButtons = true, groupContainer = null, defaultField = '', defaultOperator = 'EQUALS') {
   const wrapper = document.createElement('div');
-  wrapper.className = 'card-body gap-4 bg-white  card-border border-gray-700 ';
+  wrapper.className = 'card-body gap-4 bg-gray-800 border-gray-200 card-border border-base-300';
 
   const inputRow = document.createElement('div');
   inputRow.className = 'flex items-center gap-2 flex-wrap ';
 
   const whenLabel = document.createElement('label');
-  whenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
+  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
   whenLabel.textContent = 'When';
   inputRow.appendChild(whenLabel);
 
@@ -1061,7 +1012,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
 
   const uniqueRadioName = `bool-val-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const radioWrapper = document.createElement('div');
-  radioWrapper.className = "flex gap-4 items-center  hidden";
+  radioWrapper.className = "flex gap-4 items-center text-white hidden";
   radioWrapper.innerHTML = `
     <label class="inline-flex items-center gap-1 m-0 font-semibold font-semibold font-semibold">
       <input type="radio" name="${uniqueRadioName}" value="TRUE" class="radio radio-sm  " />
@@ -1119,7 +1070,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   thenRow.className = 'flex items-center gap-2';
 
   const thenLabel = document.createElement('label');
-  thenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
+  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
   thenLabel.textContent = 'Then';
 
   const thenInput = document.createElement('input');
@@ -1211,7 +1162,7 @@ function addCustomFieldGroup() {
   if (isFirstGroup) {
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '&times;';
-    closeBtn.className = 'absolute top-1 right-1  text-lg w-[20px] h-[20px] font-bold hover:text-red-500 font-extralight rounded-[5px] leading-[100%]';
+    closeBtn.className = 'absolute top-1 right-1 text-white text-lg w-[20px] h-[20px] font-bold hover:text-red-500 font-extralight rounded-[5px] leading-[100%]';
     closeBtn.onclick = () => groupContainer.remove();
     groupContainer.appendChild(closeBtn);
   }
@@ -1226,7 +1177,7 @@ function addCustomFieldGroup() {
   inputRow.className = 'flex items-center gap-2 flex-wrap';
 
   const whenLabel = document.createElement('label');
-  whenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
+  whenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
   whenLabel.textContent = 'When';
 
   const fieldSelect = document.createElement('select');
@@ -1243,13 +1194,13 @@ function addCustomFieldGroup() {
   valueInput.className = 'input w-[calc(33%-23px)] sm:w-[calc(33%-25px)] input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
 
   const valueSelect = document.createElement('select');
-  valueSelect.className = 'hidden flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 ';
+  valueSelect.className = 'hidden flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 text-white';
   valueSelect.innerHTML = `<option value="" disabled selected hidden>Select Country</option>` +
     predefinedCountries.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
 
   const uniqueRadioName = `bool-val-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const radioWrapper = document.createElement('div');
-  radioWrapper.className = 'flex gap-4 items-center  hidden';
+  radioWrapper.className = 'flex gap-4 items-center text-white hidden';
   radioWrapper.innerHTML = `
     <label class="inline-flex items-center gap-1 m-0 font-semibold font-semibold font-semibold">
       <input type="radio" name="${uniqueRadioName}" value="TRUE" class="radio radio-sm  " checked />
@@ -1326,7 +1277,7 @@ function addCustomFieldGroup() {
   thenRow.className = 'flex items-center gap-2';
 
   const thenLabel = document.createElement('label');
-  thenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
+  thenLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
   thenLabel.textContent = 'Then';
 
   const thenInput = document.createElement('input');
@@ -1361,7 +1312,7 @@ function addCustomFieldGroup() {
   elseRow.className = 'flex items-center gap-2';
 
   const elseLabel = document.createElement('label');
-  elseLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(55px)] font-semibold';
+  elseLabel.className = 'text-white text-sm whitespace-nowrap mt-0 w-[calc(55px)] font-semibold';
   elseLabel.textContent = 'Else';
 
   const elseInput = document.createElement('input');
@@ -1580,16 +1531,16 @@ export function generateSQL() {
 
 
   // PATCH: decide early if URL is used (dimension OR filter) ---
-  const _filters = window._filterClauses || [];
-  const usesURL =
-    // URL selected as a dimension?
-    dimensions.some(d => String(d).toLowerCase() === 'url') ||
-    // …or any filter targets URL?
-    _filters.some(f =>
-      (f.field && f.field.toLowerCase() === 'url') ||      // preferred: from updateFilterAndSortClauses
-      /\burl\b/i.test(f.clause)                            // fallback: scan clause text
-    );
-  // ---------------------------------------------------------------
+const _filters = window._filterClauses || [];
+const usesURL =
+  // URL selected as a dimension?
+  dimensions.some(d => String(d).toLowerCase() === 'url') ||
+  // …or any filter targets URL?
+  _filters.some(f =>
+    (f.field && f.field.toLowerCase() === 'url') ||      // preferred: from updateFilterAndSortClauses
+    /\burl\b/i.test(f.clause)                            // fallback: scan clause text
+  );
+// ---------------------------------------------------------------
 
 
   const indent = '<span style="display:inline-block; width:1em"></span>';
@@ -1628,7 +1579,7 @@ export function generateSQL() {
   console.log('Dimensions:', dimensions);
 
 
-  if (metrics.includes('Position')) {
+    if (metrics.includes('Position')) {
     const positionField = usesURL ? 'sum_position' : 'sum_top_position';
 
     selectLines.push(
@@ -1732,8 +1683,8 @@ export function generateSQL() {
   const plainSelectClause = `SELECT\n${plainSelectLines.join(',\n')}`;
 
   const fromTable = usesURL
-    ? '`searchconsole.searchdata_url_impression`'
-    : '`searchconsole.searchdata_site_impression`';
+   ? '`searchconsole.searchdata_url_impression`'
+   : '`searchconsole.searchdata_site_impression`';
 
 
 
@@ -1795,29 +1746,11 @@ export function generateSQL() {
   let limitValue = '';
   let limitClause = '';
 
-  
-
-  const limitInput   = document.getElementById('limitInput');
-  const limitEnabled = document.getElementById('limitEnabled');
-
-  if (limitInput && limitEnabled && limitEnabled.checked) {
-    // use typed value, or fallback to placeholder if empty
-    let raw = limitInput.value.trim();
-    if (raw === '') raw = limitInput.getAttribute('placeholder') || '';
-
-    if (raw !== '') {
-      let n = parseInt(raw, 10);
-      if (Number.isFinite(n)) {
-        // honor min if present
-        const minAttr = parseInt(limitInput.getAttribute('min') || '1', 10);
-        if (Number.isFinite(minAttr)) n = Math.max(n, minAttr);
-
-        limitClause = `\nLIMIT ${n}`;
-      }
-    }
+  const limitInput = document.getElementById('limitInput');
+  if (limitInput && limitInput.value.trim() !== '') {
+    limitValue = limitInput.value.trim();
+    limitClause = `\nLIMIT ${limitValue}`;
   }
-
-
 
 
   const sql = `${selectClause}${fromClause}${baseWhereClause}${whereHTML}${groupByClause}${orderHTML}${limitClause}`;
@@ -1837,45 +1770,40 @@ export function generateSQL() {
     });
   });
 
-  
-const hasErrors = document.querySelectorAll('#customFieldGroups .border-red-500').length > 0;
-const userTouchedInputs = document.querySelectorAll('#customFieldGroups input.user-started').length > 0;
+  const body = document.body;
+  const sqlStatus = document.getElementById('sqlStatus');
 
-const toastClass = (userTouchedInputs && hasErrors)
-  ? 'show-generated-incomplete'
-  : 'show-generated';
+  body.classList.remove('show-generated', 'show-generated-incomplete');
+  const hasErrors = document.querySelectorAll('#customFieldGroups .border-red-500').length > 0;
+  const userTouchedInputs = document.querySelectorAll('#customFieldGroups input.user-started').length > 0;
 
-showBodyToast(toastClass);   // always pass a valid string
-
+  if (userTouchedInputs && hasErrors) {
+    void body.offsetHeight;
+    body.classList.add('show-generated-incomplete');
+    if (sqlStatus) sqlStatus.setAttribute('title', 'There are incomplete fields – SQL Generated!');
+  } else {
+    body.classList.add('show-generated');
+    setTimeout(() => {
+      body.classList.remove('show-generated');
+    }, 3000);
+    if (sqlStatus) sqlStatus.removeAttribute('title');
+  }
   return plainSQL;
 }
-function showBodyToast(cls) {
-  const body = document.body;
-  if (!cls || typeof cls !== 'string') {
-    body.classList.remove('undefined');
-    return;
-  }
-  body.classList.remove('show-generated','show-generated-incomplete','show-reset','show-reset-url','undefined');
-  void body.offsetHeight;    // restart animation
-  body.classList.add(cls);
-  setTimeout(() => body.classList.remove(cls), 3000);
-}
-
-
 
 
 function updateFilterAndSortClauses() {
   const filters = [];
   document.querySelectorAll('#filterRows > div').forEach(filter => {
     const selects = filter.querySelectorAll('select');
-    const field = selects[0]?.value;
-    const operator = selects[1]?.value;
-    const logic = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
+    const field   = selects[0]?.value;
+    const operator= selects[1]?.value;
+    const logic   = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
 
     // 👇 pull values from the correct control
-    const deviceSelect = filter.querySelector('select.device-select');
-    const textInput = filter.querySelector('input[type="text"]');
-    const booleanRadio = filter.querySelector('input[name^="bool-val"]:checked');
+    const deviceSelect       = filter.querySelector('select.device-select');
+    const textInput          = filter.querySelector('input[type="text"]');
+    const booleanRadio       = filter.querySelector('input[name^="bool-val"]:checked');
     const countryInputStyled = filter.querySelector('input.country-search-input');
 
     let value = null;
@@ -1914,17 +1842,17 @@ function updateFilterAndSortClauses() {
             clause = `${normalizedField} != '${value}'`;
           }
           break;
-        case 'CONTAINS': clause = `${normalizedField} LIKE '%${value}%'`; break;
-        case 'NOT CONTAINS': clause = `${normalizedField} NOT LIKE '%${value}%'`; break;
-        case 'GREATER THAN': clause = `${normalizedField} > '${value}'`; break;
-        case 'LESS THAN': clause = `${normalizedField} < '${value}'`; break;
-        case 'IS NULL': clause = `${normalizedField} IS NULL`; break;
-        case 'IS NOT NULL': clause = `${normalizedField} IS NOT NULL`; break;
+        case 'CONTAINS':            clause = `${normalizedField} LIKE '%${value}%'`; break;
+        case 'NOT CONTAINS':        clause = `${normalizedField} NOT LIKE '%${value}%'`; break;
+        case 'GREATER THAN':        clause = `${normalizedField} > '${value}'`; break;
+        case 'LESS THAN':           clause = `${normalizedField} < '${value}'`; break;
+        case 'IS NULL':             clause = `${normalizedField} IS NULL`; break;
+        case 'IS NOT NULL':         clause = `${normalizedField} IS NOT NULL`; break;
         case 'REGEXP CONTAINS':
-          if (['query', 'url'].includes(normalizedField)) clause = `REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+          if (['query','url'].includes(normalizedField)) clause = `REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
           break;
         case 'NOT REGEXP CONTAINS':
-          if (['query', 'url'].includes(normalizedField)) clause = `NOT REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+          if (['query','url'].includes(normalizedField)) clause = `NOT REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
           break;
       }
       if (clause) filters.push({ clause, logic, field: normalizedField });
@@ -1946,205 +1874,11 @@ function updateFilterAndSortClauses() {
   });
 
   window._filterClauses = filters;
-  window._sortClauses = sorts;
+  window._sortClauses   = sorts;
 }
-
-// LIMIT toggle logic - starts here
-function initLimitToggle() {
-  const cb = document.getElementById('limitEnabled');
-  const input = document.getElementById('limitInput');
-  if (!cb || !input) return;
-
-  cb.checked = false;
-
-  // Auto-enable when typing
-  input.addEventListener('input', () => {
-    cb.checked = input.value.trim() !== '';
-  });
-
-  // If user checks the box without typing, seed value from placeholder (or 100)
-  cb.addEventListener('change', () => {
-    if (cb.checked && input.value.trim() === '') {
-      const fallback = input.getAttribute('placeholder') || '100';
-      input.value = fallback;
-      // optional: trigger input listeners if you rely on them
-      // input.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  });
-}
-
-// LIMIT toggle logic - ends here
-
-
-function initSqlPlaceholder() {
-  const ph = document.getElementById('sqlPlaceholder');
-  const out = document.getElementById('sqlOutput');
-  const outFmt = document.getElementById('sqlOutputFormated');
-  const copyBtn = document.getElementById('copySQLButton');
-  if (!ph) return;
-
-  const hasText = el => el && el.textContent.trim().length > 0;
-
-  const check = () => {
-    const isEmpty = !(hasText(out) || hasText(outFmt));
-
-    // Placeholder visibility
-    ph.classList[isEmpty ? 'remove' : 'add']('hidden');
-
-    // Copy button: visible, but disabled until we have SQL
-    if (copyBtn) {
-      copyBtn.disabled = isEmpty;
-      copyBtn.title = isEmpty ? 'Generate SQL to enable' : 'Copy SQL';
-      // Optional: if you want extra visual feedback besides DaisyUI defaults:
-      copyBtn.classList.toggle('opacity-50', isEmpty);
-      copyBtn.classList.toggle('cursor-not-allowed', isEmpty);
-    }
-  };
-
-  const cfg = { childList: true, characterData: true, subtree: true };
-  if (out) new MutationObserver(check).observe(out, cfg);
-  if (outFmt) new MutationObserver(check).observe(outFmt, cfg);
-
-  // initial state
-  check();
-}
-
-
-
-function hasUrlPresets() {
-  // Anything in the query string?
-  const qs = new URLSearchParams(window.location.search);
-  if ([...qs.keys()].length > 0) return true;
-
-  // Or in the hash (supports both k=v and compact token styles)
-  const h = (window.location.hash || '').replace(/^#/, '').trim();
-  if (!h) return false;
-  if (h.includes('=')) return true; // #m=Clicks&dim=URL...
-  const tokens = ['m', 'dim', 'st', 'sd', 'ed', 'nm', 'dv', 'f', 'limit', 'metrics', 'breakdown', 'search_type', 'device', 'page'];
-  const lc = h.toLowerCase();
-  return tokens.some(t => lc.startsWith(t) || lc.includes(`${t}=`) || lc.includes(`${t}:`) || lc.includes(`${t},`));
-}
-function setLimitDefault() {
-  const input = document.getElementById('limitInput');
-  const cb    = document.getElementById('limitEnabled');
-  if (input) {
-    const fallback = input.getAttribute('placeholder') || '100';
-    input.value = fallback;            // show 100 in the box again
-  }
-  if (cb) cb.checked = false;          // not applied until user checks the box
-}
-
-function updateResetToUrlVisibility() {
-  const btn = document.getElementById('resetToUrlButton');
-  if (!btn) return;
-  btn.classList.toggle('hidden', !hasUrlPresets());
-}
-
-// Call on page load to set initial state, and also whenever the URL changes
-function initResetToUrlVisibilityWatcher() {
-  updateResetToUrlVisibility();
-
-  // Update on browser back/forward
-  window.addEventListener('popstate', updateResetToUrlVisibility);
-
-  // Update after programmatic URL changes
-  ['pushState', 'replaceState'].forEach(fn => {
-    const orig = history[fn];
-    history[fn] = function (...args) {
-      const ret = orig.apply(this, args);
-      updateResetToUrlVisibility();
-      return ret;
-    };
-  });
-}
-
-
-// Resets all UI elements to default state
-// Pass { clearUrl: true } to also strip URL params (for preset integrations)
-function handleReset({ clearUrl = false } = {}) {
-  // 1) Clear SQL outputs (placeholder will reappear via MutationObserver)
-  const out = document.getElementById('sqlOutput');
-  const outFmt = document.getElementById('sqlOutputFormated');
-  if (out) out.textContent = '';
-  if (outFmt) outFmt.textContent = '';
-
-  // 2) Metrics & Dimensions
-  try { if (window.selectedMetrics) window.selectedMetrics.clear(); } catch { }
-  if (typeof clearAllMetrics === 'function') clearAllMetrics();
-
-  try { if (window.selectedDimensions) window.selectedDimensions.clear(); } catch { }
-  if (typeof clearAllDimensions === 'function') clearAllDimensions();
-
-  resetMetricsToDefault();
-
-  // Dimensions (clear as before)
-  try { if (window.selectedDimensions) window.selectedDimensions.clear(); } catch { }
-  if (typeof clearAllDimensions === 'function') clearAllDimensions();
-
-
-  // 3) Dates & Date range UI
-  const start = document.getElementById('startDate');
-  const end = document.getElementById('endDate');
-  if (start) start.value = '';
-  if (end) end.value = '';
-  const drLabel = document.getElementById('dateRangeLabel');
-  if (drLabel) drLabel.textContent = 'Custom date range';
-
-  // 4) Filters
-  const filterRows = document.getElementById('filterRows');
-  if (filterRows) {
-    filterRows.innerHTML = '';
-    if (typeof addFilterRow === 'function') addFilterRow(); // fresh blank row
-  }
-
-  // 5) Sort
-  const sortRows = document.getElementById('sortRows');
-  if (sortRows) sortRows.innerHTML = '';
-  const sortSection = document.getElementById('sortSection');
-  if (sortSection) sortSection.classList.add('hidden');
-
-  // 6) Custom Fields
-  const customGroups = document.getElementById('customFieldGroups');
-  if (customGroups) {
-    customGroups.innerHTML = '';
-    if (typeof addCustomFieldGroup === 'function') addCustomFieldGroup();
-  }
-  const customFieldsSection = document.getElementById('customFieldsSection');
-  if (customFieldsSection) customFieldsSection.classList.add('hidden');
-
-  // 7) Limit
-  setLimitDefault();
-
-
-  // 8) Optionally strip URL params (prevents GSC presets on refresh)
-  if (clearUrl) {
-    history.replaceState({}, '', window.location.pathname);
-  }
-
-  // 9) Notify anyone listening
-  document.dispatchEvent(new Event('gscql:reset'));
-
-  showBodyToast('show-reset');
-}
-//ends here
-
-
-// FAQ slide-in panel
-let faqAPI; // holds { open, close }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // init slide-in, but don't bind buttons here
-  faqAPI = initSlideInPanel({ panelId: 'faqPanel', overlayId: 'faqOverlay' });
-
   setupEventListeners();
-  setupTooltips(); // moved your tooltip DOMContentLoaded code into a function below
-
-  // expose if integration.js needs them
-  window.openFAQ = window.openFAQ || (() => faqAPI.open());
-  window.closeFAQ = window.closeFAQ || (() => faqAPI.close());
-  initSqlPlaceholder();
-  initResetToUrlVisibilityWatcher();
-  initLimitToggle();
 });
 
 function setupEventListeners() {
@@ -2161,60 +1895,65 @@ function setupEventListeners() {
     ['removeSortRowBtn', 'click', removeSortRow],
     ['toggleCustomFieldsHeader', 'click', toggleCustomFields],
     ['addCustomFieldGroupBtn', 'click', addCustomFieldGroup],
-
-    // FAQ slide-in hooks (same pattern)
-    ['openFaqBtn', 'click', () => faqAPI.open()],
-    ['closeFaqBtn', 'click', () => faqAPI.close()],
-    ['faqOverlay', 'click', () => faqAPI.close()],
-    ['resetButton', 'click', (e) => handleReset({ clearUrl: e.shiftKey })],
-    ['resetToUrlButton', 'click', resetToUrlPresets],
   ];
 
   listeners.forEach(([id, event, handler]) => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener(event, handler);
+    if (el) {
+      el.addEventListener(event, handler);
+    }
   });
 
-  // Fallbacks for legacy inline handlers
+  // Optional fallback (if old buttons had inline handlers)
   const fallbackCopyBtn = document.querySelector('button[onclick="copySQL()"]');
   if (fallbackCopyBtn) fallbackCopyBtn.addEventListener('click', copySQL);
+
   const fallbackGenBtn = document.querySelector('button[onclick="generateSQL()"]');
   if (fallbackGenBtn) fallbackGenBtn.addEventListener('click', generateSQL);
 
   setupEnterKeyTrigger(generateSQL);
 }
+document.addEventListener("DOMContentLoaded", () => {
+  const customFieldsTooltipIcon = document.getElementById("custom-fields-tooltip-icon");
+  const tooltipBox = document.getElementById("global-tooltip");
 
-// your tooltip code extracted into a function
-function setupTooltips() {
-  const tooltipBox = document.getElementById('global-tooltip');
+  // Tooltip: Limit input field
+  const limitTooltipIcon = document.getElementById("limit-tooltip-icon");
 
-  const customIcon = document.getElementById('custom-fields-tooltip-icon');
-  if (customIcon && tooltipBox) {
-    const txt = `Create your own fields. For example, group branded vs non-branded keywords. When query contains your brand name, the field will show "Brand", else "Non-Brand".`;
-    customIcon.addEventListener('mouseenter', (e) => {
-      tooltipBox.textContent = txt;
-      tooltipBox.classList.remove('hidden');
-      const r = e.target.getBoundingClientRect();
-      tooltipBox.style.top = `${r.top - 8 + window.scrollY}px`;
-      tooltipBox.style.left = `${r.right + 4 + window.scrollX}px`;
+  if (customFieldsTooltipIcon && tooltipBox) {
+    const customTooltipText = `Create your own fields. For example, group branded vs non-branded keywords. When query contains your brand name, the field will show "Brand", else "Non-Brand".`;
+
+    customFieldsTooltipIcon.addEventListener("mouseenter", (e) => {
+      tooltipBox.textContent = customTooltipText;
+      tooltipBox.classList.remove("hidden");
+
+      const rect = e.target.getBoundingClientRect();
+      tooltipBox.style.top = `${rect.top - 8 + window.scrollY}px`;
+      tooltipBox.style.left = `${rect.right + 4 + window.scrollX}px`;
     });
-    customIcon.addEventListener('mouseleave', () => tooltipBox.classList.add('hidden'));
+
+    customFieldsTooltipIcon.addEventListener("mouseleave", () => {
+      tooltipBox.classList.add("hidden");
+    });
   }
 
-  const limitIcon = document.getElementById('limit-tooltip-icon');
-  if (limitIcon && tooltipBox) {
-    const txt = 'Limits the number of rows returned in the SQL query. If left empty, all results will be returned.';
-    limitIcon.addEventListener('mouseenter', (e) => {
-      tooltipBox.textContent = txt;
-      tooltipBox.classList.remove('hidden');
-      const r = e.target.getBoundingClientRect();
-      tooltipBox.style.top = `${r.top - 8 + window.scrollY}px`;
-      tooltipBox.style.left = `${r.right + 4 + window.scrollX}px`;
-    });
-    limitIcon.addEventListener('mouseleave', () => tooltipBox.classList.add('hidden'));
-  }
-}
+  if (limitTooltipIcon && tooltipBox) {
+    const limitTooltipText = "Limits the number of rows returned in the SQL query. If left empty, all results will be returned.";
 
+    limitTooltipIcon.addEventListener("mouseenter", (e) => {
+      tooltipBox.textContent = limitTooltipText;
+      tooltipBox.classList.remove("hidden");
+
+      const rect = e.target.getBoundingClientRect();
+      tooltipBox.style.top = `${rect.top - 8 + window.scrollY}px`;
+      tooltipBox.style.left = `${rect.right + 4 + window.scrollX}px`;
+    });
+
+    limitTooltipIcon.addEventListener("mouseleave", () => {
+      tooltipBox.classList.add("hidden");
+    });
+  }
+});
 
 
 
@@ -2241,5 +1980,3 @@ window.generateSQL = window.generateSQL || generateSQL;
 
 
 document.dispatchEvent(new Event('gscql:ui-ready'));
-
-

@@ -1,5 +1,5 @@
 html{
-  /* background-color: #05445E; */
+  background-color: #05445E;
 }
 body {
   /* font-family: sans-serif; */
@@ -123,42 +123,6 @@ body.show-generated-incomplete::after {
   animation: slideInFadeOut 3s forwards;
 }
 
-body.show-reset::after {
-  content: "All fields reset.";
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(55, 65, 81, 0.9);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.25);
-  opacity: 0;
-  z-index: 9999;
-  animation: slideInFadeOut 3s forwards;
-}
-
-body.show-reset-url::after {
-  content: "Reset to URL presets.";
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(55, 65, 81, 0.9);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.25);
-  opacity: 0;
-  z-index: 9999;
-  animation: slideInFadeOut 3s forwards;
-}
-
 @keyframes slideInFadeOut {
   0% {
     bottom: 20px;
@@ -179,38 +143,4 @@ body.show-reset-url::after {
     bottom: 20px;
     opacity: 0;
   }
-}
-
-/* :root[data-theme="gsc"]{
-  --p: 164 95% 28%; --pc: 0 0% 100%;
-  --s: 201 96% 32%; --sc: 0 0% 100%;
-  --a: 29 92% 55%;  --ac: 0 0% 8%;
-  --n: 220 13% 18%; --nc: 210 40% 98%;
-  --b1: 210 15% 12%; --b2: 210 14% 16%; --b3: 210 14% 20%; --bc: 210 100% 96%;
-} */
-
-/* tailwind: global typography tweaks */
-@layer base {
-   :root,
-  [data-theme] {
-    --fallback-bc: 12 18 28; /* slate-900-ish; RGB without commas for daisyUI */
-  }
-  /* 1) default thickness + rendering */
-  html { @apply subpixel-antialiased; }
-  body { @apply font-medium text-slate-900; } /* darker text helps contrast on the GSC-like bg */
-
-  /* 2) headings / labels a notch stronger */
-  h1, h2, h3, label, .section-title { @apply font-semibold; }
-
-  /* 3) form & control text a bit stronger too */
-  .input, .select, .textarea, .btn, .badge { @apply font-medium; }
-
-  /* 4) Don’t thicken code/SQL blocks—keep readability */
-  code, pre, kbd, samp { @apply font-normal; }
-}
-
-.alert-info {
-  /* daisyUI uses HSL tokens: h s l (no commas) */
-  --in: 174 100% 27%;   /* #00897B  -> h=174 s=100% l=27% */
-  --inc: 0 0% 70%;     /* content color → white */
 }
