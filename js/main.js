@@ -181,7 +181,7 @@ const tooltipBox = document.getElementById("global-tooltip");
 
 dimensionEntries.forEach(([name, tooltip]) => {
   const item = document.createElement("div");
-  item.className = "relative cursor-pointer p-1 hover:bg-gray-700 flex items-center justify-between";
+  item.className = "relative cursor-pointer p-1 hover:bg-gray-300 flex items-center justify-between";
   item.setAttribute("onclick", `selectDimension('${name}')`);
 
   const span = document.createElement("span");
