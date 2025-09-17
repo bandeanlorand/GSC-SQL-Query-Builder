@@ -1,14 +1,95 @@
+/* ───────── Tailwind entry ───────── */
 @import "tailwindcss";
 
-/* Tell Tailwind where to scan */
+/* Tell Tailwind where to scan (v4 style) */
 @source "./index.html";
 @source "./view-sqls.html";
 @source "./js/**/*.js";
 
-/* Enable themes you want (add bumblebee) */
+/* DaisyUI (v4 style) */
 @plugin "daisyui" {
   themes: light --default, dark, bumblebee, garden, corporate, emerald, forest, gsc;
 }
 
-/* your overrides after plugin */
+/* Your extra CSS after Tailwind/DaisyUI builds */
 @import "../css/custom.css";
+
+/* ───────── Splash / Loader (kept in production) ───────── */
+@layer base {
+  /* Vars */
+  :root{
+    --splash-bg: #f6f8fb;          /* match your page bg */
+    --splash-intro: 700ms;         /* fade-in + initial spin */
+    --splash-hold: 300ms;          /* brief pause fully visible */
+    --splash-outro: 500ms;         /* slide to corner + fade out */
+    --splash-corner-offset: 20px;  /* where it lands top/left before fading */
+    --splash-scale-end: .55;       /* size at the corner */
+  }
+
+  /* Motion-reduced users still see it briefly, but faster */
+  @media (prefers-reduced-motion: reduce) {
+    :root{
+      --splash-intro: 300ms;
+      --splash-hold: 100ms;
+      --splash-outro: 250ms;
+    }
+  }
+
+  /* Base overlay */
+  .splash{
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    background: #f6f8fb;
+    pointer-events: none;         
+    height: 100dvh;
+  }
+
+  .splash__logo{
+    display: block;
+    /* opacity: 0; */
+    transform: scale(.9) rotate(-90deg);
+    will-change: transform, opacity;
+  }
+
+  /* Animations */
+  @keyframes splashIntro {
+    0%   { opacity: 0; transform: scale(.85) rotate(-90deg); }
+    40%  { opacity: 1; transform: scale(1)   rotate(0deg);   }
+    100% { opacity: 1; transform: scale(1)   rotate(360deg); }
+  }
+
+  @keyframes splashOutro {
+    0%   { opacity: 1; transform: translate(0,0) scale(1) rotate(360deg); }
+    100% {
+      opacity: 0;
+      transform:
+        translate(calc(-50vw + 20px),calc(-50vh + 20px)) scale(0.55)
+        rotate(540deg);
+    }
+  }
+
+  /* State hooks (JS toggles these). Use !important to beat resets in prod. */
+  .splash--intro .splash__logo{
+  animation-name: splashIntro !important;
+  animation-duration: 300ms, 0.7s !important;
+  animation-timing-function: ease-out !important;
+  animation-fill-mode: forwards !important;
+  animation-iteration-count: 1 !important;
+}
+
+.splash--outro .splash__logo{
+  animation-name: splashOutro !important;
+  animation-duration: -300ms, 0.5s !important;
+  animation-timing-function: ease-in !important;
+  animation-fill-mode: forwards !important;
+  animation-iteration-count: 1 !important;
+}
+
+  .splash--hidden{
+    display: none !important;
+  }
+}
+/* ───────── Splash end ───────── */

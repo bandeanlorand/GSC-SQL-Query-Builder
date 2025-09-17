@@ -17,7 +17,7 @@
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png" />
   <link rel="manifest" href="site.webmanifest" />
-  
+
 
   <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 
@@ -28,15 +28,9 @@
   <!-- Splash / Loader -->
   <div id="app-splash" class="splash" role="status" aria-live="polite" aria-label="Loading">
     <!-- Use your actual logo path here -->
-    <img
-      class="splash__logo"
-      src="search-analyzer-logo.png"
-      alt="GSC SQL Builder"
-      width="256"
-      height="256"
-    />
+    <img class="splash__logo" src="search-analyzer-logo.png" alt="GSC SQL Builder" width="256" height="256" />
   </div>
-  
+
 
   <main class="flex-1">
 
@@ -54,8 +48,8 @@
         </a>
       </div>
     </header>
-    <section class="max-w-[1640px] mx-auto p-4 md:p-6">
-      <div class="rounded-2xl border border-base-300/60 bg-base-200/40 shadow-sm overflow-hidden">
+    <section class="max-w-[1640px] mx-auto p-4 md:p-6 mb-2 relative">
+      <div class="rounded-2xl border border-base-300/60 bg-base-200/40 shadow-sm overflow-hidden relative ">
 
         <!-- App title bar (the “header” for the box) -->
         <div
@@ -75,14 +69,14 @@
 
 
           <div class="flex items-center gap-2">
-            <button id="openFaqBtn" class="btn btn-ghost btn-sm">? Help</button>
+            <button id="openFaqBtn" class=" btn-sm z-10 btn btn-md transition duration-100 ease">? Help</button>
             <!-- Optional: a small reset in the title bar too
         <button type="button" id="resetButtonTop" class="btn btn-outline btn-sm">Reset</button>
         -->
           </div>
         </div>
         <!-- Two-column content area -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white relative">
           <div class="space-y-4">
 
 
@@ -101,7 +95,7 @@
                     class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm">
                     <span id="dateRangeLabel" class="text-gray-400">Select date range</span>
 
-                    <svg id="dateRangeArrow" class="w-4 h-4 transition-transform duration-300" fill="none"
+                    <svg id="dateRangeArrow" class="w-4 h-4 transition-transform duration-300 cursor-pointer" fill="none"
                       stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
                     </svg>
@@ -111,22 +105,31 @@
                   class="bg-white border border-gray-600 p-1 rounded absolute z-10 mt-[8px] hidden max-h-[450px]">
                   <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Yesterday">Yesterday</div>
                   <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last Week">Last Week</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last month">Last month</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Month to last available date">Month to
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last month">Last month
+                  </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]"
+                    data-range="Month to last available date">Month to
                     last
                     available date</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last 7 days">Last 7 days</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last 14 days">Last 14 days</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last 30 days">Last 30 days</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Year to last available date">Year to
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last 7 days">Last 7 days
+                  </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last 14 days">Last 14 days
+                  </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last 30 days">Last 30 days
+                  </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]"
+                    data-range="Year to last available date">Year to
                     last
                     available date</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last quarter">Last quarter</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Quarter to last available date">Quarter
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last quarter">Last quarter
+                  </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]"
+                    data-range="Quarter to last available date">Quarter
                     to
                     last available date</div>
                   <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Last year">Last year</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Custom date range">Custom date range
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px]" data-range="Custom date range">Custom
+                    date range
                   </div>
 
 
@@ -193,7 +196,7 @@
                   <div id="metricsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto">
                     <span id="metricsPlaceholder" class="text-gray-400">Select metrics</span>
                   </div>
-                  <svg id="metricsArrow" class="w-4 h-4 transition-transform duration-300 ml-2 flex-shrink-0"
+                  <svg id="metricsArrow" class="w-4 h-4 transition-transform duration-300 cursor-pointer ml-2 flex-shrink-0"
                     fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
@@ -243,7 +246,7 @@
                   class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm h-auto min-h-[48px] p-[9px]">
                   <div id="dimensionsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto"><span
                       id="dimensionsPlaceholder" class="text-gray-400">Select dimensions</span></div>
-                  <svg id="dimensionsArrow" class="w-4 h-4 transition-transform duration-300 ml-2 flex-shrink-0"
+                  <svg id="dimensionsArrow" class="w-4 h-4 transition-transform duration-300 cursor-pointer ml-2 flex-shrink-0"
                     fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
@@ -262,10 +265,11 @@
               <!-- Filters section starts here -->
               <!-- Filters Header (inside gray box) -->
               <div class="w-full max-w-4xl mx-auto mt-4">
-                <div class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70 uppercase"
+                <div
+                  class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70 uppercase"
                   id="toggleFiltersHeader">
                   <span class="font-bold">Filters</span>
-                  <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300 rotate-180" fill="none"
+                  <svg id="filterArrow" class="w-4 h-4 transition-transform duration-300 cursor-pointer rotate-180 cursor-pointer" fill="none"
                     stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
@@ -295,10 +299,11 @@
               <!-- Sort by section starts -->
               <!-- Sort By Section -->
               <div class="w-full max-w-4xl mx-auto mt-4">
-                <div class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70 uppercase"
+                <div
+                  class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70 uppercase"
                   id="toggleSortByHeader">
                   <span class="font-bold">Sort by</span>
-                  <svg id="sortArrow" class="w-4 h-4 transition-transform duration-300" fill="none"
+                  <svg id="sortArrow" class="w-4 h-4 transition-transform duration-300 cursor-pointer" fill="none"
                     stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
@@ -323,13 +328,14 @@
 
               <!-- Custom Fields section starts -->
               <div class="w-full max-w-4xl mx-auto mt-4">
-                <div class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70 uppercase"
+                <div
+                  class=" alert w-full alert-info  flex justify-between bg-[#00897b]/60 border-[#00897b]/70 uppercase"
                   id="toggleCustomFieldsHeader">
                   <span class="font-bold">Custom Fields <i id="custom-fields-tooltip-icon"
                       class="fas fa-question-circle text-sm text-white cursor-pointer transition-colors duration-300 ease-in-out"></i></span>
                   <span class="relative group">
 
-                    <svg id="customFilterArrow" class="w-4 h-4 transition-transform duration-300" fill="none"
+                    <svg id="customFilterArrow" class="w-4 h-4 transition-transform duration-300 cursor-pointer" fill="none"
                       stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
                     </svg>
@@ -416,13 +422,15 @@
                focus:outline-none hover:text-white" disabled title="Generate SQL to enable">
                 Copy SQL
               </button>
-              <button type="button" id="resetButton" class="btn btn-md transition duration-100 ease hover:bg-[#1e8579] hover:shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm focus:outline-none hover:text-white"
+              <button type="button" id="resetButton"
+                class="btn btn-md transition duration-100 ease hover:bg-[#1e8579] hover:shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm focus:outline-none hover:text-white"
                 title="Reset all fields. Shift+Click to also clear URL params.">
                 Reset
               </button>
 
               <!-- New button -->
-              <button type="button" id="resetToUrlButton" class="btn btn-md transition duration-100 ease hover:bg-[#1e8579] hover:shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm focus:outline-none hover:text-white"
+              <button type="button" id="resetToUrlButton"
+                class="btn btn-md transition duration-100 ease hover:bg-[#1e8579] hover:shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm focus:outline-none hover:text-white"
                 title="Restore values from the current URL parameters (GSC presets).">
                 Reset to URL presets
               </button>
@@ -430,8 +438,17 @@
             </div>
 
           </div>
+
+
         </div>
+        <!-- Version chip -->
+
       </div>
+      <span id="versionBadge" title="Build version"
+        class="absolute right-4 px-3 py-1 rounded-full text-[11px] font-semibold
+                      bg-[#fff]/90 text-gray shadow-md ring-1 ring-black/10 z-[-1] bottom-[2px] right-[45px] rounded-b-[5px] rounded-t-none">
+        v5.0.17.09.2025
+      </span>
     </section>
 
     <!-- Slide-in FAQ Panel -->
@@ -546,7 +563,7 @@
 
   </main>
 
-  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.6rem] text-right">v.5.0.1.17.09.2025</footer>
+  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.6rem] text-right"></footer>
   <script type="module" src="js/main.js"></script>
   <script type="module" src="js/integration.js"></script>
   <script>
@@ -570,41 +587,9 @@
 
 </body>
 <script>
-(function () {
-  const splash = document.getElementById('app-splash');
-  if (!splash) return;
 
-  // Total visible time ≈ intro + hold + outro
-  const INTRO = parseTime(getComputedStyle(document.documentElement).getPropertyValue('--splash-intro')) || 700;
-  const HOLD  = parseTime(getComputedStyle(document.documentElement).getPropertyValue('--splash-hold'))  || 300;
-  const OUTRO = parseTime(getComputedStyle(document.documentElement).getPropertyValue('--splash-outro')) || 500;
-
-  function parseTime(val){
-    const n = parseFloat(val);
-    return isNaN(n) ? null : n;
-  }
-
-  // Start sequence as soon as DOM is ready
-  document.addEventListener('DOMContentLoaded', () => {
-    document.body.classList.add('overflow-hidden'); // prevent scroll during splash
-
-    // Stage 1: intro
-    splash.classList.add('splash--intro');
-
-    // Stage 2: slide to corner after intro + hold
-    setTimeout(() => {
-      splash.classList.remove('splash--intro');
-      splash.classList.add('splash--outro');
-    }, INTRO + HOLD);
-
-    // Stage 3: remove overlay after outro finishes
-    setTimeout(() => {
-      splash.classList.add('splash--hidden');
-      splash.classList.remove('splash--outro');
-      document.body.classList.remove('overflow-hidden');
-    }, INTRO + HOLD + OUTRO);
-  });
-})();
 </script>
+
+
 
 </html>

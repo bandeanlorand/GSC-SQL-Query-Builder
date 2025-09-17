@@ -79,4 +79,38 @@ export function initSlideInPanel({ panelId, overlayId } = {}) {
 
   return { open, close };
 }
+(function () {
+  const splash = document.getElementById('app-splash');
+  if (!splash) return;
+  const logo = splash.querySelector('.splash__logo');
+  if (!logo) return;
 
+  function getMs(name, fallback){
+    const r = getComputedStyle(document.documentElement).getPropertyValue(name);
+    const n = parseFloat(r);
+    return Number.isFinite(n) ? n : fallback;
+  }
+  const INTRO = getMs('--splash-intro',700);
+  const HOLD  = getMs('--splash-hold', 300);
+  const OUTRO = getMs('--splash-outro',500);
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('overflow-hidden');
+
+    splash.classList.add('splash--intro');
+    logo.style.animation = `splashIntro ${INTRO}ms ease-out forwards`;
+
+    setTimeout(() => {
+      splash.classList.remove('splash--intro');
+      splash.classList.add('splash--outro');
+      logo.style.animation = `splashOutro ${OUTRO}ms ease-in forwards`;
+    }, INTRO + HOLD);
+
+    setTimeout(() => {
+      splash.classList.add('splash--hidden');
+      splash.classList.remove('splash--outro');
+      document.body.classList.remove('overflow-hidden');
+      logo.style.animation = '';
+    }, INTRO + HOLD + OUTRO);
+  });
+})();
