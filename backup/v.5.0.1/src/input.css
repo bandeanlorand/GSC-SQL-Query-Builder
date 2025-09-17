@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Tell Tailwind where to scan */
+@source "./index.html";
+@source "./view-sqls.html";
+@source "./js/**/*.js";
+
+/* Enable themes you want (add bumblebee) */
+@plugin "daisyui" {
+  themes: light --default, dark, bumblebee, garden, corporate, emerald, forest, gsc;
+}
+
+/* your overrides after plugin */
+@import "../css/custom.css";
