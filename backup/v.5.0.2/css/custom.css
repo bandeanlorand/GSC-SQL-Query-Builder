@@ -1,0 +1,281 @@
+html{
+  /* background-color: #05445E; */
+}
+body {
+  /* font-family: sans-serif; */
+  height: 100%;
+  /* background: #445569; */
+  width:100%;
+  /* background: #05445E; */
+
+  /* color: #e0e0e0; */
+
+  /* font-family: "Roboto Mono", monospace; */
+  font-optical-sizing: auto;
+  font-style: normal;
+
+
+}
+
+.page-surface {
+  position: fixed;
+  background: #f2f5f9;
+ 
+  isolation: isolate;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  top: 0;
+  display:block;
+  /* bg-[#f0f4f9] */
+}
+
+/* background art with grayscale + opacity */
+.page-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url('../icon/bg-network-diagonal.svg');
+  background-repeat: no-repeat;
+  background-position: 85% 20%;
+  background-size: cover;
+
+  filter: grayscale(30%);  /* grayscale the SVG only */
+  opacity: 0.25;            /* fade it without affecting content */
+  pointer-events: none;
+  z-index: 1;
+  transform: rotate(0deg);
+}
+
+.custom-header{
+  position: relative;
+}
+
+.custom-header:before{
+  content:"";
+  position: absolute;
+  background-image: url('../icon/bg-network-right.svg');
+  background-size: cover;
+  background-position: center left;
+  width: 100%;
+  height: 100%;
+  filter: blur(0.1px);
+  opacity: 0.85;
+  
+}
+
+/* colors */
+.sql-keyword,
+.sql-alias-special {
+  color: #fa7268;
+  font-weight: bold;
+}
+
+.sql-date-format,
+.sql-expression {
+  color: #00bfff;
+}
+
+.sql-function {
+  color: #fc9e4c;
+}
+
+.sql-alias {
+  color: #34d399;
+}
+
+.sql-column {
+  color: #facc15;
+}
+
+.sql-current-date {
+  color: #a78bfa;
+}
+
+.sql-table {
+  color: #a78bfa;
+}
+
+.sql-value {
+  color: #f87171;
+}
+
+.sql-boolean {
+  color: #3b82f6;
+  /* Tailwind blue-500 blue */
+}
+
+.badge.badge-lg button{
+  margin: -4px -4px 0 0;
+  font-weight: normal;
+  font-size: 1.2rem;
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+body.show-copied::before {
+  content: "Copied to clipboard";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+  /* Tailwind gray-700 with transparency */
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  /* Large font */
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+body.show-generated::after {
+  content: "SQL Generated!";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+  /* Tailwind gray-700 with transparency */
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  /* Large font */
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+body.show-generated-incomplete::after {
+  content: "SQL Generated! But there are incomplete fields.";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+
+  color: rgba(220, 38, 38, 0.95);
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+body.show-reset::after {
+  content: "All fields reset.";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+body.show-reset-url::after {
+  content: "Reset to URL presets.";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+@keyframes slideInFadeOut {
+  0% {
+    bottom: 20px;
+    opacity: 0;
+  }
+
+  10% {
+    bottom: 40px;
+    opacity: 1;
+  }
+
+  90% {
+    bottom: 40px;
+    opacity: 1;
+  }
+
+  100% {
+    bottom: 20px;
+    opacity: 0;
+  }
+}
+
+/* :root[data-theme="gsc"]{
+  --p: 164 95% 28%; --pc: 0 0% 100%;
+  --s: 201 96% 32%; --sc: 0 0% 100%;
+  --a: 29 92% 55%;  --ac: 0 0% 8%;
+  --n: 220 13% 18%; --nc: 210 40% 98%;
+  --b1: 210 15% 12%; --b2: 210 14% 16%; --b3: 210 14% 20%; --bc: 210 100% 96%;
+} */
+
+/* tailwind: global typography tweaks */
+@layer base {
+   :root,
+  [data-theme] {
+    --fallback-bc: 12 18 28; /* slate-900-ish; RGB without commas for daisyUI */
+  }
+  /* 1) default thickness + rendering */
+  html { @apply subpixel-antialiased; }
+  body { @apply font-medium text-slate-900; } /* darker text helps contrast on the GSC-like bg */
+
+  /* 2) headings / labels a notch stronger */
+  h1, h2, h3, label, .section-title { @apply font-semibold; }
+
+  /* 3) form & control text a bit stronger too */
+  .input, .select, .textarea, .btn, .badge { @apply font-medium; }
+
+  /* 4) Don’t thicken code/SQL blocks—keep readability */
+  code, pre, kbd, samp { @apply font-normal; }
+}
+
+.alert-info {
+  /* daisyUI uses HSL tokens: h s l (no commas) */
+  --in: 174 100% 27%;   /* #00897B  -> h=174 s=100% l=27% */
+  --inc: 0 0% 70%;     /* content color → white */
+  border-radius: 4px;
+}
+.badge-primary{
+  background-color: oklch(58% 0.158 241.966);
+  border-color:  oklch(62% 0.158 241.966);
+  /* box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); */
+  text-shadow: oklch(1 0 0 / 0.15) 0px 0.5px 0px;
+  color: #fff;
+}
+.added-custom-condition-group {
+  border-color: var(--color-gray-200);
+ border-radius: 4px;
+  border-width: 1px;
+}
+
+
+
