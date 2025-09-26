@@ -369,3 +369,17 @@ body.show-reset-url::after {
 
 
 
+.filter-row{
+
+}
+.filter-row .relative.custom-select-wrap:first-child{
+  width: calc(40% - 4px);
+}
+.filter-row .relative.custom-select-wrap:first-child div.input span{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.filter-row .relative.custom-select-wrap:nth-child(2){
+  width: calc(28% - 8px);
+}

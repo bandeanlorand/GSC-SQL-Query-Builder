@@ -1,4 +1,4 @@
-import { copySQL, setupEnterKeyTrigger, initSlideInPanel } from './utils.js';
+import { copySQL, setupEnterKeyTrigger, initSlideInPanel, makeCustomSelect } from './utils.js';
 import { predefinedCountries } from './components/predefinedCountries.js';
 import { dimensionEntries } from './components/dimensionsData.js';
 import { logQuery } from './components/logQuery.js';
@@ -285,6 +285,18 @@ function removeDimension(dimension) {
 
   updateClearDimensionsButton();
   refreshDropdownHeight(dimensionsDropdown);
+
+  // keep Sort By in sync with the new dimensions
+  if (typeof window.updateSortFieldOptions === 'function') {
+    // use a microtask so DOM changes above are settled
+    queueMicrotask(() => window.updateSortFieldOptions());
+  }
+
+  // refresh filter/sort clauses so the SQL updates immediately
+  if (typeof window.updateFilterAndSortClauses === 'function') {
+    window.updateFilterAndSortClauses();
+  }
+  updateSortFieldOptions();
 }
 window.removeDimension = removeDimension;
 
@@ -533,13 +545,13 @@ document.querySelectorAll('.dimension-option').forEach(item => {
 
 
 function closeDropdown(dropdown) {
-  dropdown.style.height = "0px";
+  // dropdown.style.height = "0px";
   dropdown.style.userSelect = "none";
 
   setTimeout(() => {
     dropdown.style.width = "100%";
     dropdown.style.opacity = "0";
-    dropdown.style.background = "lime";
+    // dropdown.style.background = "lime";
   }, 100);
 
   setTimeout(() => {
@@ -835,6 +847,172 @@ function createDeviceSelect() {
   return sel;
 }
 
+// function addFilterRow() {
+//   const container = document.getElementById('filterRows');
+//   const isFirst = container.children.length === 0;
+
+//   const wrapper = document.createElement('div');
+//   wrapper.className = "space-y-2 w-full transition-all duration-500 ease-in-out overflow-hidden1 opacity-100 max-h-[200px]";
+
+//   if (!isFirst) {
+//     const topRow = document.createElement('div');
+//     topRow.className = "flex justify-between items-center";
+
+//     const radioGroup = document.createElement('div');
+//     radioGroup.className = "flex items-center gap-4 text-sm ";
+//     radioGroup.innerHTML = `
+//       <label class="inline-flex items-center gap-1 m-0 font-semibold">
+//         <input type="radio" name="logicGroup-${container.children.length}" value="AND" class="radio radio-sm" checked />
+//         AND
+//       </label>
+//       <label class="inline-flex items-center gap-1 m-0 font-semibold">
+//         <input type="radio" name="logicGroup-${container.children.length}" value="OR" class="radio radio-sm" />
+//         OR
+//       </label>
+//     `;
+
+//     const removeBtn = document.createElement('button');
+//     removeBtn.innerHTML = "&times;";
+//     removeBtn.className = " text-lg font-bold px-3 hover:text-red-500 flex w-auto pr-0 cursor-pointer transition-colors duration-300 ease-in-out";
+//     removeBtn.onclick = () => {
+//       wrapper.style.opacity = '0';
+//       wrapper.style.maxHeight = '0px';
+//       wrapper.style.padding = '0';
+//       wrapper.style.margin = '0';
+//       setTimeout(() => { wrapper.remove(); updateFilterRemoveButton(); }, 500);
+//     };
+
+//     topRow.appendChild(radioGroup);
+//     topRow.appendChild(removeBtn);
+//     wrapper.appendChild(topRow);
+//   }
+
+//   const bottomRow = document.createElement('div');
+//   bottomRow.className = "flex flex-nowrap items-center gap-2 overflow-x-auto1";
+
+//   const fieldSelect = document.createElement('select');
+//   fieldSelect.className = 'w-[calc(33%-23px)] sm:w-[calc(33%-25px)] md:w-[calc(33%-25px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+//   fieldSelect.required = true;
+//   fieldSelect.innerHTML =
+//     `<option value="" disabled selected hidden>Select Field</option>` +
+//     filterFieldOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+//   const operatorSelect = document.createElement('select');
+//   operatorSelect.className = "w-[calc(25%-22px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm";
+
+//   // --- value controls (direct children of bottomRow, no wrapper for device) ---
+//   const deviceSelect = createDeviceSelect(); // hidden by default
+
+//   const textInput = document.createElement('input');
+//   textInput.type = "text";
+//   textInput.placeholder = "Type value";
+//   textInput.className = "input w-[calc(50%-22px)] input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm";
+//   // text is visible by default; we’ll toggle as needed
+
+//   // boolean radios (also direct child, hidden by default)
+//   const radioWrapper = document.createElement('div');
+//   radioWrapper.className = "flex gap-4 items-center  hidden";
+//   radioWrapper.innerHTML = `
+//     <label class="inline-flex items-center gap-1 m-0 font-semibold">
+//       <input type="radio" name="bool-val-filter-${Date.now()}" value="TRUE" class="radio radio-sm" />
+//       TRUE
+//     </label>
+//     <label class="inline-flex items-center gap-1 m-0 font-semibold">
+//       <input type="radio" name="bool-val-filter-${Date.now()}" value="FALSE" class="radio radio-sm" />
+//       FALSE
+//     </label>
+//   `;
+
+//   // function hideAllValueControls() {
+
+
+//   function hideAllValueControls() {
+//     // deviceSelect.classList.add('hidden');
+//     deviceUI?.wrap.classList.add('hidden');
+//     textInput.classList.add('hidden');
+//     radioWrapper.classList.add('hidden');
+//     bottomRow.querySelector('.country-search-wrapper')?.remove();
+//   }
+
+
+//   // Handle field changes
+//   fieldSelect.addEventListener('change', () => {
+//     const field = fieldSelect.value;
+//     const type = getOperatorType(field);
+
+//     // Update operator dropdown
+//     const operators = filterOperatorMap[type] || [];
+//     const defaultOperator = 'EQUALS';
+//     operatorSelect.innerHTML = operators.map(opt =>
+//       `<option value="${opt}" ${opt === defaultOperator ? 'selected' : ''}>${opt}</option>`
+//     ).join('');
+
+//     hideAllValueControls();
+
+//     if ((field || '').toLowerCase() === 'device') {
+
+//       // deviceSelect.classList.remove('hidden');
+//       deviceUI?.wrap.classList.remove('hidden');
+//     } else if (type === 'boolean') {
+//       radioWrapper.classList.remove('hidden');
+//       radioWrapper.querySelector('input[value="TRUE"]').checked = true;
+//     } else if (type === 'country') {
+
+//       const wrapper = document.createElement('div');
+//       wrapper.className = 'relative country-search-wrapper w-[calc(50%-23px)] shrink-0 min-w-0';
+//       const countryInput = enableCountrySearchStyled('filter-country', window.predefinedCountries, wrapper);
+//       countryInput.classList.add('input', 'input-lg', 'w-full', 'box-border', 'p-[9px]', 'text-sm', 'h-auto');
+
+//       bottomRow.appendChild(wrapper);
+
+//     } else {
+//       textInput.classList.remove('hidden');
+//     }
+//   });
+
+//   bottomRow.appendChild(fieldSelect);
+//   bottomRow.appendChild(operatorSelect);
+//   bottomRow.appendChild(deviceSelect);
+//   bottomRow.appendChild(textInput);
+//   bottomRow.appendChild(radioWrapper);
+
+//   wrapper.appendChild(bottomRow);
+//   container.appendChild(wrapper);
+
+//   // === make the three selects custom, but keep native selects for logic ===
+
+
+// // after appending bottomRow to wrapper:
+// const fieldUI    = makeCustomSelect(fieldSelect,    { placeholder: 'Select Field' });
+// const operatorUI = makeCustomSelect(operatorSelect, { placeholder: 'Operator' });
+// const deviceUI   = makeCustomSelect(deviceSelect,   { placeholder: 'Device' });
+
+// // Hide Device custom UI by default; we'll show when field === 'Device'
+// if (deviceUI) deviceUI.wrap.classList.add('hidden');
+
+
+//   updateFilterRemoveButton();
+// }
+
+
+// function removeFilterRow() {
+//   const container = document.getElementById('filterRows');
+//   if (container.children.length > 1) {
+//     container.lastElementChild.remove();
+//     updateFilterRemoveButton();
+//   }
+// }
+
+// function updateFilterRemoveButton() {
+//   const container = document.getElementById('filterRows');
+//   const removeBtn = document.getElementById('removeFilterRowBtn');
+//   updateSortFieldOptions();
+//   if (!removeBtn) return;
+//   if (container.children.length <= 1) removeBtn.classList.add("hidden");
+//   else removeBtn.classList.remove("hidden");
+// }
+
+
 function addFilterRow() {
   const container = document.getElementById('filterRows');
   const isFirst = container.children.length === 0;
@@ -876,30 +1054,35 @@ function addFilterRow() {
   }
 
   const bottomRow = document.createElement('div');
-  bottomRow.className = "flex flex-nowrap items-center gap-2 overflow-x-auto1";
+  bottomRow.className = "flex flex-nowrap items-center gap-2  filter-row overflow-visible";
 
+  // FIELD select
   const fieldSelect = document.createElement('select');
+  fieldSelect.dataset.role = 'filter-field';
   fieldSelect.className = 'w-[calc(33%-23px)] sm:w-[calc(33%-25px)] md:w-[calc(33%-25px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
   fieldSelect.required = true;
   fieldSelect.innerHTML =
     `<option value="" disabled selected hidden>Select Field</option>` +
     filterFieldOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
+  // OPERATOR select
   const operatorSelect = document.createElement('select');
+  operatorSelect.dataset.role = 'filter-op';
   operatorSelect.className = "w-[calc(25%-22px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm";
 
-  // --- value controls (direct children of bottomRow, no wrapper for device) ---
-  const deviceSelect = createDeviceSelect(); // hidden by default
+  // DEVICE select (value control)
+  const deviceSelect = createDeviceSelect();                // hidden by default
+  deviceSelect.dataset.role = 'filter-device';
 
+  // TEXT input (value control)
   const textInput = document.createElement('input');
   textInput.type = "text";
   textInput.placeholder = "Type value";
-  textInput.className = "input w-[calc(50%-22px)] input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm";
-  // text is visible by default; we’ll toggle as needed
+  textInput.className = "input w-[calc(32%-4px)] leading-7 input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm";
 
-  // boolean radios (also direct child, hidden by default)
+  // BOOLEAN radios (value control)
   const radioWrapper = document.createElement('div');
-  radioWrapper.className = "flex gap-4 items-center  hidden";
+  radioWrapper.className = "flex gap-4 items-center hidden m-auto";
   radioWrapper.innerHTML = `
     <label class="inline-flex items-center gap-1 m-0 font-semibold">
       <input type="radio" name="bool-val-filter-${Date.now()}" value="TRUE" class="radio radio-sm" />
@@ -911,23 +1094,18 @@ function addFilterRow() {
     </label>
   `;
 
-  // function hideAllValueControls() {
-
-
   function hideAllValueControls() {
-    deviceSelect.classList.add('hidden');
+    deviceUI?.wrap.classList.add('hidden');
     textInput.classList.add('hidden');
     radioWrapper.classList.add('hidden');
     bottomRow.querySelector('.country-search-wrapper')?.remove();
   }
 
-
-  // Handle field changes
+  // Field change
   fieldSelect.addEventListener('change', () => {
     const field = fieldSelect.value;
     const type = getOperatorType(field);
 
-    // Update operator dropdown
     const operators = filterOperatorMap[type] || [];
     const defaultOperator = 'EQUALS';
     operatorSelect.innerHTML = operators.map(opt =>
@@ -937,20 +1115,16 @@ function addFilterRow() {
     hideAllValueControls();
 
     if ((field || '').toLowerCase() === 'device') {
-
-      deviceSelect.classList.remove('hidden');
+      deviceUI?.wrap.classList.remove('hidden');
     } else if (type === 'boolean') {
       radioWrapper.classList.remove('hidden');
       radioWrapper.querySelector('input[value="TRUE"]').checked = true;
     } else if (type === 'country') {
-
       const wrapper = document.createElement('div');
-      wrapper.className = 'relative country-search-wrapper w-[calc(50%-23px)] shrink-0 min-w-0';
+      wrapper.className = 'relative country-search-wrapper w-[calc(32%-4px)] shrink-0 min-w-0';
       const countryInput = enableCountrySearchStyled('filter-country', window.predefinedCountries, wrapper);
       countryInput.classList.add('input', 'input-lg', 'w-full', 'box-border', 'p-[9px]', 'text-sm', 'h-auto');
-
       bottomRow.appendChild(wrapper);
-
     } else {
       textInput.classList.remove('hidden');
     }
@@ -958,33 +1132,21 @@ function addFilterRow() {
 
   bottomRow.appendChild(fieldSelect);
   bottomRow.appendChild(operatorSelect);
-  bottomRow.appendChild(deviceSelect); 
+  bottomRow.appendChild(deviceSelect);
   bottomRow.appendChild(textInput);
   bottomRow.appendChild(radioWrapper);
 
   wrapper.appendChild(bottomRow);
   container.appendChild(wrapper);
 
+  // Skin the selects but keep native ones for your logic:
+  const fieldUI = makeCustomSelect(fieldSelect, { placeholder: 'Select Field' });
+  const operatorUI = makeCustomSelect(operatorSelect, { placeholder: 'Operator' });
+  const deviceUI = makeCustomSelect(deviceSelect, { placeholder: 'Device' });
+  if (deviceUI) deviceUI.wrap.classList.add('hidden');
+
   updateFilterRemoveButton();
 }
-
-
-// function removeFilterRow() {
-//   const container = document.getElementById('filterRows');
-//   if (container.children.length > 1) {
-//     container.lastElementChild.remove();
-//     updateFilterRemoveButton();
-//   }
-// }
-
-// function updateFilterRemoveButton() {
-//   const container = document.getElementById('filterRows');
-//   const removeBtn = document.getElementById('removeFilterRowBtn');
-//   updateSortFieldOptions();
-//   if (!removeBtn) return;
-//   if (container.children.length <= 1) removeBtn.classList.add("hidden");
-//   else removeBtn.classList.remove("hidden");
-// }
 
 
 function removeFilterRow() {
@@ -1021,7 +1183,7 @@ function enableCountrySearchStyled(idPrefix, countries, parentElement) {
   const input = document.createElement('input');
   input.type = 'text';
   input.placeholder = 'Type to search country...';
-  input.className = 'input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(100%-0px)] text-sm';
+  input.className = 'input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(100%-0px)] text-sm leading-7';
   input.autocomplete = 'off';
 
   input.classList.add('country-search-input'); // Adding class to the serach-dropdown-input 
@@ -1108,23 +1270,39 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   inputRow.className = 'flex items-center gap-2 flex-wrap ';
 
   const whenLabel = document.createElement('label');
-  whenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
+  whenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(50px-4px)] font-semibold ';
   whenLabel.textContent = 'When';
   inputRow.appendChild(whenLabel);
 
-  const fieldSelect = document.createElement('select');
-  fieldSelect.className = 'w-[calc(33%-23px)] sm:w-[calc(33%-25px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
-  fieldSelect.innerHTML =
-    `<option value="" disabled ${!defaultField ? 'selected hidden' : ''}>Select Field</option>` +
-    fieldOptionsCustomField.map(opt => `<option value="${opt}" ${opt === defaultField ? 'selected' : ''}>${opt}</option>`).join('');
+  // const fieldSelect = document.createElement('select');
+  // fieldSelect.className = 'w-[calc(33%-23px)] sm:w-[calc(33%-25px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  // fieldSelect.innerHTML =
+  //   `<option value="" disabled ${!defaultField ? 'selected hidden' : ''}>Select Field</option>` +
+  //   fieldOptionsCustomField.map(opt => `<option value="${opt}" ${opt === defaultField ? 'selected' : ''}>${opt}</option>`).join('');
 
-  const operatorSelect = document.createElement('select');
-  operatorSelect.className = 'w-[calc(33%-23px)] sm:w-[calc(33%-25px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+
+  const { wrapper: fieldSelectUI, select: fieldSelect } =
+    buildCustomFieldSelect({
+      options: fieldOptionsCustomField,
+      placeholder: 'Select Field'
+    });
+
+  // const operatorSelect = document.createElement('select');
+  // operatorSelect.className = 'w-[calc(33%-23px)] sm:w-[calc(33%-25px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+
+  const {
+    wrapper: operatorSelectUI,
+    select: operatorSelect
+  } = buildCustomSingleSelect({
+    options: ['EQUALS'],                 // temp; will be replaced by updateValueInputType()
+    placeholder: null,
+    widthClass: 'w-[calc(23%-4px)] sm:w-[calc(23%-4px)] 222222'
+  });
 
   const valueInput = document.createElement('input');
   valueInput.type = 'text';
   valueInput.placeholder = 'My Website Name';
-  valueInput.className = 'input w-[calc(30%-3px)] input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  valueInput.className = 'input w-[calc(29%-6px)] input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm leading-7';
 
   const valueSelectWrapper = document.createElement('div');
   valueSelectWrapper.className = 'hidden w-full flex-1';
@@ -1178,8 +1356,10 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
     if (firstOption) fieldSelect.value = firstOption.value;
   }
 
-  inputRow.appendChild(fieldSelect);
-  inputRow.appendChild(operatorSelect);
+  // inputRow.appendChild(fieldSelect);
+  inputRow.appendChild(fieldSelectUI);
+  // inputRow.appendChild(operatorSelect);
+  inputRow.appendChild(operatorSelectUI);
   inputRow.appendChild(valueInput);
   inputRow.appendChild(valueSelectWrapper);
   inputRow.appendChild(radioWrapper);
@@ -1189,13 +1369,13 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   thenRow.className = 'flex items-center gap-2';
 
   const thenLabel = document.createElement('label');
-  thenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
+  thenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(48px)] font-semibold';
   thenLabel.textContent = 'Then';
 
   const thenInput = document.createElement('input');
   thenInput.type = 'text';
   thenInput.placeholder = 'Brand';
-  thenInput.className = 'input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(65%-22px)] text-sm';
+  thenInput.className = 'input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(67%-2px)] text-sm leading-7';
 
   thenRow.appendChild(thenLabel);
   thenRow.appendChild(thenInput);
@@ -1203,7 +1383,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   if (addButtons) {
     const removeBtn = document.createElement('button');
     removeBtn.textContent = '−';
-    removeBtn.className = 'btn btn-md btn-ghost ';
+    removeBtn.className = 'btn btn-md btn-ghost h-[48px] min-h-[48px] w-[calc(8%-3px)]';
     removeBtn.onclick = () => {
       wrapper.remove();
       updateConditionButtonsVisibility(groupContainer);
@@ -1211,7 +1391,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
 
     const addConditionBtn = document.createElement('button');
     addConditionBtn.textContent = '+ Condition';
-    addConditionBtn.className = 'btn btn-md btn-ghost';
+    addConditionBtn.className = 'btn btn-md btn-ghost h-[48px] min-h-[48px] w-[calc(28%-3px)]';
     addConditionBtn.onclick = () => {
       if (!groupContainer) return;
       const newGroup = createConditionRow(true, true, groupContainer, '', 'EQUALS');
@@ -1237,10 +1417,36 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
 
   wrapper.appendChild(thenRow);
 
+  function refreshOperator(options, defaultOp = 'EQUALS') {
+    // 1) Build a fresh custom select
+    const { wrapper: newUI, select: newSelect } = buildCustomSingleSelect({
+      options,
+      placeholder: null,
+      widthClass: 'w-[calc(33%-23px)] sm:w-[calc(33%-25px)]'
+    });
+
+    // 2) Set default value
+    if (options.includes(defaultOp)) newSelect.value = defaultOp;
+
+    // 3) Swap in DOM
+    operatorSelectUI.replaceWith(newUI);
+
+    // 4) Update refs used below
+    operatorSelectUI = newUI;
+    operatorSelect = newSelect;
+  }
+
+
   // Trigger input initialization after DOM is attached
   setTimeout(() => {
     const initialField = fieldSelect.value || defaultField;
-    if (initialField) updateValueInputType(initialField);
+    // if (initialField) updateValueInputType(initialField);
+    fieldSelect.dispatchEvent(new Event('change', { bubbles: true }));
+  }, 0);
+  setTimeout(() => {
+    const initial = defaultField || fieldSelect.value || 'Query';
+    fieldSelect.value = initial;
+    fieldSelect.dispatchEvent(new Event('change', { bubbles: true })); // will call refreshOperator()
   }, 0);
 
   return wrapper;
@@ -1296,21 +1502,34 @@ function addCustomFieldGroup() {
   inputRow.className = 'flex items-center gap-2 flex-wrap';
 
   const whenLabel = document.createElement('label');
-  whenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
+  whenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(51px)] font-semibold';
   whenLabel.textContent = 'When';
 
-  const fieldSelect = document.createElement('select');
-  fieldSelect.className = 'w-[calc(33%-23px)] sm:w-[calc(33%-25px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
-  fieldSelect.innerHTML = `<option value="" disabled selected hidden>Select Field</option>` +
-    fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+  // const fieldSelect = document.createElement('select');
+  // fieldSelect.className = 'w-[calc(33%-23px)] sm:w-[calc(33%-25px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  // fieldSelect.innerHTML = `<option value="" disabled selected hidden>Select Field</option>` +
+  //   fieldOptionsCustomField.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
-  const operatorSelect = document.createElement('select');
-  operatorSelect.className = 'w-[calc(33%-23px)] sm:w-[calc(33%-25px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  const { wrapper: fieldSelectUI, select: fieldSelect } =
+    buildCustomFieldSelect({ options: fieldOptionsCustomField, placeholder: 'Select Field' });
+
+
+  // const operatorSelect = document.createElement('select');
+  // operatorSelect.className = 'w-[calc(33%-23px)] sm:w-[calc(33%-25px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+
+let operatorSelectUI, operatorSelect;
+({ wrapper: operatorSelectUI, select: operatorSelect } =
+   buildCustomSingleSelect({
+    options: ['EQUALS'],      // will be replaced on field change
+    placeholder: null,
+    widthClass: 'w-[calc(23%-4px)] sm:w-[calc(23%-5px)] 444444'
+  })
+);
 
   const valueInput = document.createElement('input');
   valueInput.type = 'text';
   valueInput.placeholder = 'My Website Name';
-  valueInput.className = 'input w-[calc(33%-13px)] sm:w-[calc(33%-19px)] input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  valueInput.className = 'input w-[calc(29%-3px)] sm:w-[calc(29%-5px)] input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm leading-7';
 
   const valueSelect = document.createElement('select');
   valueSelect.className = 'hidden flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 ';
@@ -1334,6 +1553,7 @@ function addCustomFieldGroup() {
   fieldSelect.addEventListener('change', () => {
     const isBooleanField = fieldSelect.value.startsWith('Is ');
     const isCountryField = fieldSelect.value === 'Country';
+
 
     // Remove previous country search wrapper if exists
     const oldCountryWrapper = inputRow.querySelector('.country-search-wrapper');
@@ -1375,8 +1595,10 @@ function addCustomFieldGroup() {
   });
 
   inputRow.appendChild(whenLabel);
-  inputRow.appendChild(fieldSelect);
-  inputRow.appendChild(operatorSelect);
+  // inputRow.appendChild(fieldSelect);
+  inputRow.appendChild(fieldSelectUI);
+  // inputRow.appendChild(operatorSelect);
+  inputRow.appendChild(operatorSelectUI);
   inputRow.appendChild(valueInput);
   inputRow.appendChild(valueSelect);
   inputRow.appendChild(radioWrapper);
@@ -1386,7 +1608,10 @@ function addCustomFieldGroup() {
     fieldSelect.value = 'Query';
     fieldSelect.dispatchEvent(new Event('change'));
   }, 500);
-
+  setTimeout(() => {
+    fieldSelect.value = 'Query';
+    fieldSelect.dispatchEvent(new Event('change', { bubbles: true }));
+  }, 0);
   conditionRow.appendChild(inputRow);
   conditionsWrapper.appendChild(conditionRow);
 
@@ -1396,17 +1621,17 @@ function addCustomFieldGroup() {
   thenRow.className = 'flex items-center gap-2';
 
   const thenLabel = document.createElement('label');
-  thenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(50px)] font-semibold';
+  thenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(53px)] font-semibold';
   thenLabel.textContent = 'Then';
 
   const thenInput = document.createElement('input');
   thenInput.type = 'text';
   thenInput.placeholder = 'Brand';
-  thenInput.className = 'input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(72%-8px)] text-sm';
+  thenInput.className = 'input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(72%-72px)] text-sm leading-7';
 
   const addConditionBtn = document.createElement('button');
   addConditionBtn.textContent = '+ Condition';
-  addConditionBtn.className = 'btn btn-md btn-ghost ';
+  addConditionBtn.className = 'btn btn-md btn-ghost h-[48px] min-h-[48px] w-[calc(28%-0px)]';
   addConditionBtn.onclick = () => {
     const newGroup = createConditionGroupWrapper(groupContainer);
     const elseRow = Array.from(groupContainer.children).find(child => {
@@ -1437,7 +1662,7 @@ function addCustomFieldGroup() {
   const elseInput = document.createElement('input');
   elseInput.type = 'text';
   elseInput.placeholder = 'Non-Brand';
-  elseInput.className = 'input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm';
+  elseInput.className = 'input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm leading-7';
 
   elseRow.appendChild(elseLabel);
   elseRow.appendChild(elseInput);
@@ -1447,6 +1672,79 @@ function addCustomFieldGroup() {
   groupContainer.appendChild(elseRow);
 
   document.getElementById('customFieldGroups').appendChild(groupContainer);
+
+  
+
+}
+
+
+// --- helper: build a custom-select for the "Field" dropdown (single select) ---
+function buildCustomFieldSelect({ options, placeholder = 'Select Field' }) {
+  // 1) native select (kept in DOM for value + events)
+  const select = document.createElement('select');
+  select.className = 'w-100 hidden'; // hide native; UI will be injected by makeCustomSelect
+  // populate
+  select.innerHTML =
+    `<option value="" disabled selected hidden>${placeholder}</option>` +
+    options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+  // 2) wrapper for the custom UI so we control width/placement
+  const wrapper = document.createElement('div');
+  wrapper.className = 'w custom-select-wrapper w-[calc(40%-4px)] sm:w-[calc(40%-5px)]';
+
+  // 3) insert native select (required for the util to hook), then build UI
+  wrapper.appendChild(select);
+
+  // Call your existing utility (the same used for Metrics/Dimensions)
+  // IMPORTANT: your util should dispatch a native 'change' on the hidden <select>.
+  // If it emits a custom event instead, we re-dispatch to 'change' below.
+  const ui = makeCustomSelect(select, {
+    single: true,
+    placeholder,
+    showArrow: true,
+  });
+
+  // Safety: if the util emits its own event on the UI element, mirror it to the select
+  if (ui && ui.addEventListener) {
+    ui.addEventListener('change', () => {
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
+  return { wrapper, select, ui };
+}
+function buildCustomSingleSelect({ options, placeholder, widthClass }) {
+  const select = document.createElement('select');
+  select.className = `${widthClass} hidden`;
+
+  select.innerHTML =
+    (placeholder ? `<option value="" disabled selected hidden>${placeholder}</option>` : '') +
+    options.map(o => `<option value="${o}">${o}</option>`).join('');
+
+  const wrapper = document.createElement('div');
+  wrapper.className = `relative custom-select-wrap ${widthClass} 44444 custom-select-wrapper`;
+  wrapper.appendChild(select);
+
+  const ui = makeCustomSelect(select, { single: true, placeholder, showArrow: true });
+
+  // Mirror custom pick → native <select> change (covers all implementations)
+  wrapper.addEventListener('custom-select:change', (e) => {
+    if (e.detail && 'value' in e.detail && select.value !== e.detail.value) {
+      select.value = e.detail.value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+  wrapper.addEventListener('click', (ev) => {
+    const opt = ev.target.closest('[data-value]');
+    if (!opt) return;
+    const val = opt.getAttribute('data-value');
+    if (select.value !== val) {
+      select.value = val;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+
+  return { wrapper, select, ui };
 }
 
 function updateConditionButtonsVisibility(groupContainer) {
@@ -1822,7 +2120,16 @@ export function generateSQL() {
     return { ...f, clause };
   });
 
-  const sortClauses = window._sortClauses || [];
+  // const sortClauses = window._sortClauses || [];
+
+  let sortClauses = window._sortClauses || [];
+  if (sortClauses.length && typeof sortClauses[0] === 'object') {
+    // convert {field, order} -> "field ORDER"
+    sortClauses = sortClauses
+      .filter(o => o && o.field)
+      .map(o => `${normalizeFieldName(o.field)} ${o.order || 'ASC'}`);
+  }
+
 
 
   const extraWhereText = (() => {
@@ -1934,67 +2241,262 @@ function showBodyToast(cls) {
 
 
 
+// function updateFilterAndSortClauses() {
+//   const filters = [];
+//   // document.querySelectorAll('#filterRows > div').forEach(filter => {
+//   //   const selects = filter.querySelectorAll('select');
+//   //   const field = selects[0]?.value;
+//   //   const operator = selects[1]?.value;
+//   //   const logic = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
+
+//   //   // 👇 pull values from the correct control
+//   //   const deviceSelect = filter.querySelector('select.device-select');
+//   //   const textInput = filter.querySelector('input[type="text"]');
+//   //   const booleanRadio = filter.querySelector('input[name^="bool-val"]:checked');
+//   //   const countryInputStyled = filter.querySelector('input.country-search-input');
+
+//   //   let value = null;
+//   //   if (field?.startsWith('Is ') && booleanRadio) {
+//   //     value = booleanRadio.value?.toUpperCase();
+//   //   } else if (field === 'Country') {
+//   //     if (countryInputStyled?.dataset?.code) value = countryInputStyled.dataset.code.trim();
+//   //   } else if (field === 'Device' && deviceSelect) {
+//   //     value = deviceSelect.value;                       // <- the new dropdown
+//   //   } else if (textInput) {
+//   //     value = textInput.value?.trim();
+//   //   }
+//   //   if (typeof value === 'string') value = value.trim();
+
+//   //   const normalizedField = normalizeFieldName(field);
+//   //   if (
+//   //     field && operator && (
+//   //       operator.includes('NULL') ||
+//   //       (typeof value === 'string' && value !== '') ||
+//   //       (typeof value === 'boolean') ||
+//   //       (typeof value === 'string' && (value.toUpperCase() === 'TRUE' || value.toUpperCase() === 'FALSE'))
+//   //     )
+//   //   ) {
+//   //     let clause = '';
+//   //     switch (operator) {
+//   //       case 'EQUALS':
+//   //         clause = field.startsWith('Is ')
+//   //           ? `${normalizedField} = ${value.toUpperCase()}`
+//   //           : `${normalizedField} = '${value}'`;
+//   //         break;
+//   //       case 'NOT EQUALS':
+//   //         if (field.startsWith('Is ') && (value.toUpperCase() === 'FALSE' || value.toUpperCase() === 'TRUE')) {
+//   //           const correctedValue = value.toUpperCase() === 'FALSE' ? 'TRUE' : 'FALSE';
+//   //           clause = `${normalizedField} = ${correctedValue}`;
+//   //         } else {
+//   //           clause = `${normalizedField} != '${value}'`;
+//   //         }
+//   //         break;
+//   //       case 'CONTAINS': clause = `${normalizedField} LIKE '%${value}%'`; break;
+//   //       case 'NOT CONTAINS': clause = `${normalizedField} NOT LIKE '%${value}%'`; break;
+//   //       case 'GREATER THAN': clause = `${normalizedField} > '${value}'`; break;
+//   //       case 'LESS THAN': clause = `${normalizedField} < '${value}'`; break;
+//   //       case 'IS NULL': clause = `${normalizedField} IS NULL`; break;
+//   //       case 'IS NOT NULL': clause = `${normalizedField} IS NOT NULL`; break;
+//   //       case 'REGEXP CONTAINS':
+//   //         if (['query', 'url'].includes(normalizedField)) clause = `REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+//   //         break;
+//   //       case 'NOT REGEXP CONTAINS':
+//   //         if (['query', 'url'].includes(normalizedField)) clause = `NOT REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+//   //         break;
+//   //     }
+//   //     if (clause) filters.push({ clause, logic, field: normalizedField });
+//   //   }
+
+//   //   // store global AND/OR joiner
+//   //   const globalLogicInput = document.querySelector('#filterRows input[type="radio"]:checked');
+//   //   window._filterLogic = globalLogicInput ? globalLogicInput.value : 'AND';
+//   // });
+
+//   // const sorts = [];
+//   // document.querySelectorAll('#sortRows > div').forEach(row => {
+//   //   const select = row.querySelector('select');
+//   //   const direction = row.querySelector('input[type="radio"]:checked')?.value || 'ASC';
+//   //   if (select && select.value) {
+//   //     const normalizedSort = normalizeFieldName(select.value);
+//   //     sorts.push(`${normalizedSort} ${direction}`);
+//   //   }
+//   // });
+
+//   // window._filterClauses = filters;
+//   // window._sortClauses = sorts;
+
+//   // --- SORTS (works with custom dropdown) ---
+
+//   document.querySelectorAll('#filterRows > div').forEach(filter => {
+//   const fieldSel    = filter.querySelector('select[data-role="filter-field"]');
+//   const opSel       = filter.querySelector('select[data-role="filter-op"]');
+//   const deviceSel   = filter.querySelector('select[data-role="filter-device"], select.device-select');
+//   const textInput   = filter.querySelector('input[type="text"]');
+//   const boolRadio   = filter.querySelector('input[name^="bool-val"]:checked');
+//   const countryIn   = filter.querySelector('input.country-search-input');
+
+//   const field    = fieldSel?.value || '';
+//   const operator = opSel?.value || '';
+//   const logic    = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
+
+//   let value = null;
+//   if (field.startsWith('Is ') && boolRadio) {
+//     value = boolRadio.value?.toUpperCase();
+//   } else if (field === 'Country') {
+//     value = countryIn?.dataset?.code?.trim() || null;
+//   } else if (field === 'Device' && deviceSel) {
+//     value = deviceSel.value;
+//   } else if (textInput) {
+//     value = (textInput.value || '').trim();
+//   }
+
+//   const normalizedField = normalizeFieldName(field);
+
+//   if (
+//     field && operator && (
+//       operator.includes('NULL') ||
+//       (typeof value === 'string' && value !== '') ||
+//       (value === 'TRUE' || value === 'FALSE')
+//     )
+//   ) {
+//     let clause = '';
+//     switch (operator) {
+//       case 'EQUALS':
+//         clause = field.startsWith('Is ') ? `${normalizedField} = ${value}` : `${normalizedField} = '${value}'`;
+//         break;
+//       case 'NOT EQUALS':
+//         if (field.startsWith('Is ') && (value === 'FALSE' || value === 'TRUE')) {
+//           clause = `${normalizedField} = ${value === 'FALSE' ? 'TRUE' : 'FALSE'}`;
+//         } else {
+//           clause = `${normalizedField} != '${value}'`;
+//         }
+//         break;
+//       case 'CONTAINS':              clause = `${normalizedField} LIKE '%${value}%'`; break;
+//       case 'NOT CONTAINS':          clause = `${normalizedField} NOT LIKE '%${value}%'`; break;
+//       case 'GREATER THAN':          clause = `${normalizedField} > '${value}'`; break;
+//       case 'LESS THAN':             clause = `${normalizedField} < '${value}'`; break;
+//       case 'IS NULL':               clause = `${normalizedField} IS NULL`; break;
+//       case 'IS NOT NULL':           clause = `${normalizedField} IS NOT NULL`; break;
+//       case 'REGEXP CONTAINS':       if (['query','url'].includes(normalizedField)) clause = `REGEXP_CONTAINS(${normalizedField}, r'${value}')`; break;
+//       case 'NOT REGEXP CONTAINS':   if (['query','url'].includes(normalizedField)) clause = `NOT REGEXP_CONTAINS(${normalizedField}, r'${value}')`; break;
+//     }
+//     if (clause) filters.push({ clause, logic, field: normalizedField });
+//   }
+
+//   const globalLogicInput = document.querySelector('#filterRows input[type="radio"]:checked');
+//   window._filterLogic = globalLogicInput ? globalLogicInput.value : 'AND';
+// });
+
+
+//   const sorts = [];
+//   const sortRows = document.querySelectorAll('#sortRows > div[id^="sortRow-"], #sortRows > div');
+
+//   sortRows.forEach((row, idx) => {
+//     // read selected label from our custom dropdown placeholder
+//     const ph =
+//       row.querySelector(`#sortFieldPlaceholder-${idx}`) ||
+//       row.querySelector('[id^="sortFieldPlaceholder-"]');
+
+//     // normalize to SQL column name
+//     let field = null;
+//     const label = ph?.textContent?.trim();
+//     if (label && label !== 'Select Field') {
+//       field = normalizeFieldName(label);  // e.g. "Site URL" -> "site_url"
+//     }
+
+//     // radio group name changed to sort-${idx} in the custom version
+//     const direction = row.querySelector(`input[name="sort-${idx}"]:checked`)?.value || 'ASC';
+
+//     if (field) {
+//       sorts.push(`${field} ${direction}`);
+//     }
+//   });
+
+//   window._sortClauses = sorts;
+
+// }
+
+// LIMIT toggle logic - starts here
+
 function updateFilterAndSortClauses() {
   const filters = [];
+
+  // ----- FILTERS -----
   document.querySelectorAll('#filterRows > div').forEach(filter => {
-    const selects = filter.querySelectorAll('select');
-    const field = selects[0]?.value;
-    const operator = selects[1]?.value;
+    const fieldSel = filter.querySelector('select[data-role="filter-field"]') || filter.querySelector('select');
+    const opSel = filter.querySelector('select[data-role="filter-op"]') || filter.querySelectorAll('select')[1];
+    const deviceSel = filter.querySelector('select[data-role="filter-device"], select.device-select');
+    const textInput = filter.querySelector('input[type="text"]');
+    const boolRadio = filter.querySelector('input[name^="bool-val"]:checked');
+    const countryIn = filter.querySelector('input.country-search-input');
+
+    const field = (fieldSel?.value || '').trim();
+    const operator = (opSel?.value || '').trim();
     const logic = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
 
-    // 👇 pull values from the correct control
-    const deviceSelect = filter.querySelector('select.device-select');
-    const textInput = filter.querySelector('input[type="text"]');
-    const booleanRadio = filter.querySelector('input[name^="bool-val"]:checked');
-    const countryInputStyled = filter.querySelector('input.country-search-input');
-
     let value = null;
-    if (field?.startsWith('Is ') && booleanRadio) {
-      value = booleanRadio.value?.toUpperCase();
+    if (!field || !operator) return;
+
+    if (field.startsWith('Is ') && boolRadio) {
+      value = (boolRadio.value || '').toUpperCase(); // TRUE / FALSE
     } else if (field === 'Country') {
-      if (countryInputStyled?.dataset?.code) value = countryInputStyled.dataset.code.trim();
-    } else if (field === 'Device' && deviceSelect) {
-      value = deviceSelect.value;                       // <- the new dropdown
+      value = (countryIn?.dataset?.code || '').trim();
+    } else if (field === 'Device' && deviceSel) {
+      value = deviceSel.value;
     } else if (textInput) {
-      value = textInput.value?.trim();
+      value = (textInput.value || '').trim();
     }
-    if (typeof value === 'string') value = value.trim();
 
     const normalizedField = normalizeFieldName(field);
+
+    // accept NULL operators or non-empty values (including TRUE/FALSE)
+    const hasBoolean = value === 'TRUE' || value === 'FALSE';
     if (
-      field && operator && (
-        operator.includes('NULL') ||
-        (typeof value === 'string' && value !== '') ||
-        (typeof value === 'boolean') ||
-        (typeof value === 'string' && (value.toUpperCase() === 'TRUE' || value.toUpperCase() === 'FALSE'))
-      )
+      operator.includes('NULL') ||
+      (typeof value === 'string' && value !== '') ||
+      hasBoolean
     ) {
       let clause = '';
       switch (operator) {
         case 'EQUALS':
           clause = field.startsWith('Is ')
-            ? `${normalizedField} = ${value.toUpperCase()}`
+            ? `${normalizedField} = ${value}`
             : `${normalizedField} = '${value}'`;
           break;
         case 'NOT EQUALS':
-          if (field.startsWith('Is ') && (value.toUpperCase() === 'FALSE' || value.toUpperCase() === 'TRUE')) {
-            const correctedValue = value.toUpperCase() === 'FALSE' ? 'TRUE' : 'FALSE';
-            clause = `${normalizedField} = ${correctedValue}`;
+          if (field.startsWith('Is ') && hasBoolean) {
+            clause = `${normalizedField} = ${value === 'FALSE' ? 'TRUE' : 'FALSE'}`;
           } else {
             clause = `${normalizedField} != '${value}'`;
           }
           break;
-        case 'CONTAINS': clause = `${normalizedField} LIKE '%${value}%'`; break;
-        case 'NOT CONTAINS': clause = `${normalizedField} NOT LIKE '%${value}%'`; break;
-        case 'GREATER THAN': clause = `${normalizedField} > '${value}'`; break;
-        case 'LESS THAN': clause = `${normalizedField} < '${value}'`; break;
-        case 'IS NULL': clause = `${normalizedField} IS NULL`; break;
-        case 'IS NOT NULL': clause = `${normalizedField} IS NOT NULL`; break;
+        case 'CONTAINS':
+          clause = `${normalizedField} LIKE '%${value}%'`;
+          break;
+        case 'NOT CONTAINS':
+          clause = `${normalizedField} NOT LIKE '%${value}%'`;
+          break;
+        case 'GREATER THAN':
+          clause = `${normalizedField} > '${value}'`;
+          break;
+        case 'LESS THAN':
+          clause = `${normalizedField} < '${value}'`;
+          break;
+        case 'IS NULL':
+          clause = `${normalizedField} IS NULL`;
+          break;
+        case 'IS NOT NULL':
+          clause = `${normalizedField} IS NOT NULL`;
+          break;
         case 'REGEXP CONTAINS':
-          if (['query', 'url'].includes(normalizedField)) clause = `REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+          if (['query', 'url'].includes(normalizedField)) {
+            clause = `REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+          }
           break;
         case 'NOT REGEXP CONTAINS':
-          if (['query', 'url'].includes(normalizedField)) clause = `NOT REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+          if (['query', 'url'].includes(normalizedField)) {
+            clause = `NOT REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+          }
           break;
       }
       if (clause) filters.push({ clause, logic, field: normalizedField });
@@ -2005,21 +2507,27 @@ function updateFilterAndSortClauses() {
     window._filterLogic = globalLogicInput ? globalLogicInput.value : 'AND';
   });
 
+  // ----- SORTS (custom dropdowns, no native <select>) -----
   const sorts = [];
-  document.querySelectorAll('#sortRows > div').forEach(row => {
-    const select = row.querySelector('select');
-    const direction = row.querySelector('input[type="radio"]:checked')?.value || 'ASC';
-    if (select && select.value) {
-      const normalizedSort = normalizeFieldName(select.value);
-      sorts.push(`${normalizedSort} ${direction}`);
-    }
+  document.querySelectorAll('#sortRows > div').forEach((row) => {
+    // Find the chosen field label from the custom placeholder inside this row
+    const ph = row.querySelector('[id^="sortFieldPlaceholder-"]');
+    const label = ph?.textContent?.trim();
+
+    // Normalize to SQL column name
+    let field = null;
+    if (label && label !== 'Select Field') field = normalizeFieldName(label);
+
+    // Direction (ASC/DESC)
+    const dir = row.querySelector('input[type="radio"]:checked')?.value || 'ASC';
+
+    if (field) sorts.push(`${field} ${dir}`);
   });
 
   window._filterClauses = filters;
   window._sortClauses = sorts;
 }
 
-// LIMIT toggle logic - starts here
 function initLimitToggle() {
   const cb = document.getElementById('limitEnabled');
   const input = document.getElementById('limitInput');

@@ -36,19 +36,21 @@
 
     <header
       class="custom-header text-white px-8 py-4 text-left flex row items-center justify-between flex-row shadow-lg fixed w-full navbar z-10 bg-[#222227] ">
-      <div class="items-start justify-start flex-col">
-        <h1 class="font-bold mb-1 text-xl">Google Search Console SQL Query Builder</h1>
-        <p class="mb-1 text-sm">Build your SQL queries for Google Search Console data easily.</p>
-      </div>
-      <div class="flex items-center z-10">
+      <div class="max-w-[1740px] mx-auto flex items-center justify-between w-full px-4 md:px-6">
+        <div class="items-start justify-start flex-col">
+          <h1 class="font-bold mb-1 text-xl">Google Search Console SQL Query Builder</h1>
+          <p class="mb-1 text-sm">Build your SQL queries for Google Search Console data easily.</p>
+        </div>
+        <div class="flex items-center z-10">
 
-        <p class="text-sm">powered by</p>
-        <a href="#" class="max-w-[120px] block">
-          <img src="search-analyzer-logo-1024x341-white.png" alt="" />
-        </a>
+          <p class="text-sm">powered by</p>
+          <a href="#" class="max-w-[120px] block">
+            <img src="search-analyzer-logo-1024x341-white.png" alt="" />
+          </a>
+        </div>
       </div>
     </header>
-    <section class="max-w-[1640px] mx-auto p-4 md:p-6 mb-2 relative z-[1] mt-[100px]">
+    <section class="max-w-[1740px] mx-auto p-4 md:p-6 mb-2 relative z-[1] mt-[100px]">
       <div class="rounded-2xl border border-base-300/60 bg-base-200/40 overflow-hidden relative  z-[2] ">
 
         <!-- App title bar (the “header” for the box) -->
@@ -83,7 +85,7 @@
 
             <div class="my-6 flex flex-wrap gap-2 ">
               <label for="dateRange" class="text-md font-semibold">Date Range</label>
-              <div id="dateRangeContainer" class="relative w-full  ">
+              <div id="dateRangeContainer" class="relative w-full mb-4">
                 <div class="relative group focus-within:ring-0 w-full">
                   <!-- Subtle glow layer -->
                   <div
@@ -104,19 +106,32 @@
                 </div>
                 <div id="dateRangeDropdown" data-open="false"
                   class="bg-white border border-gray-600 p-1 rounded absolute z-10 mt-[8px] hidden max-h-[450px]">
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Yesterday">Yesterday</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last Week">Last Week</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last month">Last month </div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Month to last available date">Month to last available date</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last 7 days">Last 7 days </div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last 14 days">Last 14 days</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last 28 days">Last 28 days</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last 30 days">Last 30 days</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last quarter">Last quarter </div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Quarter to last available date">Quarter to last available date</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Year to last available date">Year to last available date</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last year">Last year</div>
-                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Custom date range">Custom  date range </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Yesterday">Yesterday
+                  </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last Week">Last Week
+                  </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last month">Last
+                    month </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2"
+                    data-range="Month to last available date">Month to last available date</div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last 7 days">Last 7
+                    days </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last 14 days">Last 14
+                    days</div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last 28 days">Last 28
+                    days</div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last 30 days">Last 30
+                    days</div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last quarter">Last
+                    quarter </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2"
+                    data-range="Quarter to last available date">Quarter to last available date</div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2"
+                    data-range="Year to last available date">Year to last available date</div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Last year">Last year
+                  </div>
+                  <div class="cursor-pointer p-1 hover:bg-gray-300 rounded-[3px] px-2" data-range="Custom date range">
+                    Custom date range </div>
                 </div>
               </div>
 
@@ -164,14 +179,14 @@
               <div class="flex items-center justify-between w-full">
                 <label for="metrics" class="text-md font-semibold">Metrics</label>
                 <div class="flex items-center gap-2">
-                <button id="addAllMetricsBtn" class="btn btn-xs btn-ghost ">
-                  <i class="fa-regular fa-plus"></i>
-                  <span>Add all</span>
-                </button>
-                <button id="clearMetricsBtn" class="btn btn-xs btn-ghost ">
-                  <i class="fa-regular fa-circle-xmark"></i>
-                  <span>Clear all</span>
-                </button>
+                  <button id="addAllMetricsBtn" class="btn btn-xs btn-ghost ">
+                    <i class="fa-regular fa-plus"></i>
+                    <span>Add all</span>
+                  </button>
+                  <button id="clearMetricsBtn" class="btn btn-xs btn-ghost ">
+                    <i class="fa-regular fa-circle-xmark"></i>
+                    <span>Clear all</span>
+                  </button>
                 </div>
               </div>
               <div id="metricsContainer" class="relative w-full group focus-within:ring-0">
@@ -182,7 +197,7 @@
 
                 <!-- Selected metrics box -->
                 <div id="selectedMetrics" tabindex="0"
-                  class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm">
+                  class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm mb-4">
                   <div id="metricsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto">
                     <span id="metricsPlaceholder" class="text-gray-400">Select metrics</span>
                   </div>
@@ -226,7 +241,7 @@
                   <span>Clear all</span>
                 </button>
               </div>
-              <div id="dimensionsContainer" class="relative w-full group focus-within:ring-0">
+              <div id="dimensionsContainer" class="relative w-full group focus-within:ring-0 mb-4">
                 <!-- Glow when focused -->
                 <div
                   class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-lg blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
@@ -256,9 +271,9 @@
 
               <!-- Filters section starts here -->
               <!-- Filters Header (inside gray box) -->
-              <div class="w-full max-w-4xl mx-auto mt-4">
+              <div class="w-full max-w-4xl mx-auto mt-4 mb-4">
                 <div
-                  class="alert alert-info w-full flex justify-between bg-[#2f3237]/90 border-[#2f3237]/70 uppercase text-white"
+                  class="alert alert-info w-full flex justify-between bg-[#2f3237]/90 border-[#2f3237]/70 uppercase text-white p-4"
                   id="toggleFiltersHeader">
                   <span class="font-bold">Filters</span>
                   <svg id="filterArrow"
@@ -277,12 +292,20 @@
                   <!-- Add/Remove Buttons -->
                   <div class="flex gap-2 mt-2">
                     <button id="addFilterRowBtn"
-                      class="badge badge-sm badge-accent hover:bg-teal-600 font-semibold text-md cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white">
-                      +
+                      class="badge badge-md  hover:bg-[#0366a0]  font-semibold  cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+     viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
                     </button>
                     <button id="removeFilterRowBtn"
-                      class="badge badge-sm badge-accent hover:bg-teal-600 font-semibold text-md cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white">
-                      −
+                      class="badge badge-md hover:bg-[#0366a0] font-semibold cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+     viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M5 12h14" stroke="#fff" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
                     </button>
                   </div>
                 </div>
@@ -293,7 +316,7 @@
               <!-- Sort By Section -->
               <div class="w-full max-w-4xl mx-auto mt-4">
                 <div
-                  class="alert alert-info w-full flex justify-between bg-[#2f3237]/90 border-[#2f3237]/70 uppercase text-white"
+                  class="alert alert-info w-full flex justify-between bg-[#2f3237]/90 border-[#2f3237]/70 uppercase text-white p-4"
                   id="toggleSortByHeader">
                   <span class="font-bold">Sort by</span>
                   <svg id="sortArrow" class="w-4 h-4 transition-transform duration-300 cursor-pointer" fill="none"
@@ -306,12 +329,22 @@
                   <div id="sortRows" class="space-y-2"></div>
                   <div class="flex gap-2 mt-2">
                     <button id="addSortRowBtn"
-                      class="badge badge-sm badge-accent hover:bg-teal-600 font-semibold text-md cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white">
-                      +
+                      class="badge badge-md  hover:bg-[#0366a0]  font-semibold  cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+     viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
                     </button>
                     <button id="removeSortRowBtn"
-                      class="badge badge-sm badge-accent hover:bg-teal-600 font-semibold text-md cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white">
-                      −
+                      class="badge badge-md  hover:bg-[#0366a0]  font-semibold  cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+     viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M5 12h14" stroke="#fff" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
                     </button>
                   </div>
                 </div>
@@ -322,7 +355,7 @@
               <!-- Custom Fields section starts -->
               <div class="w-full max-w-4xl mx-auto mt-4">
                 <div
-                  class="alert alert-info w-full flex justify-between bg-[#2f3237]/90 border-[#2f3237]/70 uppercase text-white"
+                  class="alert alert-info w-full flex justify-between bg-[#2f3237]/90 border-[#2f3237]/70 uppercase text-white p-4"
                   id="toggleCustomFieldsHeader">
                   <span class="font-bold">Custom Fields <i id="custom-fields-tooltip-icon"
                       class="fas fa-question-circle text-sm text-white cursor-pointer transition-colors duration-300 ease-in-out"></i></span>
@@ -361,7 +394,7 @@
 
                   <div class="relative w-full group focus-within:ring-0">
                     <input id="limitInput" type="number"
-                      class="input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(100%-2px)] text-sm"
+                      class="input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(100%-2px)] text-sm leading-7"
                       placeholder="100" min="1">
                   </div>
                 </div>
@@ -556,11 +589,10 @@
 
 
 
-
-
   </main>
 
-  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.6rem] text-right opacity-8 text-white">v5.0.5.20.09.2025
+  <footer class="mt-auto float-right right-0 bottom-0 mr-[5px] text-[0.6rem] text-right opacity-8 text-white">
+    v5.0.8.25.09.2025
   </footer>
   <script type="module" src="js/main.js"></script>
   <script type="module" src="js/integration.js"></script>

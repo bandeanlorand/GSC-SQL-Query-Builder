@@ -77,125 +77,125 @@
 
   // ---------- HASH ingestion ----------
   // Accepts either compressed "#gsc=<payload>" OR plain "#m=...&dim=...&sd=...&ed=..."
-function getHashPayload() {
-  const raw = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash;
+  function getHashPayload() {
+    const raw = location.hash.startsWith('#') ? location.hash.slice(1) : location.hash;
 
-  // 1) compressed payload support (existing)
-  const m = raw.match(/(?:^|&)gsc=([^&]+)/);
-  if (m) {
-    const obj = tryDecode(m[1]);
-    if (obj) return obj;
-  }
-
-  // 2) plain hash params
-  const hp = new URLSearchParams(raw);
-  if (![...hp.keys()].length) return null;
-
-  const metricsMap = {
-    CLICKS: 'Clicks',
-    IMPRESSIONS: 'Impressions',
-    CTR: 'CTR',
-    POSITION: 'Avg Position'
-  };
-  const dimMap = {
-    page: 'URL',
-    query: 'Query',
-    country: 'Country',
-    device: 'Device',
-    search_type: 'Search Type'
-  };
-
-  // metrics (filter unknowns)
-  const allowedLabels = new Set(Object.values(metricsMap));
-  const metrics = splitCSV(hp.get('m'))
-    .map(x => metricsMap[(x || '').toUpperCase()] || '')
-    .filter(v => allowedLabels.has(v));
-
-  const breakdown  = (hp.get('dim') || '').toLowerCase();
-  const dimensions = breakdown ? [dimMap[breakdown] || breakdown] : [];
-
-  // dates
-  const sd  = yyyymmddToISO(hp.get('sd') || hp.get('start_date'));
-  const ed  = yyyymmddToISO(hp.get('ed') || hp.get('end_date'));
-
-  const nm  = hp.get('nm') ? parseInt(hp.get('nm'), 10) : null;
-
-
-  let date = sd && ed ? { from: sd, to: ed } : (nm ? { months: nm } : null);
-  
-
-  const filters = [];
-
-  const st = hp.get('st');
-  if (st) filters.push({ field:'Search Type', op:'EQUALS', value: (st+'').toUpperCase() });
-
-  const dv = normalizeDevice(hp.get('dv'));
-  if (dv && dv !== 'ALL') filters.push({ field:'Device', op:'EQUALS', value: dv });
-
-  const page = hp.get('page');
-  if (page) filters.push({ field:'URL', op:'CONTAINS', value: (page+'').replace(/\*/g,'') });
-
-  const country = hp.get('country');
-  if (country) {
-    const c2 = normalizeCountryCode(country);
-    if (c2) filters.push({ field:'Country', op:'EQUALS', value: c2 });
-  }
-
-  // NEW: legacy query= fallback (hash)
-  const qfilter = hp.get('query');
-  if (qfilter) filters.push({ field:'Query', op:'CONTAINS', value: (qfilter+'').replace(/\*/g,'') });
-
-  // NEW: parse generic f= filters (URL:CONTAINS:*..., Query:REGEXP:..., etc.)
-  // --- NEW: parse generic f= filters (URL:CONTAINS:*..., Query:REGEXP:..., etc.)
-const fs = hp.getAll('f');
-fs.forEach(rawFilter => {
-  if (!rawFilter) return;
-  const parts = String(rawFilter).split(':');
-  if (parts.length < 3) return;
-
-  const fieldRaw = parts[0].trim().toLowerCase();   // url | query | device | country | search type...
-  const opRaw    = parts[1].trim().toUpperCase();   // CONTAINS | EQUALS | REGEXP | NOT_CONTAINS | NOT_REGEXP ...
-  const valueRaw = parts.slice(2).join(':');        // allow ":" inside value
-
-  const fieldMap = { page:'URL', url:'URL', query:'Query', country:'Country', device:'Device', 'search type':'Search Type' };
-  const field = fieldMap[fieldRaw] || (fieldRaw.charAt(0).toUpperCase() + fieldRaw.slice(1));
-
-  // map op tokens → UI labels used by your select element
-  const opMap = {
-    'REGEXP': 'REGEXP CONTAINS',
-    'NOT_REGEXP': 'NOT REGEXP CONTAINS',
-    'NOT_EQUALS': 'NOT EQUALS',
-    'NOT CONTAINS': 'NOT CONTAINS',
-    'CONTAINS': 'CONTAINS',
-    'EQUALS': 'EQUALS'
-  };
-  const uiOp = opMap[opRaw] || opRaw;
-
-  // normalize values for specific fields
-  let v = valueRaw;
-  if (field === 'Device')   v = normalizeDevice(valueRaw);
-  if (field === 'Country')  v = normalizeCountryCode(valueRaw.replace(/\*/g, ''));
-  if (field === 'URL')      v = valueRaw.replace(/\*/g, '');
-  if (field === 'Query' && uiOp === 'CONTAINS') v = valueRaw.replace(/\*/g, ''); // strip wildcards for input
-
-  filters.push({ field, op: uiOp, value: v });
-});
-
-
-  return {
-    v: 1,
-    source: 'hash',
-    report: {
-      date,
-      dimensions,
-      metrics,
-      filters_logic: 'AND',
-      filters,
-      sort: [],
-      customFields: []
+    // 1) compressed payload support (existing)
+    const m = raw.match(/(?:^|&)gsc=([^&]+)/);
+    if (m) {
+      const obj = tryDecode(m[1]);
+      if (obj) return obj;
     }
-  };
-}
+
+    // 2) plain hash params
+    const hp = new URLSearchParams(raw);
+    if (![...hp.keys()].length) return null;
+
+    const metricsMap = {
+      CLICKS: 'Clicks',
+      IMPRESSIONS: 'Impressions',
+      CTR: 'CTR',
+      POSITION: 'Avg Position'
+    };
+    const dimMap = {
+      page: 'URL',
+      query: 'Query',
+      country: 'Country',
+      device: 'Device',
+      search_type: 'Search Type'
+    };
+
+    // metrics (filter unknowns)
+    const allowedLabels = new Set(Object.values(metricsMap));
+    const metrics = splitCSV(hp.get('m'))
+      .map(x => metricsMap[(x || '').toUpperCase()] || '')
+      .filter(v => allowedLabels.has(v));
+
+    const breakdown = (hp.get('dim') || '').toLowerCase();
+    const dimensions = breakdown ? [dimMap[breakdown] || breakdown] : [];
+
+    // dates
+    const sd = yyyymmddToISO(hp.get('sd') || hp.get('start_date'));
+    const ed = yyyymmddToISO(hp.get('ed') || hp.get('end_date'));
+
+    const nm = hp.get('nm') ? parseInt(hp.get('nm'), 10) : null;
+
+
+    let date = sd && ed ? { from: sd, to: ed } : (nm ? { months: nm } : null);
+
+
+    const filters = [];
+
+    const st = hp.get('st');
+    if (st) filters.push({ field: 'Search Type', op: 'EQUALS', value: (st + '').toUpperCase() });
+
+    const dv = normalizeDevice(hp.get('dv'));
+    if (dv && dv !== 'ALL') filters.push({ field: 'Device', op: 'EQUALS', value: dv });
+
+    const page = hp.get('page');
+    if (page) filters.push({ field: 'URL', op: 'CONTAINS', value: (page + '').replace(/\*/g, '') });
+
+    const country = hp.get('country');
+    if (country) {
+      const c2 = normalizeCountryCode(country);
+      if (c2) filters.push({ field: 'Country', op: 'EQUALS', value: c2 });
+    }
+
+    // NEW: legacy query= fallback (hash)
+    const qfilter = hp.get('query');
+    if (qfilter) filters.push({ field: 'Query', op: 'CONTAINS', value: (qfilter + '').replace(/\*/g, '') });
+
+    // NEW: parse generic f= filters (URL:CONTAINS:*..., Query:REGEXP:..., etc.)
+    // --- NEW: parse generic f= filters (URL:CONTAINS:*..., Query:REGEXP:..., etc.)
+    const fs = hp.getAll('f');
+    fs.forEach(rawFilter => {
+      if (!rawFilter) return;
+      const parts = String(rawFilter).split(':');
+      if (parts.length < 3) return;
+
+      const fieldRaw = parts[0].trim().toLowerCase();   // url | query | device | country | search type...
+      const opRaw = parts[1].trim().toUpperCase();   // CONTAINS | EQUALS | REGEXP | NOT_CONTAINS | NOT_REGEXP ...
+      const valueRaw = parts.slice(2).join(':');        // allow ":" inside value
+
+      const fieldMap = { page: 'URL', url: 'URL', query: 'Query', country: 'Country', device: 'Device', 'search type': 'Search Type' };
+      const field = fieldMap[fieldRaw] || (fieldRaw.charAt(0).toUpperCase() + fieldRaw.slice(1));
+
+      // map op tokens → UI labels used by your select element
+      const opMap = {
+        'REGEXP': 'REGEXP CONTAINS',
+        'NOT_REGEXP': 'NOT REGEXP CONTAINS',
+        'NOT_EQUALS': 'NOT EQUALS',
+        'NOT CONTAINS': 'NOT CONTAINS',
+        'CONTAINS': 'CONTAINS',
+        'EQUALS': 'EQUALS'
+      };
+      const uiOp = opMap[opRaw] || opRaw;
+
+      // normalize values for specific fields
+      let v = valueRaw;
+      if (field === 'Device') v = normalizeDevice(valueRaw);
+      if (field === 'Country') v = normalizeCountryCode(valueRaw.replace(/\*/g, ''));
+      if (field === 'URL') v = valueRaw.replace(/\*/g, '');
+      if (field === 'Query' && uiOp === 'CONTAINS') v = valueRaw.replace(/\*/g, ''); // strip wildcards for input
+
+      filters.push({ field, op: uiOp, value: v });
+    });
+
+
+    return {
+      v: 1,
+      source: 'hash',
+      report: {
+        date,
+        dimensions,
+        metrics,
+        filters_logic: 'AND',
+        filters,
+        sort: [],
+        customFields: []
+      }
+    };
+  }
 
 
   // ---------- QUERY ingestion (legacy links / Stephan’s link) ----------
@@ -343,9 +343,13 @@ fs.forEach(rawFilter => {
       if (typeof window.addFilterRow === 'function') window.addFilterRow();
       const row = cont.lastElementChild; if (!row) return;
 
-      const selects = row.querySelectorAll('select');
-      const fieldSelect = selects[0];
-      const opSelect = selects[1];
+      // const selects = row.querySelectorAll('select');
+      // const fieldSelect = selects[0];
+      // const opSelect = selects[1];
+
+      const fieldSelect = row.querySelector('select[data-role="filter-field"]');
+const opSelect    = row.querySelector('select[data-role="filter-op"]');
+
 
       // 1) Set field first so the correct value control is created
       if (fieldSelect && f.field) {
@@ -356,49 +360,49 @@ fs.forEach(rawFilter => {
       }
 
       // 2) Operator
-if (opSelect && f.op) {
-  // normalize to UI labels
-  const opNormMap = {
-    'REGEXP': 'REGEXP CONTAINS',
-    'NOT_REGEXP': 'NOT REGEXP CONTAINS',
-    'NOT_EQUALS': 'NOT EQUALS',
-    'NOT CONTAINS': 'NOT CONTAINS',
-    'CONTAINS': 'CONTAINS',
-    'EQUALS': 'EQUALS'
-  };
-  const want = opNormMap[(f.op + '').toUpperCase()] || (f.op + '');
+      if (opSelect && f.op) {
+        // normalize to UI labels
+        const opNormMap = {
+          'REGEXP': 'REGEXP CONTAINS',
+          'NOT_REGEXP': 'NOT REGEXP CONTAINS',
+          'NOT_EQUALS': 'NOT EQUALS',
+          'NOT CONTAINS': 'NOT CONTAINS',
+          'CONTAINS': 'CONTAINS',
+          'EQUALS': 'EQUALS'
+        };
+        const want = opNormMap[(f.op + '').toUpperCase()] || (f.op + '');
 
-  // try set by value
-  opSelect.value = want;
+        // try set by value
+        opSelect.value = want;
 
-  // fallback: set by visible text
-  if (opSelect.value !== want) {
-    const opt = Array.from(opSelect.options).find(o => (o.value || o.textContent).trim().toUpperCase() === want.toUpperCase());
-    if (opt) opt.selected = true;
-  }
-  opSelect.dispatchEvent(new Event('change', { bubbles: true }));
-}
+        // fallback: set by visible text
+        if (opSelect.value !== want) {
+          const opt = Array.from(opSelect.options).find(o => (o.value || o.textContent).trim().toUpperCase() === want.toUpperCase());
+          if (opt) opt.selected = true;
+        }
+        opSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      }
 
 
       // 3) Set the control value
-const deviceSelect  = row.querySelector('select.device-select');
-const countryInput  = row.querySelector('input.country-search-input');
-const textInput     = row.querySelector('input[type="text"]');
+      const deviceSelect = row.querySelector('select.device-select');
+      const countryInput = row.querySelector('input.country-search-input');
+      const textInput = row.querySelector('input[type="text"]');
 
-if (deviceSelect && (fieldSelect?.value === 'Device')) {
-  deviceSelect.classList.remove('hidden');
-  deviceSelect.value = normalizeDevice(f.value || '');
-} else if (countryInput && (fieldSelect?.value === 'Country')) {
-  const code = normalizeCountryCode(f.value || '');
-  countryInput.dataset.code = code;
-  countryInput.value = countryLabelFromCode(code);
-} else if (textInput && f.value != null) {
-  let val = f.value;
-  if (fieldSelect?.value === 'Query' && /CONTAINS/i.test(opSelect?.value || '')) {
-    val = String(val).replace(/\*/g, '');
-  }
-  textInput.value = val;
-}
+      if (deviceSelect && (fieldSelect?.value === 'Device')) {
+        deviceSelect.classList.remove('hidden');
+        deviceSelect.value = normalizeDevice(f.value || '');
+      } else if (countryInput && (fieldSelect?.value === 'Country')) {
+        const code = normalizeCountryCode(f.value || '');
+        countryInput.dataset.code = code;
+        countryInput.value = countryLabelFromCode(code);
+      } else if (textInput && f.value != null) {
+        let val = f.value;
+        if (fieldSelect?.value === 'Query' && /CONTAINS/i.test(opSelect?.value || '')) {
+          val = String(val).replace(/\*/g, '');
+        }
+        textInput.value = val;
+      }
 
 
       // 4) Logic between rows
@@ -459,9 +463,13 @@ if (deviceSelect && (fieldSelect?.value === 'Device')) {
         rows = wrapper.querySelectorAll('.custom-condition-row');
         g.conditions.forEach((c, i) => {
           const row = rows[i]; if (!row) return;
-          const selects = row.querySelectorAll('select');
-          const fieldSelect = selects[0];
-          const opSelect = selects[1];
+          // const selects = row.querySelectorAll('select');
+          // const fieldSelect = selects[0];
+          // const opSelect = selects[1];
+
+          const fieldSelect = row.querySelector('select[data-role="filter-field"]');
+          const opSelect = row.querySelector('select[data-role="filter-op"]');
+
           const txt = row.querySelector('input[type="text"]');
           const countryInput = row.querySelector('input.country-search-input');
 
