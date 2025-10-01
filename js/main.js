@@ -1267,10 +1267,10 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   wrapper.className = 'card-body gap-4 bg-white  card-border border-gray-700 ';
 
   const inputRow = document.createElement('div');
-  inputRow.className = 'flex items-center gap-2 flex-wrap ';
+  inputRow.className = 'flex items-center gap-2 flex-wrap added-card-when-row';
 
   const whenLabel = document.createElement('label');
-  whenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(50px-4px)] font-semibold ';
+  whenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(45px-0px)] font-semibold ';
   whenLabel.textContent = 'When';
   inputRow.appendChild(whenLabel);
 
@@ -1366,7 +1366,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   wrapper.appendChild(inputRow);
 
   const thenRow = document.createElement('div');
-  thenRow.className = 'flex items-center gap-2';
+  thenRow.className = 'flex items-center gap-2 added-then-row';
 
   const thenLabel = document.createElement('label');
   thenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(48px)] font-semibold';
@@ -1529,7 +1529,7 @@ let operatorSelectUI, operatorSelect;
   const valueInput = document.createElement('input');
   valueInput.type = 'text';
   valueInput.placeholder = 'My Website Name';
-  valueInput.className = 'input w-[calc(29%-3px)] sm:w-[calc(29%-5px)] input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm leading-7';
+  valueInput.className = 'input  input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm leading-7';
 
   const valueSelect = document.createElement('select');
   valueSelect.className = 'hidden flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700 ';
@@ -1621,7 +1621,7 @@ let operatorSelectUI, operatorSelect;
   thenRow.className = 'flex items-center gap-2 then-row';
 
   const thenLabel = document.createElement('label');
-  thenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(53px)] font-semibold';
+  thenLabel.className = ' text-sm whitespace-nowrap mt-0 w-[calc(51px)] font-semibold';
   thenLabel.textContent = 'Then';
 
   const thenInput = document.createElement('input');

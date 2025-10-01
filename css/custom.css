@@ -408,5 +408,49 @@ div.bg-white.border.rounded.absolute div.cursor-pointer.rounded {
 }
 .custom-field-card .else-row{
   background-color: purple;
+}
+.custom-field-card .added-custom-condition-group{
+  background-color: lightgray;
+}
+.custom-field-card .added-custom-condition-group .added-card-when-row{
+  background-color: orange;
+  display: flex;
+  justify-content: space-between;
+}
+.custom-field-card .added-custom-condition-group .added-then-row{
+  background-color: yellow;
+  display: flex;
+  justify-content: space-between;
+}
+.custom-field-card .added-custom-condition-group .added-card-when-row label,
+.custom-field-card .added-custom-condition-group .added-then-row label{
+  background-color: red;
 } */
 /* first level card styles - ends here */
+
+/* generic row */
+.row-flex {
+  display: flex;
+  flex-wrap: wrap;       /* allow wrapping but in predictable chunks */
+  align-items: center;
+  gap: 8px;
+}
+
+.row-flex > label {
+  flex: 0 0 var(--label-w);  /* fixed label column */
+  width: var(--label-w);
+}
+
+.row-flex > .field {  flex: 1 1 280px; min-width: 180px; }
+.row-flex > .op {     flex: 0 1 160px; min-width: 130px; }
+.row-flex > .value {  flex: 1 1 280px; min-width: 180px; }
+.row-flex > .actions {flex: 0 0 auto; }
+
+/* responsive */
+@media (max-width: 900px) {
+  .row-flex > .op,
+  .row-flex > .value,
+  .row-flex > .actions {
+    flex-basis: 100%; /* drop under the first line in order */
+  }
+}
