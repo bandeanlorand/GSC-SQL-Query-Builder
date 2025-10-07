@@ -95,7 +95,7 @@
       CLICKS: 'Clicks',
       IMPRESSIONS: 'Impressions',
       CTR: 'CTR',
-      POSITION: 'Position'
+      POSITION: 'Avg Position'
     };
     const dimMap = {
       page: 'URL',
@@ -162,16 +162,9 @@
 
       // map op tokens → UI labels used by your select element
       const opMap = {
-        'NOT_EQUALS': 'NOT EQUALS',
         'REGEXP': 'REGEXP CONTAINS',
-        'REGEX': 'REGEXP CONTAINS',                 // NEW
-        'REGEXP CONTAINS': 'REGEXP CONTAINS',       // NEW (idempotent)
-        'REGEX CONTAINS': 'REGEXP CONTAINS',        // NEW
         'NOT_REGEXP': 'NOT REGEXP CONTAINS',
-        'NOT REGEXP': 'NOT REGEXP CONTAINS',        // NEW
-        'NOT REGEX': 'NOT REGEXP CONTAINS',         // NEW
-        'NOT REGEX CONTAINS': 'NOT REGEXP CONTAINS',// NEW
-        'NOT REGEXP CONTAINS': 'NOT REGEXP CONTAINS',
+        'NOT_EQUALS': 'NOT EQUALS',
         'NOT CONTAINS': 'NOT CONTAINS',
         'CONTAINS': 'CONTAINS',
         'EQUALS': 'EQUALS'
@@ -210,7 +203,7 @@
     const qp = new URLSearchParams(location.search);
     if (![...qp.keys()].length) return null;
 
-    const metricsMap = { CLICKS: 'Clicks', IMPRESSIONS: 'Impressions', CTR: 'CTR', POSITION: 'Position' };
+    const metricsMap = { CLICKS: 'Clicks', IMPRESSIONS: 'Impressions', CTR: 'CTR', POSITION: 'Avg Position' };
     const dimMap = { page: 'URL', query: 'Query', country: 'Country', device: 'Device', search_type: 'Search Type' };
 
     const allowedLabels = new Set(Object.values(metricsMap));
@@ -371,15 +364,8 @@ const opSelect    = row.querySelector('select[data-role="filter-op"]');
         // normalize to UI labels
         const opNormMap = {
           'REGEXP': 'REGEXP CONTAINS',
-          'REGEX': 'REGEXP CONTAINS',                   
-          'REGEXP CONTAINS': 'REGEXP CONTAINS',         
-          'REGEX CONTAINS': 'REGEXP CONTAINS',          
           'NOT_REGEXP': 'NOT REGEXP CONTAINS',
-          'NOT REGEXP': 'NOT REGEXP CONTAINS',
-          'NOT REGEX': 'NOT REGEXP CONTAINS',
-          'NOT REGEX CONTAINS': 'NOT REGEXP CONTAINS',
-          'NOT REGEXP CONTAINS': 'NOT REGEXP CONTAINS',
-          'NOT EQUALS': 'NOT EQUALS',
+          'NOT_EQUALS': 'NOT EQUALS',
           'NOT CONTAINS': 'NOT CONTAINS',
           'CONTAINS': 'CONTAINS',
           'EQUALS': 'EQUALS'
@@ -444,7 +430,7 @@ const opSelect    = row.querySelector('select[data-role="filter-op"]');
       const radios = Array.from(row.querySelectorAll('input[type="radio"]'));
 
       if (fieldSelect && s.field) {
-        const fieldMap = { clicks: 'Clicks', impressions: 'Impressions', ctr: 'CTR', position: 'Position' };
+        const fieldMap = { clicks: 'Clicks', impressions: 'Impressions', ctr: 'CTR', position: 'Avg Position' };
         fieldSelect.value = fieldMap[(s.field + '').toLowerCase()] || s.field;
         fieldSelect.dispatchEvent(new Event('change', { bubbles: true }));
       }
@@ -477,6 +463,9 @@ const opSelect    = row.querySelector('select[data-role="filter-op"]');
         rows = wrapper.querySelectorAll('.custom-condition-row');
         g.conditions.forEach((c, i) => {
           const row = rows[i]; if (!row) return;
+          // const selects = row.querySelectorAll('select');
+          // const fieldSelect = selects[0];
+          // const opSelect = selects[1];
 
           const fieldSelect = row.querySelector('select[data-role="filter-field"]');
           const opSelect = row.querySelector('select[data-role="filter-op"]');

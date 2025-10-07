@@ -841,16 +841,41 @@ function addFilterRow() {
   const wrapper = document.createElement('div');
   wrapper.className = "space-y-2 w-full transition-all duration-500 ease-in-out overflow-hidden1 opacity-100 max-h-[200px]";
 
-  // We build topRow *optionally* now; for first row it will hold only the Clear button
-  let topRow = null;
   if (!isFirst) {
-    topRow = document.createElement('div');
+    const topRow = document.createElement('div');
     topRow.className = "flex justify-between items-center";
+
+    const radioGroup = document.createElement('div');
+    radioGroup.className = "flex items-center gap-4 text-sm ";
+    radioGroup.innerHTML = `
+      <label class="inline-flex items-center gap-1 m-0 font-semibold">
+        <input type="radio" name="logicGroup-${container.children.length}" value="AND" class="radio radio-sm" checked />
+        AND
+      </label>
+      <label class="inline-flex items-center gap-1 m-0 font-semibold">
+        <input type="radio" name="logicGroup-${container.children.length}" value="OR" class="radio radio-sm" />
+        OR
+      </label>
+    `;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.innerHTML = "&times;";
+    removeBtn.className = " text-lg font-bold px-3 hover:text-red-500 flex w-auto pr-0 cursor-pointer transition-colors duration-300 ease-in-out";
+    removeBtn.onclick = () => {
+      wrapper.style.opacity = '0';
+      wrapper.style.maxHeight = '0px';
+      wrapper.style.padding = '0';
+      wrapper.style.margin = '0';
+      setTimeout(() => { wrapper.remove(); updateFilterRemoveButton(); }, 500);
+    };
+
+    topRow.appendChild(radioGroup);
+    topRow.appendChild(removeBtn);
     wrapper.appendChild(topRow);
   }
 
   const bottomRow = document.createElement('div');
-  bottomRow.className = "flex flex-nowrap items-center gap-2 filter-row overflow-visible";
+  bottomRow.className = "flex flex-nowrap items-center gap-2  filter-row overflow-visible";
 
   // FIELD select
   const fieldSelect = document.createElement('select');
@@ -866,8 +891,9 @@ function addFilterRow() {
   operatorSelect.dataset.role = 'filter-op';
   operatorSelect.className = "w-[calc(25%-22px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm disabled";
 
+
   // DEVICE select (value control)
-  const deviceSelect = createDeviceSelect(); // hidden by default
+  const deviceSelect = createDeviceSelect();                // hidden by default
   deviceSelect.dataset.role = 'filter-device';
 
   // TEXT input (value control)
@@ -878,7 +904,7 @@ function addFilterRow() {
 
   // BOOLEAN radios (value control)
   const radioWrapper = document.createElement('div');
-  radioWrapper.className = "bool-radio-wrapper flex gap-4 items-center flex-1 justify-center hidden m-auto";
+  radioWrapper.className = "flex gap-4 items-center flex-1 justify-center hidden m-auto";
   radioWrapper.innerHTML = `
     <label class="inline-flex items-center gap-1 m-0 font-semibold">
       <input type="radio" name="bool-val-filter-${Date.now()}" value="TRUE" class="radio radio-sm" />
@@ -926,7 +952,6 @@ function addFilterRow() {
     }
   });
 
-  // assemble bottom row
   bottomRow.appendChild(fieldSelect);
   bottomRow.appendChild(operatorSelect);
   bottomRow.appendChild(deviceSelect);
@@ -937,81 +962,13 @@ function addFilterRow() {
   container.appendChild(wrapper);
 
   // Skin the selects but keep native ones for your logic:
-  const fieldUI   = makeCustomSelect(fieldSelect,   { placeholder: 'Select Field' });
-  const operatorUI= makeCustomSelect(operatorSelect,{ placeholder: 'Operator' });
-  const deviceUI  = makeCustomSelect(deviceSelect,  { placeholder: 'Device' });
+  const fieldUI = makeCustomSelect(fieldSelect, { placeholder: 'Select Field' });
+  const operatorUI = makeCustomSelect(operatorSelect, { placeholder: 'Operator' });
+  const deviceUI = makeCustomSelect(deviceSelect, { placeholder: 'Device' });
   if (deviceUI) deviceUI.wrap.classList.add('hidden');
-
-  // --- CLEAR button (works for ALL rows, including the first) ---
-  const clearBtn = document.createElement('button');
-  clearBtn.type = 'button';
-  clearBtn.title = 'Clear this filter';
-  clearBtn.className = 'btn btn-ghost btn-xs px-2 text-xs';
-  clearBtn.textContent = 'Clear';
-  clearBtn.addEventListener('click', () => clearFilterRow(wrapper));
-
-  // --- REMOVE (×) button (only for non-first rows) ---
-  let removeBtn = null;
-if (!isFirst) {
-  removeBtn = document.createElement('button');
-  removeBtn.type = 'button';
-  removeBtn.setAttribute('aria-label', 'Remove filter');
-  removeBtn.title = 'Remove filter';
-
-  // pill button, same size as "Clear", but centers the X
-  removeBtn.className =
-    'btn btn-ghost btn-xs h-6 min-h-[24px] px-2 leading-none ' + // fixed height + no line-height
-    'inline-flex items-center justify-center text-base';           // a bit larger X
-
-  // put the glyph in a span so we can keep leading-none
-  removeBtn.innerHTML = '<span class="block leading-none text-xs mt-[-1px] mr-[-1px]">&#10005;</span>';
-
-  removeBtn.onclick = () => {
-    wrapper.style.opacity = '0';
-    wrapper.style.maxHeight = '0px';
-    wrapper.style.padding = '0';
-    wrapper.style.margin = '0';
-    setTimeout(() => { wrapper.remove(); updateFilterRemoveButton(); }, 500);
-  };
-}
-
-
-  // place the buttons
-  if (isFirst) {
-    // build a tiny right-aligned row for the clear button
-    const firstTop = document.createElement('div');
-    firstTop.className = "flex justify-end items-center -mt-1";
-    firstTop.appendChild(clearBtn);
-    wrapper.insertBefore(firstTop, bottomRow);
-  } else {
-    // we already created topRow for non-first rows
-    const left = document.createElement('div');
-    left.className = "flex items-center gap-4 text-sm";
-    // (radioGroup remains exactly as you had it)
-    left.innerHTML = `
-      <label class="inline-flex items-center gap-1 m-0 font-semibold">
-        <input type="radio" name="logicGroup-${container.children.length - 1}" value="AND" class="radio radio-sm" checked />
-        AND
-      </label>
-      <label class="inline-flex items-center gap-1 m-0 font-semibold">
-        <input type="radio" name="logicGroup-${container.children.length - 1}" value="OR" class="radio radio-sm" />
-        OR
-      </label>
-    `;
-    const right = document.createElement('div');
-    right.className = "flex items-center gap-1";
-    right.appendChild(clearBtn);
-    right.appendChild(removeBtn);
-
-    topRow.appendChild(left);
-    topRow.appendChild(right);
-  }
 
   updateFilterRemoveButton();
 }
-
-
-
 
 function removeFilterRow() {
   const container = document.getElementById('filterRows');
@@ -1019,45 +976,6 @@ function removeFilterRow() {
     container.lastElementChild.remove();
     updateFilterRemoveButton();
   }
-}
-function clearFilterRow(wrapper) {
-  const row = wrapper.querySelector('.filter-row');
-  if (!row) return;
-
-  // native controls
-  const fieldSelect    = row.querySelector('select[data-role="filter-field"]');
-  const operatorSelect = row.querySelector('select[data-role="filter-op"]');
-  const deviceSelect   = row.querySelector('select[data-role="filter-device"]');
-  const textInput      = row.querySelector('input[type="text"]');
-  const radioWrapper   = row.querySelector('.bool-radio-wrapper') || row.querySelector('div'); // fallback
-
-  // 1) reset selects/inputs
-  if (fieldSelect)    { fieldSelect.selectedIndex = 0; }
-  if (operatorSelect) { operatorSelect.innerHTML = ''; }
-  if (deviceSelect)   { deviceSelect.selectedIndex = 0; }
-  if (textInput)      { textInput.value = ''; }
-
-  // uncheck boolean radios if any
-  if (radioWrapper) {
-    radioWrapper.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
-  }
-
-  // 2) remove country search UI if present
-  row.querySelectorAll('.country-search-wrapper').forEach(el => el.remove());
-
-  // 3) hide value controls (device/text/bool)
-  row.querySelectorAll('.device-select, .country-search-wrapper').forEach(el => el.classList.add('hidden'));
-  const textEl = row.querySelector('input[type="text"]');
-  if (textEl) textEl.classList.add('hidden');
-  const boolWrap = row.querySelector('.bool-radio-wrapper');
-  if (boolWrap) boolWrap.classList.add('hidden');
-
-  // 4) best-effort sync for your custom selects (defensive)
-  //    If your makeCustomSelect mirrors native <select>, a change event usually re-renders the placeholder.
-  //    We trigger it AFTER we’ve put the native back to "no selection".
-  try {
-    fieldSelect && fieldSelect.dispatchEvent(new Event('change', { bubbles: true }));
-  } catch (_) {}
 }
 
 function updateFilterRemoveButton() {
@@ -2125,6 +2043,198 @@ export function generateSQL() {
 
   return plainSQL;
 }
+function showBodyToast(cls) {
+  const body = document.body;
+  if (!cls || typeof cls !== 'string') {
+    body.classList.remove('undefined');
+    return;
+  }
+  body.classList.remove('show-generated', 'show-generated-incomplete', 'show-reset', 'show-reset-url', 'undefined');
+  void body.offsetHeight;    // restart animation
+  body.classList.add(cls);
+  setTimeout(() => body.classList.remove(cls), 3000);
+}
+
+
+
+
+// function updateFilterAndSortClauses() {
+//   const filters = [];
+//   // document.querySelectorAll('#filterRows > div').forEach(filter => {
+//   //   const selects = filter.querySelectorAll('select');
+//   //   const field = selects[0]?.value;
+//   //   const operator = selects[1]?.value;
+//   //   const logic = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
+
+//   //   // 👇 pull values from the correct control
+//   //   const deviceSelect = filter.querySelector('select.device-select');
+//   //   const textInput = filter.querySelector('input[type="text"]');
+//   //   const booleanRadio = filter.querySelector('input[name^="bool-val"]:checked');
+//   //   const countryInputStyled = filter.querySelector('input.country-search-input');
+
+//   //   let value = null;
+//   //   if (field?.startsWith('Is ') && booleanRadio) {
+//   //     value = booleanRadio.value?.toUpperCase();
+//   //   } else if (field === 'Country') {
+//   //     if (countryInputStyled?.dataset?.code) value = countryInputStyled.dataset.code.trim();
+//   //   } else if (field === 'Device' && deviceSelect) {
+//   //     value = deviceSelect.value;                       // <- the new dropdown
+//   //   } else if (textInput) {
+//   //     value = textInput.value?.trim();
+//   //   }
+//   //   if (typeof value === 'string') value = value.trim();
+
+//   //   const normalizedField = normalizeFieldName(field);
+//   //   if (
+//   //     field && operator && (
+//   //       operator.includes('NULL') ||
+//   //       (typeof value === 'string' && value !== '') ||
+//   //       (typeof value === 'boolean') ||
+//   //       (typeof value === 'string' && (value.toUpperCase() === 'TRUE' || value.toUpperCase() === 'FALSE'))
+//   //     )
+//   //   ) {
+//   //     let clause = '';
+//   //     switch (operator) {
+//   //       case 'EQUALS':
+//   //         clause = field.startsWith('Is ')
+//   //           ? `${normalizedField} = ${value.toUpperCase()}`
+//   //           : `${normalizedField} = '${value}'`;
+//   //         break;
+//   //       case 'NOT EQUALS':
+//   //         if (field.startsWith('Is ') && (value.toUpperCase() === 'FALSE' || value.toUpperCase() === 'TRUE')) {
+//   //           const correctedValue = value.toUpperCase() === 'FALSE' ? 'TRUE' : 'FALSE';
+//   //           clause = `${normalizedField} = ${correctedValue}`;
+//   //         } else {
+//   //           clause = `${normalizedField} != '${value}'`;
+//   //         }
+//   //         break;
+//   //       case 'CONTAINS': clause = `${normalizedField} LIKE '%${value}%'`; break;
+//   //       case 'NOT CONTAINS': clause = `${normalizedField} NOT LIKE '%${value}%'`; break;
+//   //       case 'GREATER THAN': clause = `${normalizedField} > '${value}'`; break;
+//   //       case 'LESS THAN': clause = `${normalizedField} < '${value}'`; break;
+//   //       case 'IS NULL': clause = `${normalizedField} IS NULL`; break;
+//   //       case 'IS NOT NULL': clause = `${normalizedField} IS NOT NULL`; break;
+//   //       case 'REGEXP CONTAINS':
+//   //         if (['query', 'url'].includes(normalizedField)) clause = `REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+//   //         break;
+//   //       case 'NOT REGEXP CONTAINS':
+//   //         if (['query', 'url'].includes(normalizedField)) clause = `NOT REGEXP_CONTAINS(${normalizedField}, r'${value}')`;
+//   //         break;
+//   //     }
+//   //     if (clause) filters.push({ clause, logic, field: normalizedField });
+//   //   }
+
+//   //   // store global AND/OR joiner
+//   //   const globalLogicInput = document.querySelector('#filterRows input[type="radio"]:checked');
+//   //   window._filterLogic = globalLogicInput ? globalLogicInput.value : 'AND';
+//   // });
+
+//   // const sorts = [];
+//   // document.querySelectorAll('#sortRows > div').forEach(row => {
+//   //   const select = row.querySelector('select');
+//   //   const direction = row.querySelector('input[type="radio"]:checked')?.value || 'ASC';
+//   //   if (select && select.value) {
+//   //     const normalizedSort = normalizeFieldName(select.value);
+//   //     sorts.push(`${normalizedSort} ${direction}`);
+//   //   }
+//   // });
+
+//   // window._filterClauses = filters;
+//   // window._sortClauses = sorts;
+
+//   // --- SORTS (works with custom dropdown) ---
+
+//   document.querySelectorAll('#filterRows > div').forEach(filter => {
+//   const fieldSel    = filter.querySelector('select[data-role="filter-field"]');
+//   const opSel       = filter.querySelector('select[data-role="filter-op"]');
+//   const deviceSel   = filter.querySelector('select[data-role="filter-device"], select.device-select');
+//   const textInput   = filter.querySelector('input[type="text"]');
+//   const boolRadio   = filter.querySelector('input[name^="bool-val"]:checked');
+//   const countryIn   = filter.querySelector('input.country-search-input');
+
+//   const field    = fieldSel?.value || '';
+//   const operator = opSel?.value || '';
+//   const logic    = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
+
+//   let value = null;
+//   if (field.startsWith('Is ') && boolRadio) {
+//     value = boolRadio.value?.toUpperCase();
+//   } else if (field === 'Country') {
+//     value = countryIn?.dataset?.code?.trim() || null;
+//   } else if (field === 'Device' && deviceSel) {
+//     value = deviceSel.value;
+//   } else if (textInput) {
+//     value = (textInput.value || '').trim();
+//   }
+
+//   const normalizedField = normalizeFieldName(field);
+
+//   if (
+//     field && operator && (
+//       operator.includes('NULL') ||
+//       (typeof value === 'string' && value !== '') ||
+//       (value === 'TRUE' || value === 'FALSE')
+//     )
+//   ) {
+//     let clause = '';
+//     switch (operator) {
+//       case 'EQUALS':
+//         clause = field.startsWith('Is ') ? `${normalizedField} = ${value}` : `${normalizedField} = '${value}'`;
+//         break;
+//       case 'NOT EQUALS':
+//         if (field.startsWith('Is ') && (value === 'FALSE' || value === 'TRUE')) {
+//           clause = `${normalizedField} = ${value === 'FALSE' ? 'TRUE' : 'FALSE'}`;
+//         } else {
+//           clause = `${normalizedField} != '${value}'`;
+//         }
+//         break;
+//       case 'CONTAINS':              clause = `${normalizedField} LIKE '%${value}%'`; break;
+//       case 'NOT CONTAINS':          clause = `${normalizedField} NOT LIKE '%${value}%'`; break;
+//       case 'GREATER THAN':          clause = `${normalizedField} > '${value}'`; break;
+//       case 'LESS THAN':             clause = `${normalizedField} < '${value}'`; break;
+//       case 'IS NULL':               clause = `${normalizedField} IS NULL`; break;
+//       case 'IS NOT NULL':           clause = `${normalizedField} IS NOT NULL`; break;
+//       case 'REGEXP CONTAINS':       if (['query','url'].includes(normalizedField)) clause = `REGEXP_CONTAINS(${normalizedField}, r'${value}')`; break;
+//       case 'NOT REGEXP CONTAINS':   if (['query','url'].includes(normalizedField)) clause = `NOT REGEXP_CONTAINS(${normalizedField}, r'${value}')`; break;
+//     }
+//     if (clause) filters.push({ clause, logic, field: normalizedField });
+//   }
+
+//   const globalLogicInput = document.querySelector('#filterRows input[type="radio"]:checked');
+//   window._filterLogic = globalLogicInput ? globalLogicInput.value : 'AND';
+// });
+
+
+//   const sorts = [];
+//   const sortRows = document.querySelectorAll('#sortRows > div[id^="sortRow-"], #sortRows > div');
+
+//   sortRows.forEach((row, idx) => {
+//     // read selected label from our custom dropdown placeholder
+//     const ph =
+//       row.querySelector(`#sortFieldPlaceholder-${idx}`) ||
+//       row.querySelector('[id^="sortFieldPlaceholder-"]');
+
+//     // normalize to SQL column name
+//     let field = null;
+//     const label = ph?.textContent?.trim();
+//     if (label && label !== 'Select Field') {
+//       field = normalizeFieldName(label);  // e.g. "Site URL" -> "site_url"
+//     }
+
+//     // radio group name changed to sort-${idx} in the custom version
+//     const direction = row.querySelector(`input[name="sort-${idx}"]:checked`)?.value || 'ASC';
+
+//     if (field) {
+//       sorts.push(`${field} ${direction}`);
+//     }
+//   });
+
+//   window._sortClauses = sorts;
+
+// }
+
+// LIMIT toggle logic - starts here
+
 function updateFilterAndSortClauses() {
   const filters = [];
 
@@ -2234,17 +2344,7 @@ function updateFilterAndSortClauses() {
   window._filterClauses = filters;
   window._sortClauses = sorts;
 }
-function showBodyToast(cls) {
-  const body = document.body;
-  if (!cls || typeof cls !== 'string') {
-    body.classList.remove('undefined');
-    return;
-  }
-  body.classList.remove('show-generated', 'show-generated-incomplete', 'show-reset', 'show-reset-url', 'undefined');
-  void body.offsetHeight;    // restart animation
-  body.classList.add(cls);
-  setTimeout(() => body.classList.remove(cls), 3000);
-}
+
 function initLimitToggle() {
   const cb = document.getElementById('limitEnabled');
   const input = document.getElementById('limitInput');
