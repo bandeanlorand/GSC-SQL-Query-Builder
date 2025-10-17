@@ -545,13 +545,11 @@ document.querySelectorAll('.dimension-option').forEach(item => {
 
 
 function closeDropdown(dropdown) {
-  // dropdown.style.height = "0px";
   dropdown.style.userSelect = "none";
 
   setTimeout(() => {
     dropdown.style.width = "100%";
     dropdown.style.opacity = "0";
-    // dropdown.style.background = "lime";
   }, 100);
 
   setTimeout(() => {
