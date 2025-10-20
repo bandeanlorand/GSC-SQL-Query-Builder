@@ -1,0 +1,576 @@
+html{
+  /* background-color: #05445E; */
+}
+body {
+  /* font-family: sans-serif; */
+  height: 100%;
+  /* background: #445569; */
+  width:100%;
+  
+
+  
+
+  /* color: #e0e0e0; */
+
+  /* font-family: "Roboto Mono", monospace; */
+  font-optical-sizing: auto;
+  font-style: normal;
+  letter-spacing: 0.9px;
+
+  background: var(--bg); color: var(--fg);
+}
+
+.page-surface {
+  position: fixed;
+  /* background: #f2f5f9; */
+  isolation: isolate;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  top: 0;
+  display:block;
+  /* bg-[#f0f4f9] */
+}
+
+/* background art with grayscale + opacity */
+.page-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url('../icon/bg-network-diagonal.svg');
+  background-repeat: no-repeat;
+  background-position: 85% 20%;
+  background-size: cover;
+
+  filter: grayscale(30%);  /* grayscale the SVG only */
+  opacity: 0.025;            /* fade it without affecting content */
+  pointer-events: none;
+  z-index: 1;
+  transform: rotate(0deg);
+}
+
+
+/* colors */
+.sql-keyword,
+.sql-alias-special {
+  color: #fa7268;
+  font-weight: bold;
+}
+
+.sql-date-format,
+.sql-expression {
+  color: #00bfff;
+}
+
+.sql-function {
+  color: #fc9e4c;
+}
+
+.sql-alias {
+  color: #34d399;
+}
+
+.sql-column {
+  color: #facc15;
+}
+
+.sql-current-date {
+  color: #a78bfa;
+}
+
+.sql-table {
+  color: #a78bfa;
+}
+
+.sql-value {
+  color: #f87171;
+}
+
+.sql-boolean {
+  color: #3b82f6;
+  /* Tailwind blue-500 blue */
+}
+
+.badge.badge-lg button{
+  margin: -4px -4px 0 0;
+  font-weight: normal;
+  font-size: 1.2rem;
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+body.show-copied::before {
+  content: "Copied to clipboard";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+  /* Tailwind gray-700 with transparency */
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  /* Large font */
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+body.show-generated::after {
+  content: "SQL Generated!";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+  /* Tailwind gray-700 with transparency */
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  /* Large font */
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+body.show-generated-incomplete::after {
+  content: "SQL Generated! But there are incomplete fields.";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+
+  color: rgba(220, 38, 38, 0.95);
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+body.show-reset::after {
+  content: "All fields reset.";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+body.show-reset-url::after {
+  content: "Reset to URL presets.";
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(55, 65, 81, 0.9);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  opacity: 0;
+  z-index: 9999;
+  animation: slideInFadeOut 3s forwards;
+}
+
+@keyframes slideInFadeOut {
+  0% {
+    bottom: 20px;
+    opacity: 0;
+  }
+
+  10% {
+    bottom: 40px;
+    opacity: 1;
+  }
+
+  90% {
+    bottom: 40px;
+    opacity: 1;
+  }
+
+  100% {
+    bottom: 20px;
+    opacity: 0;
+  }
+}
+
+/* :root[data-theme="gsc"]{
+  --p: 164 95% 28%; --pc: 0 0% 100%;
+  --s: 201 96% 32%; --sc: 0 0% 100%;
+  --a: 29 92% 55%;  --ac: 0 0% 8%;
+  --n: 220 13% 18%; --nc: 210 40% 98%;
+  --b1: 210 15% 12%; --b2: 210 14% 16%; --b3: 210 14% 20%; --bc: 210 100% 96%;
+} */
+
+/* tailwind: global typography tweaks */
+@layer base {
+   :root,
+  [data-theme] {
+    --fallback-bc: 12 18 28; /* slate-900-ish; RGB without commas for daisyUI */
+  }
+  /* 1) default thickness + rendering */
+  html { @apply subpixel-antialiased; }
+  body { @apply font-medium text-slate-900; } /* darker text helps contrast on the GSC-like bg */
+
+  /* 2) headings / labels a notch stronger */
+  h1, h2, h3, label, .section-title { @apply font-semibold; }
+
+  /* 3) form & control text a bit stronger too */
+  .input, .select, .textarea, .btn, .badge { @apply font-medium; }
+
+  /* 4) Don’t thicken code/SQL blocks—keep readability */
+  code, pre, kbd, samp { @apply font-normal; }
+}
+
+.alert-info {
+  /* daisyUI uses HSL tokens: h s l (no commas) */
+  --in: 174 100% 27%;   /* #00897B  -> h=174 s=100% l=27% */
+  --inc: 0 0% 70%;     /* content color → white */
+  border-radius: 4px;
+}
+.badge-primary{
+  /* background-color: var(--color-primary-custom);
+  border-color: var(--color-primary-custom); */
+  /* box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow); */
+  text-shadow: oklch(1 0 0 / 0.15) 0px 0.5px 0px;
+  color: #fff;
+  
+}
+.badge.badge-primary span{
+  line-height: 26px;
+  height: 28px;
+}
+/* .added-custom-condition-group {
+  border-color: var(--color-gray-200);
+ border-radius: 4px;
+  border-width: 1px;
+} */
+
+
+
+/* ───────── Splash / Loader (kept in production) ───────── */
+@layer base {
+  /* Vars */
+  :root{
+    --splash-bg: #f6f8fb;          /* match page bg */
+    --splash-intro: 700ms;         /* fade-in + initial spin */
+    --splash-hold: 300ms;          /* brief pause fully visible */
+    --splash-outro: 500ms;         /* slide to corner + fade out */
+    --splash-corner-offset: 20px;  /* where it lands top/left before fading */
+    --splash-scale-end: .55;       /* size at the corner */
+  }
+
+  /* Motion-reduced users still see it briefly, but faster */
+  @media (prefers-reduced-motion: reduce) {
+    :root{
+      --splash-intro: 300ms;
+      --splash-hold: 100ms;
+      --splash-outro: 250ms;
+    }
+  }
+
+  /* Base overlay */
+  .splash{
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    background: #f6f8fb;
+    pointer-events: none;         
+    height: 100dvh;
+  }
+   .splash::before{
+    content: '';
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    background: #f6f8fb;
+    display: block;
+    top: 0;
+    left: 0;
+    z-index: -1;
+   }
+
+  .splash__logo{
+    display: block;
+    /* opacity: 0; */
+    transform: scale(.9) rotate(-90deg);
+    will-change: transform, opacity;
+  }
+
+  /* Animations */
+  @keyframes splashIntro {
+    0%   { opacity: 0; transform: scale(.85) rotate(-90deg); }
+    40%  { opacity: 1; transform: scale(1)   rotate(0deg);   }
+    100% { opacity: 1; transform: scale(1)   rotate(360deg); }
+  }
+
+  @keyframes splashOutro {
+    0%   { opacity: 1; transform: translate(0,0) scale(1) rotate(360deg); }
+    100% {
+      opacity: 0;
+      transform:
+        translate(calc(750px + 20px),calc(-50vh + 70px)) scale(0.55) rotate(540deg)
+    }
+  }
+
+  /* State hooks (JS toggles these). Use !important to beat resets in prod. */
+  .splash--intro .splash__logo{
+  animation-name: splashIntro !important;
+  animation-duration: 300ms, 0.9s !important;
+  animation-timing-function: ease-out !important;
+  animation-fill-mode: forwards !important;
+  animation-iteration-count: 1 !important;
+}
+
+.splash--outro .splash__logo{
+  animation-name: splashOutro !important;
+  animation-duration: -300ms, 0.9s !important;
+  animation-timing-function: ease-in !important;
+  animation-fill-mode: forwards !important;
+  animation-iteration-count: 1 !important;
+}
+
+  .splash--hidden{
+    display: none !important;
+  }
+}
+/* ───────── Splash end ───────── */
+
+
+
+.filter-row{
+
+}
+.filter-row .relative.custom-select-wrap:first-child{
+  width: calc(40% - 4px);
+}
+.filter-row .relative.custom-select-wrap:first-child div.input span{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.filter-row .relative.custom-select-wrap:nth-child(2){
+  width: calc(28% - 8px);
+}
+
+
+div.bg-white.border.rounded.absolute div.cursor-pointer.rounded {
+  font-size: 13.2px;
+  letter-spacing: -0.2px;
+}
+
+/* first level card styles - starts here */
+/* .custom-field-card{
+  
+}
+.custom-field-card .when-row{
+  background-color: blue;
+}
+
+.custom-field-card .then-row{
+  background-color: green;
+}
+.custom-field-card .else-row{
+  background-color: purple;
+}
+.custom-field-card .added-custom-condition-group{
+  background-color: lightgray;
+}
+.custom-field-card .added-custom-condition-group .added-card-when-row{
+  background-color: orange;
+  display: flex;
+  justify-content: space-between;
+}
+
+
+.custom-field-card .added-custom-condition-group .added-then-row{
+  background-color: yellow;
+
+}
+.custom-field-card .added-custom-condition-group .added-card-when-row label,
+.custom-field-card .added-custom-condition-group .added-then-row label{
+  background-color: red;
+} */
+/* first level card styles - ends here */
+
+/* generic row */
+.row-flex {
+  display: flex;
+  flex-wrap: wrap;       /* allow wrapping but in predictable chunks */
+  align-items: center;
+  gap: 8px;
+}
+
+.row-flex > label {
+  flex: 0 0 var(--label-w);  /* fixed label column */
+  width: var(--label-w);
+}
+
+.row-flex > .field {  flex: 1 1 280px; min-width: 180px; }
+.row-flex > .op {     flex: 0 1 160px; min-width: 130px; }
+.row-flex > .value {  flex: 1 1 280px; min-width: 180px; }
+.row-flex > .actions {flex: 0 0 auto; }
+
+/* responsive */
+@media (max-width: 900px) {
+  .row-flex > .op,
+  .row-flex > .value,
+  .row-flex > .actions {
+    flex-basis: 100%; /* drop under the first line in order */
+  }
+}
+.custom-field-card .added-custom-condition-group .added-card-when-row .custom-select-wrap.custom-select-wrapper{
+  min-width: 170px !important;
+}
+
+
+/* AZ-UI style segmented theme toggle */
+.segmented.azui{
+  /* Track & colors – tuned to match the screenshot */
+  --seg-track: #6b7280;           /* neutral gray track (Tailwind gray-500-ish) */
+  --seg-fg:    #2b2f36;           /* icon/text color on light track */
+  --seg-on:    #ffffff;           /* active thumb background */
+  --seg-on-fg: #1f2937;           /* active icon/text (near gray-800) */
+  --seg-ring:  rgba(0,0,0,.18);
+
+  position: relative;             /* let the thumb position inside */
+  display: inline-flex;
+  gap: 0;
+  padding: 6px;
+  border-radius: 9999px;
+  background: var(--seg-track);
+  box-shadow:
+    0 6px 16px rgba(0,0,0,.25),
+    0 0 0 1px rgba(0,0,0,.10) inset;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* buttons */
+.segmented.azui > button{
+  position: relative;
+  z-index: 2;                     /* above thumb */
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.85);   /* inactive label on gray track */
+  padding: 10px 14px;             /* a bit taller like AZ-UI */
+  font: 600 14px/1 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+  border-radius: 9999px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .18s ease;
+  display: inline-flex; align-items:center; justify-content:center;
+  gap: 8px;
+}
+
+/* simple glyph A sizing */
+.segmented.azui > button .icon{ display:inline-block; font-weight:700; }
+
+/* active state text */
+.segmented.azui > button[aria-selected="true"]{
+  color: var(--seg-on-fg);
+}
+
+/* focus */
+.segmented.azui > button:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 3px var(--seg-ring);
+}
+
+/* the moving white pill */
+.segmented.azui .thumb{
+  position: absolute;
+  z-index: 1;
+  height: calc(100% - 12px);      /* respect container padding */
+  top: 6px; left: 6px;
+  width: 0;
+  transform: translateX(0);
+  border-radius: 9999px;
+  background: var(--seg-on);
+  box-shadow:
+    0 1px 0 rgba(0,0,0,.06) inset,
+    0 10px 20px rgba(0,0,0,.30);
+  transition:
+    transform .22s cubic-bezier(.2,.7,.2,1),
+    width .22s cubic-bezier(.2,.7,.2,1),
+    background-color .18s ease;
+}
+
+/* hover brighten a bit (optional) */
+.segmented.azui > button:hover{
+  color: #fff;
+}
+
+/* Dark theme tune so the control still reads correctly on dark UIs */
+:root[data-theme="dark"] .segmented.azui{
+  --seg-track: #6b7280;           /* keep the same medium gray track */
+  --seg-fg:    #e5e7eb;           /* light-ish for hover text */
+  --seg-on:    #ffffff;           /* white thumb for contrast */
+  --seg-on-fg: #111827;           /* dark label on white thumb */
+}
+
+/* Utility: visually hidden text for a11y */
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+
+
+
+
+/* Light = defaults */
+:root {
+  /* tokens */
+  --bg: #fcfcfcda;
+  --bg-dropdown:#fff;
+  --bg-dropdown-hover: oklch(58% 0.158 241.966);
+  --color-dropdown-hover:#fff;
+  --color-primary-custom:oklch(58% 0.158 241.966);
+  --condition-card-bg: oklch(93.044% 0.00883 264.607);
+  /* --fg: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --accent: #2563eb; */
+
+  color-scheme: light dark;
+}
+
+/* Dark overrides (switches when data-theme="dark" on <html>) */
+:root[data-theme="dark"] {
+  --bg: #05445E; 
+  --bg-dropdown:#1f2937;
+  --bg-dropdown-hover: oklch(42.695% 0.07913 222.367);
+  --color-dropdown-hover:#fff;
+  --color-primary-custom:oklch(53.224% 0.175 254.962);
+  --condition-card-bg:oklch(0.278 0.033 256.848);
+  /* --input-text:; */
+  /* --fg: #e5e7eb;
+  --muted: #9ca3af;
+  --border: #1f2937;
+  --accent: #60a5fa; */
+}
