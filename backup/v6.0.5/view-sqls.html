@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logged SQL Queries</title>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+ 
+<link rel="canonical" href="https://www.gscbigquery.com/">
+
+  <script type="module">
+    import { supabase } from './js/components/logQuery.js';
+
+    let queries = [];
+    let currentPage = 1;
+    let perPage = 10;
+    let selectedIndex = -1;
+
+//     function formatDate(raw) {
+//   const { DateTime } = luxon;
+
+//   const dt = DateTime.fromISO(raw, { zone: 'utc' });
+//   return dt.isValid ? dt.toFormat('dd/MM/yyyy HH:mm:ss') : 'Invalid Date';
+// }
+function formatDate(raw) {
+  const d = new Date(raw);
+  if (isNaN(d)) return 'Invalid Date';
+  return d.toLocaleString('en-GB', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+}
+
+
+
+
+    async function loadQueries() {
+      const { data, error } = await supabase
+        .from('logged_queries')
+        .select('id, query, created_at, source_page')
+        // .not('source_page', 'eq', '/gscbigquery/')
+        .order('created_at', { ascending: false });
+
+      if (error || !data) {
+        document.getElementById('queryList').innerHTML = `<p>Error loading queries</p>`;
+        console.error(error);
+        return;
+      }
+
+      queries = data;
+      renderPage();
+    }
+
+    function selectItem(globalIndex, element, row) {
+      selectedIndex = globalIndex;
+
+      // Clear previous selection
+      document.querySelectorAll('.query-item.selected').forEach((el) =>
+        el.classList.remove('selected')
+      );
+      element.classList.add('selected');
+
+      // Scroll into view
+      element.scrollIntoView({ block: 'nearest' });
+
+      // Show query
+      document.getElementById('queryPreview').innerHTML = `
+    <h2 style="margin-top: 0;">Full SQL Query</h2>
+    <pre>${row.query}</pre>
+  `;
+    }
+
+
+    function renderPage() {
+      const listEl = document.getElementById('queryList');
+      const previewEl = document.getElementById('queryPreview');
+      const paginationEl = document.getElementById('paginationControls');
+
+      const totalPages = Math.ceil(queries.length / perPage);
+      const start = (currentPage - 1) * perPage;
+      const end = start + perPage;
+
+      listEl.innerHTML = '';
+      selectedIndex = -1;
+
+      const visibleQueries = queries.slice(start, end);
+      visibleQueries.forEach((row, idxOnPage) => {
+        const globalIndex = start + idxOnPage;
+
+        const div = document.createElement('div');
+        div.className = 'query-item';
+        div.innerHTML = `
+
+          <div class="timestamp">${formatDate(row.created_at)}</div>
+
+
+          <div class="truncated-sql">${row.query.slice(0, 100)}...</div>
+        `;
+        div.onclick = () => selectItem(globalIndex, div, row);
+        listEl.appendChild(div);
+      });
+
+      // Render pagination controls
+      paginationEl.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+          <label>
+            Show
+            <select id="perPageSelect">
+              <option value="5" ${perPage === 5 ? 'selected' : ''}>5</option>
+              <option value="10" ${perPage === 10 ? 'selected' : ''}>10</option>
+              <option value="25" ${perPage === 25 ? 'selected' : ''}>25</option>
+              <option value="50" ${perPage === 50 ? 'selected' : ''}>50</option>
+            </select>
+            entries
+          </label>
+          <div>
+            <button id="prevBtn" ${currentPage === 1 ? 'disabled' : ''}>◀</button>
+            <span> Page ${currentPage} of ${totalPages} </span>
+            <button id="nextBtn" ${currentPage === totalPages ? 'disabled' : ''}>▶</button>
+          </div>
+        </div>
+      `;
+
+      // Event bindings
+      document.getElementById('perPageSelect').addEventListener('change', (e) => {
+        perPage = parseInt(e.target.value);
+        currentPage = 1;
+        renderPage();
+      });
+
+      document.getElementById('prevBtn').addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderPage();
+        }
+      });
+
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderPage();
+        }
+      });
+
+      if (visibleQueries.length > 0) {
+  const firstItem = document.querySelector('.query-item');
+  selectItem(start, firstItem, visibleQueries[0]);
+}
+
+    }
+
+    loadQueries();
+
+    document.addEventListener('keydown', (e) => {
+      if (queries.length === 0) return;
+
+      const totalPages = Math.ceil(queries.length / perPage);
+      const start = (currentPage - 1) * perPage;
+      const end = Math.min(start + perPage, queries.length);
+      const visibleItems = Array.from(document.querySelectorAll('.query-item'));
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const newIndex = Math.min(selectedIndex + 1, end - 1);
+        if (newIndex !== selectedIndex) {
+          const row = queries[newIndex];
+          const itemEl = visibleItems[newIndex - start];
+          selectItem(newIndex, itemEl, row);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const newIndex = Math.max(selectedIndex - 1, start);
+        if (newIndex !== selectedIndex) {
+          const row = queries[newIndex];
+          const itemEl = visibleItems[newIndex - start];
+          selectItem(newIndex, itemEl, row);
+        }
+      }
+    });
+  </script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+    }
+
+    #leftPanel {
+      width: 50%;
+      border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    #queryList {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    #paginationControls {
+      padding: 1rem;
+      border-top: 1px solid #ccc;
+      background: #fff;
+    }
+
+    #queryList {
+      /* width: 100%; */
+      border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    #paginationControls {
+      padding-top: 1rem;
+    }
+
+    #queryPreview {
+      width: 50%;
+      padding: 1rem;
+      white-space: pre-wrap;
+      background: #f9f9f9;
+    }
+
+    .query-item {
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .query-item:hover {
+      background-color: #f0f0f0;
+    }
+
+    .query-item.selected {
+      border-color: #007bff;
+      background-color: #e8f0fe;
+    }
+
+    .timestamp {
+      color: #888;
+      font-size: 0.9rem;
+    }
+
+    .truncated-sql {
+      margin-top: 0.25rem;
+      font-family: monospace;
+      color: #333;
+    }
+
+    select,
+    button {
+      padding: 4px 8px;
+      font-size: 14px;
+      margin: 0 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="leftPanel">
+    <div id="queryList"><strong>Loading queries...</strong></div>
+    <div id="paginationControls"></div>
+  </div>
+  <div id="queryPreview"><em>Select a query to view full SQL</em></div>
+</body>
