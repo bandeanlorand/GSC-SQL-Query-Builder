@@ -1,0 +1,124 @@
+/* page loader styles starts here */
+/* ========== Splash vars ========== */
+:root{
+  --splash-bg: #f6f8fb;            /* match your page bg */
+  --splash-intro: 700ms;           /* fade-in + initial spin */
+  --splash-hold: 300ms;            /* brief pause fully visible */
+  --splash-outro: 500ms;           /* slide to corner + fade out */
+  --splash-corner-offset: 20px;    /* where it lands top/left before fading */
+  --splash-scale-end: .55;         /* size at the corner */
+}
+
+/* High-contrast users still see it, but motion-sensitive users get reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root{
+    --splash-intro: 300ms;
+    --splash-hold: 100ms;
+    --splash-outro: 250ms;
+  }
+}
+
+/* ========== Base ========== */
+.splash{
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  background: var(--splash-bg);
+  pointer-events: none; /* prevents any accidental clicks */
+  height: 100vh;
+}
+
+.splash__logo{
+  display: block;
+  opacity: 0;
+  transform: scale(.9) rotate(-90deg);
+  will-change: transform, opacity;
+}
+
+/* ========== Animations ========== */
+@keyframes splashIntro {
+  0%   { opacity: 0; transform: scale(.85) rotate(-90deg); }
+  40%  { opacity: 1; transform: scale(1)   rotate(0deg);   }
+  100% { opacity: 1; transform: scale(1)   rotate(360deg); }
+}
+
+@keyframes splashOutro {
+  /* Starting from center of viewport; translate to the corner */
+  0%   { opacity: 1; transform: translate(0,0) scale(1) rotate(360deg); }
+  100% { 
+    opacity: 0;
+    transform:
+      translate(calc(-50vw + var(--splash-corner-offset)),
+                calc(-50vh + var(--splash-corner-offset)))
+      scale(var(--splash-scale-end))
+      rotate(540deg);
+  }
+}
+
+/* When JS toggles these classes, the sequence plays */
+.splash--intro .splash__logo{
+  animation: splashIntro var(--splash-intro) ease-out forwards;
+}
+
+.splash--outro .splash__logo{
+  animation: splashOutro var(--splash-outro) ease-in forwards;
+}
+
+/* Fully hidden after the sequence */
+.splash--hidden{
+  display: none !important;
+}
+
+
+:root{
+  --splash-bg: #f6f8fb;
+  --splash-intro: 700ms;
+  --splash-hold: 300ms;
+  --splash-outro: 500ms;
+  --splash-corner-offset: 20px;
+  --splash-scale-end: .55;   /* shrink target (zoom-out) */
+  --splash-scale-in-end: 1.35; /* grow target (zoom-in) */
+}
+
+/* existing keyframes stay as-is for desktop */
+
+/* ===== Mobile-specific outro: go UP-RIGHT ===== */
+@media (max-width: 640px) {
+  /* Zoom OUT (shrink) */
+  @keyframes splashOutroMobileZoomOut {
+    0%   { opacity: 1; transform: translate(0,0) scale(1) rotate(360deg); }
+    100% {
+      opacity: 0;
+      transform:
+        translate(calc(50vw - var(--splash-corner-offset)),
+                  calc(-50vh + var(--splash-corner-offset)))
+        scale(var(--splash-scale-end))
+        rotate(540deg);
+    }
+  }
+
+  /* Zoom IN (grow) */
+  @keyframes splashOutroMobileZoomIn {
+    0%   { opacity: 1; transform: translate(0,0) scale(1) rotate(360deg); }
+    100% {
+      opacity: 0;
+      transform:
+        translate(calc(50vw - var(--splash-corner-offset)),
+                  calc(-50vh + var(--splash-corner-offset)))
+        scale(var(--splash-scale-in-end))
+        rotate(540deg);
+    }
+  }
+
+  /* Apply the correct mobile outro when JS sets .splash--mobile */
+  .splash--mobile.splash--outro.splash--zoom-out .splash__logo {
+    animation: splashOutroMobileZoomOut var(--splash-outro) ease-in forwards;
+  }
+  .splash--mobile.splash--outro.splash--zoom-in .splash__logo {
+    animation: splashOutroMobileZoomIn var(--splash-outro) ease-in forwards;
+  }
+}
+
+/* page loader styles ends here */

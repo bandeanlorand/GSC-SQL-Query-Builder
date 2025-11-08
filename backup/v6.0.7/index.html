@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" class="">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Search Console BigQuery SQL Query Builder</title>
+  <meta name="description"
+    content="Do you want to query your Google Search Console data in BigQuery? We help you building the SQL to get your data with ease!">
+  <link rel="canonical" href="https://www.gscbigquery.com/" />
+
+  <link href="src/output.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <link rel="icon" type="image/png" href="icon/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="shortcut icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png" />
+  <link rel="manifest" href="site.webmanifest" />
+
+
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+  <script>
+    try {
+      const k = 'theme';
+      const m = localStorage.getItem(k) || 'dark'; // default = dark
+      const isDark = m === 'dark' || (m === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      document.documentElement.classList.toggle('dark', isDark);
+    } catch (e) { }
+  </script>
+</head>
+
+<body
+  class="min-h-screen flex flex-col subpixel-antialiased font-medium [&_*]:transition-all [&_*]:duration-150 [&_*]:ease-in-out">
+  <div class="page-surface"></div>
+  <!-- Splash / Loader -->
+  <div id="app-splash" class="splash max-w-[1600px] mx-auto" role="status" aria-live="polite" aria-label="Loading">
+    <img class="splash__logo" src="search-analyzer-logo.png" alt="GSC SQL Builder" width="256" height="256" />
+  </div>
+
+
+  <main class="flex-1 ease-in transition-all">
+
+    <header
+      class="custom-header text-white px-4 sm:px-8 py-4 text-left flex row items-center justify-between flex-row shadow-lg fixed w-full navbar z-10 bg-[#222227] ">
+      <div class="max-w-[1690px] mx-auto w-full px-2 md:px-6 flex justify-between gap-3 items-center">
+        <!-- Left: title + tagline -->
+        <div class="flex flex-col items-start min-w-0 md:max-w-[65%]">
+          <h1 class="font-vlod leading-tight tracking-[0.02em] text-white text-[14px] sm:text-[16px] md:text-[18px]">
+            <span class="block whitespace-nowrap inline-flex items-center gap-1">
+              <!-- Colored 'Google' -->
+              <span class="inline-flex">
+                Google
+              </span>
+
+              <span>Search Console</span>
+
+              <!-- Icon after phrase -->
+
+              <svg width="16px" height="16px" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/"
+                style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;
+         filter: grayscale(100%) opacity(0.85) blur(0.4px);">
+                <g transform="matrix(15.9486,0,0,15.9486,-65.4855,-60.4616)">
+                  <path
+                    d="M11.081,30.527L6.361,35.248C5.999,35.608 5.406,35.608 5.044,35.248L4.752,34.956C4.392,34.594 4.392,34.002 4.752,33.64L9.472,28.919C9.834,28.558 10.428,28.558 10.79,28.919L11.081,29.21C11.256,29.384 11.354,29.622 11.354,29.869C11.354,30.115 11.256,30.353 11.081,30.527Z"
+                    style="fill:rgb(251,188,4);fill-rule:nonzero;" />
+                  <path
+                    d="M23.75,32.5C23.75,32.5 29.793,32.5 29.793,32.5C33.106,32.5 35.833,29.773 35.833,26.46C35.833,26.459 35.833,26.459 35.833,26.458C35.833,26.458 35.833,10.207 35.833,10.207C35.833,6.894 33.106,4.167 29.793,4.167C29.793,4.167 29.791,4.167 29.79,4.167C26.477,4.167 23.75,6.894 23.75,10.207C23.75,10.207 23.75,32.5 23.75,32.5Z"
+                    style="fill:rgb(66,133,244);fill-rule:nonzero;" />
+                  <path
+                    d="M13.748,32.5L13.752,32.5C17.065,32.5 19.792,29.773 19.792,26.46C19.792,26.459 19.792,26.457 19.792,26.457C19.792,23.144 17.065,20.417 13.752,20.417L13.748,20.417C10.435,20.417 7.708,23.144 7.708,26.457C7.708,26.457 7.708,26.459 7.708,26.46C7.708,29.773 10.435,32.5 13.748,32.5Z"
+                    style="fill:rgb(251,188,4);fill-rule:nonzero;" />
+                  <path
+                    d="M27.971,32.5C27.971,32.5 22.082,32.5 22.082,32.5C18.769,32.5 16.042,29.773 16.042,26.46C16.042,26.459 16.042,26.459 16.042,26.458L16.042,18.542C16.042,18.541 16.042,18.541 16.042,18.54C16.042,15.227 18.769,12.5 22.082,12.5C22.082,12.5 22.084,12.5 22.085,12.5C25.398,12.5 28.125,15.227 28.125,18.54C28.125,18.541 28.125,18.541 28.125,18.542L28.125,32.346C28.125,32.43 28.055,32.5 27.971,32.5Z"
+                    style="fill:rgb(52,168,83);fill-rule:nonzero;" />
+                  <path
+                    d="M28.125,32.346C28.125,32.346 28.125,18.542 28.125,18.542C28.125,15.855 26.332,13.476 23.75,12.735L23.75,32.5L27.97,32.5C27.97,32.5 27.971,32.5 27.971,32.5C28.055,32.5 28.125,32.43 28.125,32.346Z"
+                    style="fill:rgb(25,103,210);fill-rule:nonzero;" />
+                  <path
+                    d="M19.792,26.575C19.792,24.128 18.306,21.913 16.042,20.985L16.042,26.575C16.042,28.295 16.762,29.848 17.917,30.948C19.115,29.81 19.794,28.227 19.792,26.575Z"
+                    style="fill:rgb(234,67,53);fill-rule:nonzero;" />
+                </g>
+              </svg>
+
+
+
+            </span>
+            <span class="block md:inline-block">SQL Query Builder</span>
+          </h1>
+
+          <p class="hidden md:block mt-1 text-xs md:text-sm opacity-90">
+            Build your SQL queries for Google Search Console data easily.
+          </p>
+        </div>
+
+        <!-- Right: "powered by" + logo -->
+        <div class="flex flex-col items-center gap-1 md:flex-row md:items-center md:gap-2 shrink-0 z-10">
+          <p class="text-[10px] sm:text-xs md:text-sm leading-none md:mr-1 md:mb-0 mb-1 hidden sm:block">powered by</p>
+          <a href="#" class="block w-[88px] md:w-[120px]" aria-label="Search Analyzer">
+            <img src="search-analyzer-logo-1024x341-white.png" alt="Search Analyzer logo" class="w-full h-auto">
+          </a>
+        </div>
+      </div>
+
+    </header>
+    <section class="max-w-[1740px] mx-auto p-4 md:p-6 mb-2 relative z-[1] mt-[100px] pb-0  ">
+      <!-- Theme toggle (Auto / Light / Dark) -->
+      <!-- Segmented Theme Toggle -->
+      <!-- DaisyUI tabs boxed theme switch -->
+      <button data-open="openFaqBtn"
+        class="btn-sm z-10 btn btn-md transition duration-100 ease absolute left-6 sm:left-10 md:left-12 top-2.5 lg:hidden">?
+        Help</button>
+      <div id="themeToggle"
+        class="tabs tabs-box tabs-sm bg-base-300 inline-flex p-1 shadow absolute right-6 sm:right-11 md:right-12 top-2.5 z-50">
+        <!-- Auto -->
+        <label class="tab rounded-full" title="Auto (system)">
+          <input type="radio" name="themeTabs" value="auto" aria-label="Auto">
+          <span class="font-bold">A</span>
+        </label>
+
+        <!-- Light -->
+        <label class="tab rounded-full" title="Light">
+          <input type="radio" name="themeTabs" value="light" aria-label="Light">
+          <!-- Sun -->
+          <svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2" />
+            <path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l-1.4-1.4M20.4 20.4L19 19M5 19l-1.4 1.4M20.4 3.6L19 5"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </label>
+
+        <!-- Dark -->
+        <label class="tab rounded-full" title="Dark">
+          <input type="radio" name="themeTabs" value="dark" aria-label="Dark">
+          <!-- Moon + stars -->
+          <svg class="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21 12.79A8 8 0 1 1 11.21 3a6.5 6.5 0 0 0 9.79 9.79Z" stroke="currentColor" stroke-width="2"
+              fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M5.5 6.5h0M7.5 9.5h0M4.5 10.5h0" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </label>
+      </div>
+
+      <div class="rounded-2xl border-none  overflow-hidden relative  z-[2] ">
+
+        <!-- App title bar (the “header” for the box) -->
+        <div
+          class="custom-header flex items-center justify-between px-6 py-4 border-b border-base-300/60  backdrop-blur bg-[#00897b]/60 shadow-lg hidden">
+          <div class="flex items-center gap-4">
+            <a href="#" class="max-w-[120px] block">
+              <img src="search-analyzer-logo-1024x341.png" alt="" />
+            </a>
+            <div>
+
+              <h1 class="text-xl font-semibold">Google Search Console SQL Query Builder</h1>
+              <p class="text-sm opacity-80">Build your SQL queries for Google Search Console data easily.</p>
+            </div>
+
+          </div>
+
+        </div>
+        <!-- Two-column content area -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-6 p-2 sm:p-6 relative">
+
+          <div class="space-y-4 md:col-span-12 lg:col-span-7 xl:col-span-6     ">
+            <div class="my-6 flex flex-wrap gap-2 ">
+              <label for="dateRange" class="text-lg font-semibold">Date Range</label>
+              <div id="dateRangeContainer" class="relative w-full mb-4">
+                <div class="relative group focus-within:ring-0 w-full">
+                  <!-- Subtle glow layer -->
+                  <div
+                    class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+                  </div>
+
+                  <!-- Input field -->
+                  <div id="selectedDateRange" tabindex="0" data-toggle="dropdown" data-target="#dateRangeDropdown"
+                    data-arrow="#dateRangeArrow"
+                    class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm">
+                    <span id="dateRangeLabel" class="">Select date range</span>
+
+                    <svg id="dateRangeArrow" class="w-4 h-4 transition-transform duration-300 cursor-pointer"
+                      fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </div>
+                </div>
+                <div id="dateRangeDropdown" data-open="false"
+                  class="bg-[var(--bg-dropdown)] border border-gray-600 p-1 rounded absolute z-10 mt-[8px] hidden max-h-[450px]">
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Yesterday">Yesterday
+                  </div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Last Week">Last Week
+                  </div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Last month">Last
+                    month </div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Month to last available date">Month to last available date</div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Last 7 days">Last 7
+                    days </div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Last 14 days">Last 14
+                    days</div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Last 28 days">Last 28
+                    days</div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Last 30 days">Last 30
+                    days</div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Last quarter">Last
+                    quarter </div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Quarter to last available date">Quarter to last available date</div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Year to last available date">Year to last available date</div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Last year">Last year
+                  </div>
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-range="Custom date range">
+                    Custom date range </div>
+                </div>
+              </div>
+
+              <!-- Custom date inputs start -->
+              <!-- Hidden by default, shown when "Custom date range" is selected -->
+              <div id="customDateInputs" class="hidden mt-2 z-0 w-full">
+                <div class="grid grid-cols-2 gap-4">
+                  <!-- Start Date -->
+                  <div>
+                    <label for="startDate" class="mb-1 block text-md font-semibold">Start Date</label>
+                    <div class="relative group w-full">
+                      <!-- Glow layer -->
+                      <div
+                        class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none z-0">
+                      </div>
+                      <!-- Input -->
+                      <input
+                        class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm"
+                        type="date" id="startDate" />
+                    </div>
+                  </div>
+
+                  <!-- End Date -->
+                  <div>
+                    <label for="endDate" class="mb-1 block text-md font-semibold">End Date</label>
+                    <div class="relative group w-full">
+                      <!-- Glow layer -->
+                      <div
+                        class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-[10px] blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none z-0">
+                      </div>
+                      <!-- Input -->
+                      <input
+                        class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm"
+                        type="date" id="endDate" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
+              <!-- Custom date inputs end -->
+
+
+              <!-- Metrics starts here -->
+              <div class="flex items-center justify-between w-full">
+                <label for="metrics" class="text-lg font-semibold">Metrics</label>
+                <div class="flex items-center gap-2">
+                  <button id="addAllMetricsBtn" class="btn btn-xs btn-ghost ">
+                    <i class="fa-regular fa-plus"></i>
+                    <span>Add all</span>
+                  </button>
+                  <button id="clearMetricsBtn" class="btn btn-xs btn-ghost ">
+                    <i class="fa-regular fa-circle-xmark"></i>
+                    <span>Clear all</span>
+                  </button>
+                </div>
+              </div>
+              <div id="metricsContainer" class="relative w-full group focus-within:ring-0">
+                <!-- Subtle glowing border -->
+                <div
+                  class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-lg blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+                </div>
+
+                <!-- Selected metrics box -->
+                <div id="selectedMetrics" tabindex="0"
+                  class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm mb-4 h-auto min-h-[48px] p-[9px]">
+                  <div id="metricsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto">
+                    <span id="metricsPlaceholder" class="">Select metrics</span>
+                  </div>
+                  <svg id="metricsArrow"
+                    class="w-4 h-4 transition-transform duration-300 cursor-pointer ml-2 flex-shrink-0" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+
+                <!-- Dropdown items -->
+                <div id="metricsDropdown" data-open="false"
+                  class="bg-[var(--bg-dropdown)] border border-gray-600 p-1 rounded absolute z-10 transition-all mt-[8px] hidden ">
+
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-metric="Clicks">
+                    <span>Clicks</span> <i class="far fa-question-circle text-gray-400" style="cursor: pointer;"></i>
+                  </div>
+
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-metric="Impressions">
+                    <span>Impressions</span> <i class="far fa-question-circle text-gray-400"
+                      style="cursor: pointer;"></i>
+                  </div>
+
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-metric="CTR">
+                    <span>CTR</span> <i class="far fa-question-circle text-gray-400" style="cursor: pointer;"></i>
+                  </div>
+
+                  <div
+                    class="cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2"
+                    data-metric="Position">
+                    <span>Position</span> <i class="far fa-question-circle text-gray-400" style="cursor: pointer;"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Metrics ends here -->
+
+              <!-- Dimensions starts here -->
+              <div class="flex items-center justify-between w-full">
+                <label for="dimensions" class="text-lg font-semibold">Dimensions</label>
+                <button id="clearDimensionsBtn" class="btn btn-xs btn-ghost font-normal hidden">
+                  <i class="fa-regular fa-circle-xmark"></i>
+                  <span>Clear all</span>
+                </button>
+              </div>
+              <div id="dimensionsContainer" class="relative w-full group focus-within:ring-0 mb-4">
+                <!-- Glow when focused -->
+                <div
+                  class="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-lg blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300 pointer-events-none">
+                </div>
+
+                <!-- Selected Dimensions -->
+                <div id="selectedDimensions" tabindex="0"
+                  class="input w-full input-lg relative items-center justify-between cursor-pointer focus:outline-none text-sm h-auto min-h-[48px] p-[9px]">
+                  <div id="dimensionsTagsContainer" class="flex flex-wrap gap-2 items-center overflow-auto"><span
+                      id="dimensionsPlaceholder" class="">Select dimensions</span></div>
+                  <svg id="dimensionsArrow"
+                    class="w-4 h-4 transition-transform duration-300 cursor-pointer ml-2 flex-shrink-0" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+
+                <!-- Dimensions dropdown -->
+                <div id="dimensionsDropdown"
+                  class="bg-[var(--bg-dropdown)] border border-gray-600 p-1 rounded absolute z-10 transition-all max-h-[400px] overflow-y-auto w-full mt-[8px] h-auto hidden">
+                </div>
+              </div>
+              <!-- Dimensions ends here -->
+
+              <!-- Filters section starts here -->
+              <!-- Filters Header (inside gray box) -->
+              <div class="w-full max-w-4xl mx-auto mt-4 mb-4">
+                <div
+                  class="alert alert-info w-full flex justify-between bg-[#2f3237]/90 border-[#2f3237]/70 uppercase text-white p-4"
+                  id="toggleFiltersHeader">
+                  <span class="font-bold">Filters</span>
+                  <svg id="filterArrow"
+                    class="w-4 h-4 transition-transform duration-300 cursor-pointer rotate-180 cursor-pointer"
+                    fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+
+                <!-- Filters Form Section (outside the gray box) -->
+                <!-- filter input and dropdown row starts here -->
+                <div id="filterSection" class="bg-transparent px-0 py-4 space-y-2">
+                  <div id="filterRows" class="space-y-2">
+                    <!--Filter Row gets injected here -->
+                  </div>
+                  <!-- Add/Remove Buttons -->
+                  <div class="flex items-center gap-2 shrink-0 w-auto">
+                    <button id="addFilterRowBtn"
+                      class="badge badge-md  hover:bg-[#0366a0]  font-semibold  cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white"><svg
+                        xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        aria-hidden="true">
+                        <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round" />
+                      </svg>
+
+                    </button>
+                    <button id="removeFilterRowBtn"
+                      class="badge badge-md hover:bg-[#0366a0] font-semibold cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white"><svg
+                        xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        aria-hidden="true">
+                        <path d="M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round" />
+                      </svg>
+
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+              <!-- Filters section ends here -->
+              <!-- Sort by section starts -->
+              <!-- Sort By Section -->
+              <div class="w-full max-w-4xl mx-auto mt-4">
+                <div
+                  class="alert alert-info w-full flex justify-between bg-[#2f3237]/90 border-[#2f3237]/70 uppercase text-white p-4"
+                  id="toggleSortByHeader">
+                  <span class="font-bold">Sort by</span>
+                  <svg id="sortArrow" class="w-4 h-4 transition-transform duration-300 cursor-pointer" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+
+                <div id="sortSection" class="hidden bg-transparent px-0 py-4 space-y-2">
+                  <div id="sortRows" class="space-y-2"></div>
+                  <div class="flex items-center gap-2 shrink-0 w-auto">
+                    <button id="addSortRowBtn"
+                      class="badge badge-md  hover:bg-[#0366a0]  font-semibold  cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        aria-hidden="true">
+                        <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round" />
+                      </svg>
+
+                    </button>
+                    <button id="removeSortRowBtn"
+                      class="badge badge-md  hover:bg-[#0366a0]  font-semibold  cursor-pointer transition-colors duration-300 ease-in-out bg-[#2f3237]/90 border-[#2f3237]/70 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        aria-hidden="true">
+                        <path d="M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                          stroke-linejoin="round" />
+                      </svg>
+
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sort by section ends -->
+
+              <!-- Custom Fields section starts -->
+              <div class="w-full max-w-4xl mx-auto mt-4">
+                <div
+                  class="alert alert-info w-full flex justify-between bg-[#2f3237]/90 border-[#2f3237]/70 uppercase text-white p-4"
+                  id="toggleCustomFieldsHeader">
+                  <span class="font-bold">Custom Fields <i id="custom-fields-tooltip-icon"
+                      class="fas fa-question-circle text-sm text-white cursor-pointer transition-colors duration-300 ease-in-out"></i></span>
+                  <span class="relative group">
+
+                    <svg id="customFilterArrow" class="w-4 h-4 transition-transform duration-300 cursor-pointer"
+                      fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+
+                  </span>
+                </div>
+
+                <div id="customFieldsSection" class="hidden bg-transparent px-0 py-4 space-y-4">
+                  <div id="customFieldGroups" class="space-y-4"></div>
+
+                  <button id="addCustomFieldGroupBtn" class="btn btn-sm btn-ghost font-normal">+ Custom
+                    Field</button>
+                </div>
+              </div>
+              <!-- Custom Fields section ends -->
+
+              <!-- Limit input starts here-->
+
+              <div class="flex items-center justify-between w-full mt-2 w-full ">
+                <label class="text-lg font-semibold w-full">
+                  Limit <i id="limit-tooltip-icon"
+                    class="fas fa-question-circle text-xs text-gray-400 cursor-pointer"></i> <span
+                    class="text-sm font-light">(optional)</span>:
+                </label>
+
+              </div>
+              <div class="mt-2 flex items-center gap-3 w-full md:w-auto">
+
+                <div class="relative w-full group focus-within:ring-0 flex w-full md:w-auto items-center gap-2">
+                  <input id="limitInput" type="number"
+                    class="input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(100%-2px)] text-sm leading-7"
+                    placeholder="100" min="1"><input id="limitEnabled" type="checkbox" class="checkbox checkbox-sm mx-2"
+                    aria-label="Apply LIMIT" />
+                </div>
+              </div>
+
+
+              <!-- Limit input ends here -->
+            </div>
+          </div>
+          <div class="space-y-4 mt-4 md:col-span-12 lg:col-span-5 xl:col-span-6 md:self-start mt-5">
+
+            <div class="flex justify-between items-center mb-2">
+              <h2 class="text-xl font-semibold">Generated SQL</h2>
+
+
+              <button data-open="openFaqBtn"
+                class="btn-sm z-10 btn btn-md transition duration-100 ease hidden lg:block">? Help</button>
+
+            </div>
+            <div class="mockup-code !h-auto pb-0 mt-[0px] relative bg-gray-900/100">
+              <pre id="sqlOutput"
+                class="resize-y overflow-auto rounded p-4 text-sm whitespace-pre-wrap min-h-[400px] w-full"></pre>
+
+              <!-- Placeholder text (shown when output is empty) -->
+              <div id="sqlPlaceholder" class="absolute inset-0 z-10 grid place-items-center px-6
+            text-center text-2xl md:text-3xl font-semibold
+            text-base-content/90 drop-shadow pointer-events-none select-none text-gray-700">
+                No SQL generated yet.
+              </div>
+
+            </div>
+            <pre id="sqlOutputFormated"
+              class="overflow-auto rounded bg-gray-900 p-4 text-sm whitespace-pre-wrap mt-2 h-1 opacity-0"></pre>
+
+            <div class="my-6 flex flex-wrap gap-3 justify-center w-full items-center ">
+              <button type="submit" id="generateSQLButton"
+                class="btn btn-xl block transition duration-100 ease-in-out hover:bg-[#0366a0] hover:shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm focus:outline-none bg-[#0082ce]/90 border-[#0082ce]/70 text-white hover:text-white w-full sm:w-auto lg:w-full xl:w-auto">
+                Generate SQL
+              </button>
+
+              <div class="w-full gap-3 sm:w-auto lg:w-full xl:w-auto">
+                <button id="copySQLButton"
+                  class="btn btn-md transition duration-100 ease hover:bg-[#0366a0] hover:shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm focus:outline-none hover:text-white my-1 w-full sm:w-auto lg:w-full xl:w-auto"
+                  disabled title="Generate SQL to enable">
+                  Copy SQL
+                </button>
+                <button type="button" id="resetButton"
+                  class="btn btn-md transition duration-100 ease hover:bg-[#0366a0] hover:shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm focus:outline-none hover:text-white my-1 w-full sm:w-auto lg:w-full xl:w-auto"
+                  title="Reset all fields. Shift+Click to also clear URL params.">
+                  Reset
+                </button>
+                <!-- reset to url button -->
+                <button type="button" id="resetToUrlButton"
+                  class="btn btn-md transition duration-100 ease hover:bg-[#0366a0] hover:shadow-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-sm focus:outline-none hover:text-white my-1 w-full sm:w-auto lg:w-full xl:w-auto"
+                  title="Restore values from the current URL parameters (GSC presets).">
+                  Reset to URL presets
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+
+        </div>
+        <!-- Version chip -->
+
+      </div>
+      <!-- label spcae  label was here-->
+    </section>
+
+
+    <br class="mb-10" />
+    <!-- Slide-in FAQ Panel -->
+    <aside id="faqPanel" class="fixed top-0 left-0 h-full w-full
+         sm:w-[546px] md:w-[600px] 
+         bg-base-100 shadow-2xl transform -translate-x-full
+         transition-transform duration-300 ease-in-out
+         z-30 overflow-y-auto" aria-hidden="true" role="dialog" aria-labelledby="faqPanelTitle">
+
+      <!-- header  -->
+      <div
+        class="p-6 flex justify-between items-center border-b border-base-300 sticky top-0 bg-base-100 z-10 bg-[#222227]">
+        <h2 id="faqPanelTitle" class="text-xl font-bold">FAQ &amp; Suggestions</h2>
+        <button id="closeFaqBtn" class="btn btn-sm btn-ghost" aria-label="Close FAQ">✕</button>
+      </div>
+
+      <!-- one-column accordion -->
+      <div class="p-4 space-y-2">
+
+        <!-- About -->
+        <div class="collapse collapse-plus border-b border-base-300/50 antialiased [text-rendering:optimizeLegibility] pb-[10px]">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-semibold">
+            About GSC SQL Query Builder
+          </div>
+          <div class="collapse-content space-y-3 text-sm">
+            <p><strong>GSC SQL Query Builder</strong> is a tool designed to simplify the process of generating SQL
+              queries
+              for <strong>Google Search Console (GSC)</strong> data stored in <strong>BigQuery</strong>. This tool is
+              tailored to work with GSC datasets, allowing users to build custom queries visually, without deep SQL
+              expertise.</p>
+            <ul class="list-disc pl-6 space-y-1">
+              <li><strong>Select metrics and dimensions</strong> from curated dropdowns based on the GSC schema.</li>
+              <li><strong>Set a date range</strong> using preset options or custom values.</li>
+              <li><strong>Apply filters and sorting</strong> with AND/OR logic blocks.</li>
+              <li><strong>Create custom fields</strong> using <code>CASE WHEN</code> logic with fallbacks.</li>
+              <li><strong>Generate SQL</strong> and copy formatted or raw output for BigQuery.</li>
+              <li>Data reflects GSC’s ~2-day reporting delay.</li>
+            </ul>
+            <p>The queries use <code>SAFE_DIVIDE()</code> and other protective logic to stay stable with sparse data.
+            </p>
+            <p>We log generated SQL (not personal data) to improve the tool.</p>
+          </div>
+        </div>
+
+        <!-- What is this tool for? -->
+        <div class="collapse collapse-plus border-b border-base-300/50 antialiased [text-rendering:optimizeLegibility] pb-[10px]">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-semibold">
+            What is this tool for?
+            
+          </div>
+          <div class="collapse-content text-sm">
+            <p>This builder helps you create SQL queries to analyze Google Search Console data within BigQuery — without
+              having to write SQL manually.</p>
+          </div>
+        </div>
+
+        <!-- Do I need SQL knowledge? -->
+        <div class="collapse collapse-plus border-b border-base-300/50 antialiased [text-rendering:optimizeLegibility] pb-[10px]">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-semibold">
+            Do I need SQL knowledge?
+          </div>
+          <div class="collapse-content text-sm">
+            <p>Nope. The interface is built so that even non-technical users can create valid BigQuery SQL queries.</p>
+          </div>
+        </div>
+
+        <!-- Is this tool free? -->
+        <div class="collapse collapse-plus border-b border-base-300/50 antialiased [text-rendering:optimizeLegibility] pb-[10px]">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-semibold">
+            Is this tool free to use?
+          </div>
+          <div class="collapse-content text-sm">
+            <p>Yes! The Query Builder is completely free and designed to help marketers and analysts work faster.</p>
+          </div>
+        </div>
+
+        <!-- Invalid SQL -->
+        <div class="collapse collapse-plus border-b border-base-300/50 antialiased [text-rendering:optimizeLegibility] pb-[10px]">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-semibold">
+            What if I generate an invalid SQL query?
+          </div>
+          <div class="collapse-content text-sm space-y-2">
+            <p>We cover most edge cases and try to prevent illogical output, but some combinations may still be invalid.
+            </p>
+            <p>If you hit one, please send us the broken query so we can improve the logic. We’re expanding coverage for
+              conflicting data types/filters in future versions.</p>
+          </div>
+        </div>
+
+        <!-- Feedback -->
+        <div class="collapse collapse-plus border-b border-base-300/50 antialiased [text-rendering:optimizeLegibility] pb-[10px]">
+          <input type="checkbox" />
+          <div class="collapse-title text-base font-semibold">
+            Where can I give feedback or suggest improvements?
+          </div>
+          <div class="collapse-content text-sm">
+            <p>We’d love your input! Send ideas, feature requests, or bug reports to
+              <a href="mailto:support@example.com" class="link">support@example.com</a>.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+  </main>
+
+  <footer class="mt-auto float-right right-0 bottom-0  text-[0.6rem] text-right text-white relative">
+    <div class="max-w-[1740px] mx-auto relative text-center">
+      <span class="opacity-2">v6.0.5.21.10.2025</span>
+
+      <span id="versionBadge"
+        class="lg:fixed block px-3 py-1 text-[14px] font-semibold w-full md:w-auto
+                      bg-[#F3F5F9] text-gray shadow-md ring-1 ring-black/10 z-[0] bottom-[0px] right-0 md:right-[45px] lg:rounded-t-[5px] rounded-b-none z-[11] text-gray-900">
+        <div style="text-align:center;letter-spacing: initial;"><a href="https://www.linkedin.com/in/stephanczysch/"
+            target="_blank" rel="noopener">Made with <i class="fa-solid fa-heart text-red-500"></i>
+            in Berlin by Stephan
+            Czysch <i class="fa-brands fa-linkedin text-lg fa-lg text-gray"></i></a></div>
+      </span>
+
+    </div>
+  </footer>
+  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/integration.js"></script>
+  <script defer>
+    document.addEventListener('DOMContentLoaded', () => {
+      const panel = document.getElementById('faqPanel');
+      if (!panel) return; // panel not on this page
+
+      const openBtns = document.querySelectorAll('#openFaqBtn,[data-open="faq"]');
+      const closeBtns = document.querySelectorAll('#closeFaqBtn,[data-close="faq"]');
+
+      openBtns.forEach(btn => btn?.addEventListener('click', () => {
+        panel.classList.remove('translate-x-full');
+      }));
+
+      closeBtns.forEach(btn => btn?.addEventListener('click', () => {
+        panel.classList.add('translate-x-full');
+      }));
+    });
+  </script>
+
+
+  <div id="global-tooltip"
+    class="z-50 pointer-events-none bg-gray-900 text-xs p-2 rounded shadow-lg max-w-xs hidden absolute text-white">
+  </div>
+  <div id="faqOverlay" class="fixed inset-0 bg-black/50 hidden opacity-0 z-20 transition-opacity duration-300"></div>
+
+</body>
+
+</html>
