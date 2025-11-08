@@ -544,7 +544,10 @@ div.bg-white.border.rounded.absolute div.cursor-pointer.rounded {
     transform: translateY(-120%) scale(1.85);
     font-weight: 300;
   }
-
+#faqPanel{
+    transition-duration: 300ms !important;
+    transition-property: transform !important; /* matches transition-transform */
+  }
 
 /* Light = defaults */
 :root {
