@@ -1,4 +1,4 @@
-import { copySQL, setupEnterKeyTrigger, initSlideInPanel, makeCustomSelect, initThemeToggle  } from './utils.js';
+import { copySQL, setupEnterKeyTrigger, initSlideInPanel, makeCustomSelect, initThemeToggle } from './utils.js';
 import { predefinedCountries } from './components/predefinedCountries.js';
 import { dimensionEntries } from './components/dimensionsData.js';
 import { logQuery } from './components/logQuery.js';
@@ -834,23 +834,23 @@ function createDeviceSelect() {
 
 
 /* ---------- numeric helpers (UI only) ---------- */
-const NUMERIC_INT_FIELDS = new Set(['clicks','impressions']); // INT64
-const NUMERIC_DEC_FIELDS = new Set(['ctr','position']);       // decimals (SAFE_DIVIDE etc.)
-const NUMERIC_OPS = new Set(['EQUALS','NOT EQUALS','GREATER THAN','LESS THAN','GREATER EQUAL','LESS EQUAL']);
+const NUMERIC_INT_FIELDS = new Set(['clicks', 'impressions']); // INT64
+const NUMERIC_DEC_FIELDS = new Set(['ctr', 'position']);       // decimals (SAFE_DIVIDE etc.)
+const NUMERIC_OPS = new Set(['EQUALS', 'NOT EQUALS', 'GREATER THAN', 'LESS THAN', 'GREATER EQUAL', 'LESS EQUAL']);
 
-function normalizeLabelToKey(label){
+function normalizeLabelToKey(label) {
   const l = String(label || '');
-  const map = { 'Impressions':'impressions', 'Clicks':'clicks', 'CTR':'ctr', 'Position':'position' };
+  const map = { 'Impressions': 'impressions', 'Clicks': 'clicks', 'CTR': 'ctr', 'Position': 'position' };
   return map[l] || map[l.toLowerCase()] || l.toLowerCase();
 }
-function isNumericFieldLabel(label){
+function isNumericFieldLabel(label) {
   const k = normalizeLabelToKey(label);
   return NUMERIC_INT_FIELDS.has(k) || NUMERIC_DEC_FIELDS.has(k);
 }
-function isDecimalFieldLabel(label){
+function isDecimalFieldLabel(label) {
   return NUMERIC_DEC_FIELDS.has(normalizeLabelToKey(label));
 }
-function setValueInputTypeForField(inputEl, fieldLabel){
+function setValueInputTypeForField(inputEl, fieldLabel) {
   if (!inputEl) return;
   if (isNumericFieldLabel(fieldLabel)) {
     inputEl.type = 'number';
@@ -868,23 +868,50 @@ function setValueInputTypeForField(inputEl, fieldLabel){
   inputEl.classList.remove('border-red-500');
   inputEl.removeAttribute('title');
 }
-function validateNumericIfNeeded(fieldLabel, operatorValue, inputEl){
+// function validateNumericIfNeeded(fieldLabel, operatorValue, inputEl) {
+//   if (!inputEl) return true;
+//   if (!isNumericFieldLabel(fieldLabel) || !NUMERIC_OPS.has(String(operatorValue))) {
+//     inputEl.classList.remove('border-red-500'); inputEl.removeAttribute('title');
+//     return true;
+//   }
+//   const n = Number(inputEl.value);
+//   if (!Number.isFinite(n)) {
+//     inputEl.classList.add('border-red-500');
+//     inputEl.setAttribute('title', 'Enter a valid number');
+//     return false;
+//   }
+//   inputEl.classList.remove('border-red-500'); inputEl.removeAttribute('title');
+//   return true;
+// }
+// /* ---------------------------------------------- */
+function validateNumericIfNeeded(fieldLabel, operatorValue, inputEl) {
   if (!inputEl) return true;
   if (!isNumericFieldLabel(fieldLabel) || !NUMERIC_OPS.has(String(operatorValue))) {
-    inputEl.classList.remove('border-red-500'); inputEl.removeAttribute('title'); 
+    inputEl.classList.remove('border-red-500'); inputEl.removeAttribute('title');
     return true;
   }
-  const n = Number(inputEl.value);
-  if (!Number.isFinite(n)) {
+
+  const raw = inputEl.value;
+  const hasChars = raw.trim() !== '';
+
+  let bad = false;
+  if (inputEl.type === 'number') {
+    // For number inputs: letters → value=='' but badInput===true; decimals use valueAsNumber
+    bad = inputEl.validity.badInput || (hasChars && !Number.isFinite(inputEl.valueAsNumber));
+  } else {
+    // For text inputs (fallback)
+    bad = hasChars && !/^-?\d+(\.\d+)?$/.test(raw);
+  }
+
+  if (bad) {
     inputEl.classList.add('border-red-500');
-    inputEl.setAttribute('title','Enter a valid number');
+    inputEl.setAttribute('title', 'Enter a valid number');
     return false;
   }
-  inputEl.classList.remove('border-red-500'); inputEl.removeAttribute('title');
+  inputEl.classList.remove('border-red-500');
+  inputEl.removeAttribute('title');
   return true;
 }
-/* ---------------------------------------------- */
-
 
 function addFilterRow() {
   const container = document.getElementById('filterRows');
@@ -929,6 +956,7 @@ function addFilterRow() {
 
   // ▼ VALUE input (will switch to number for numeric fields)
   const textInput = document.createElement('input');
+  const numTip = createNumericTip();
   textInput.type = "text";
   textInput.placeholder = "Type value";
   textInput.className =
@@ -956,6 +984,7 @@ function addFilterRow() {
     textInput.classList.add('hidden');
     radioWrapper.classList.add('hidden');
     bottomRow.querySelector('.country-search-wrapper')?.remove();
+    numTip.classList.add('hidden');
   }
 
   // Assemble row
@@ -963,19 +992,20 @@ function addFilterRow() {
   bottomRow.appendChild(operatorSelect);
   bottomRow.appendChild(deviceSelect);
   bottomRow.appendChild(textInput);
+  bottomRow.appendChild(numTip);
   bottomRow.appendChild(radioWrapper);
 
   wrapper.appendChild(bottomRow);
   container.appendChild(wrapper);
 
   // Skin the selects
-  const fieldUI    = makeCustomSelect(fieldSelect,    { placeholder: 'Select Field' });
+  const fieldUI = makeCustomSelect(fieldSelect, { placeholder: 'Select Field' });
   const operatorUI = makeCustomSelect(operatorSelect, { placeholder: 'Operator' });
-  const deviceUI   = makeCustomSelect(deviceSelect,   { placeholder: 'Device' });
+  const deviceUI = makeCustomSelect(deviceSelect, { placeholder: 'Device' });
 
-  fieldUI.wrap.classList.add('stackable','w-full','sm:w-[calc(33%-25px)]','md:w-[calc(33%-25px)]');
-  operatorUI.wrap.classList.add('stackable','w-full','sm:w-[calc(25%-22px)]');
-  if (deviceUI) deviceUI.wrap.classList.add('stackable','w-full','sm:w-[calc(50%-22px)]','hidden');
+  fieldUI.wrap.classList.add('stackable', 'w-full', 'sm:w-[calc(33%-25px)]', 'md:w-[calc(33%-25px)]');
+  operatorUI.wrap.classList.add('stackable', 'w-full', 'sm:w-[calc(25%-22px)]');
+  if (deviceUI) deviceUI.wrap.classList.add('stackable', 'w-full', 'sm:w-[calc(50%-22px)]', 'hidden');
 
   textInput.classList.add('stackable');
   radioWrapper.classList.add('stackable');
@@ -983,7 +1013,7 @@ function addFilterRow() {
   // ▼ Field change → show proper value control + set input type + validate
   fieldSelect.addEventListener('change', () => {
     const field = fieldSelect.value;
-    const type  = getOperatorType(field);
+    const type = getOperatorType(field);
 
     const operators = filterOperatorMap[type] || [];
     const defaultOperator = 'EQUALS';
@@ -1002,26 +1032,32 @@ function addFilterRow() {
       const cWrap = document.createElement('div');
       cWrap.className = 'relative country-search-wrapper stackable w-full sm:w-[calc(32%-4px)] shrink-0 min-w-0';
       const countryInput = enableCountrySearchStyled('filter-country', window.predefinedCountries, cWrap);
-      countryInput.classList.add('input','input-lg','w-full','box-border','p-[9px]','text-sm','h-auto');
+      countryInput.classList.add('input', 'input-lg', 'w-full', 'box-border', 'p-[9px]', 'text-sm', 'h-auto');
       bottomRow.appendChild(cWrap);
     } else {
       textInput.classList.remove('hidden');
-      setValueInputTypeForField(textInput, field);            // ▼ switch to number for numeric fields
-      validateNumericIfNeeded(field, operatorSelect.value, textInput); // ▼ instant validation
+      setValueInputTypeForField(textInput, field);            // switch to number for numeric fields
+      // validateNumericIfNeeded(field, operatorSelect.value, textInput); // instant validation
+      const ok = validateNumericIfNeeded(field, operatorSelect.value, textInput);
+      numTip.classList.toggle('hidden', ok);
     }
   });
 
-  // ▼ Operator change → (re)validate if numeric
+  // Operator change → (re)validate if numeric
   operatorSelect.addEventListener('change', () => {
-    validateNumericIfNeeded(fieldSelect.value, operatorSelect.value, textInput);
+    // validateNumericIfNeeded(fieldSelect.value, operatorSelect.value, textInput);
+    const ok = validateNumericIfNeeded(fieldSelect.value, operatorSelect.value, textInput); //
+    numTip.classList.toggle('hidden', ok);
   });
 
-  // ▼ Typing → live validation for numeric fields
+  // Typing live validation for numeric fields
   textInput.addEventListener('input', () => {
-    validateNumericIfNeeded(fieldSelect.value, operatorSelect.value, textInput);
+    // validateNumericIfNeeded(fieldSelect.value, operatorSelect.value, textInput);
+    const ok = validateNumericIfNeeded(fieldSelect.value, operatorSelect.value, textInput);
+    numTip.classList.toggle('hidden', ok);
   });
 
-  // ▼ Initial input mode (when row first appears)
+  // Initial input mode (when row first appears)
   setValueInputTypeForField(textInput, fieldSelect.value || '');
 
   // CLEAR button
@@ -1094,16 +1130,26 @@ function clearFilterRow(wrapper) {
   const row = wrapper.querySelector('.filter-row');
   if (!row) return;
 
-  const fieldSelect    = row.querySelector('select[data-role="filter-field"]');
-  const operatorSelect = row.querySelector('select[data-role="filter-op"]');
-  const deviceSelect   = row.querySelector('select[data-role="filter-device"]');
-  const textInput      = row.querySelector('input[type="text"], input[type="number"]'); // ▲ accept both
-  const radioWrapper   = row.querySelector('.bool-radio-wrapper') || row.querySelector('div');
+  const tip = row.querySelector('.num-tip');
+  if (tip) tip.classList.add('hidden');
 
-  if (fieldSelect)    { fieldSelect.selectedIndex = 0; }
+
+
+  const fieldSelect = row.querySelector('select[data-role="filter-field"]');
+  const operatorSelect = row.querySelector('select[data-role="filter-op"]');
+  const deviceSelect = row.querySelector('select[data-role="filter-device"]');
+  const textInput = row.querySelector('input[type="text"], input[type="number"]'); // ▲ accept both
+  const radioWrapper = row.querySelector('.bool-radio-wrapper') || row.querySelector('div');
+
+  if (fieldSelect) { fieldSelect.selectedIndex = 0; }
   if (operatorSelect) { operatorSelect.innerHTML = ''; }
-  if (deviceSelect)   { deviceSelect.selectedIndex = 0; }
-  if (textInput)      { textInput.value = ''; setValueInputTypeForField(textInput, ''); } // ▲ reset & clear invalid state
+  if (deviceSelect) { deviceSelect.selectedIndex = 0; }
+  if (textInput) {
+    textInput.value = '';
+    textInput.classList.remove('border-red-500');
+    textInput.removeAttribute('title');
+    setValueInputTypeForField(textInput, '');
+  }
 
   if (radioWrapper) {
     radioWrapper.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
@@ -1117,7 +1163,7 @@ function clearFilterRow(wrapper) {
   const boolWrap = row.querySelector('.bool-radio-wrapper');
   if (boolWrap) boolWrap.classList.add('hidden');
 
-  try { fieldSelect && fieldSelect.dispatchEvent(new Event('change', { bubbles: true })); } catch (_) {}
+  try { fieldSelect && fieldSelect.dispatchEvent(new Event('change', { bubbles: true })); } catch (_) { }
 }
 
 
@@ -1242,7 +1288,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
       options: ['EQUALS'],
       placeholder: null,
       // hidden <select> width is irrelevant; wrapper gets our width classes below
-      widthClass: '' 
+      widthClass: ''
     });
 
   const valueInput = document.createElement('input');
@@ -1255,7 +1301,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   // shown only for Country; still needs widths
   valueSelectWrapper.className = 'hidden w-full md:flex-1 min-w-0';
 
-  const uniqueRadioName = `bool-val-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+  const uniqueRadioName = `bool-val-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const radioWrapper = document.createElement('div');
   radioWrapper.className = 'hidden flex w-full md:flex-1 justify-center items-center gap-6 md:gap-4 mt-2 md:mt-0';
   radioWrapper.innerHTML = `
@@ -1275,7 +1321,7 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
     const defaultOp = 'EQUALS';
 
     operatorSelect.innerHTML = operators.map(opt =>
-      `<option value="${opt}" ${opt===defaultOp?'selected':''}>${opt}</option>`
+      `<option value="${opt}" ${opt === defaultOp ? 'selected' : ''}>${opt}</option>`
     ).join('');
 
     valueInput.classList.add('hidden');
@@ -1298,8 +1344,8 @@ function createConditionRow(hasRemove = true, addButtons = true, groupContainer 
   fieldSelect.addEventListener('change', () => updateValueInputType(fieldSelect.value));
 
   // ✅ make the custom-select wrappers responsive and shrinkable
-  fieldSelectUI.classList.add('w-full','md:w-[34%]','min-w-0');
-  operatorSelectUI.classList.add('w-full','md:w-[23%]','min-w-0');
+  fieldSelectUI.classList.add('w-full', 'md:w-[34%]', 'min-w-0');
+  operatorSelectUI.classList.add('w-full', 'md:w-[23%]', 'min-w-0');
 
   inputRow.appendChild(fieldSelectUI);
   inputRow.appendChild(operatorSelectUI);
@@ -2131,17 +2177,17 @@ export function generateSQL() {
   return plainSQL;
 }
 function updateFilterAndSortClauses() {
-
-  
-
   const filters = [];
+
+  // local helper for safe SQL strings
+  const sqlString = (v) => `'${String(v).replace(/'/g, "''")}'`;
 
   // ----- FILTERS -----
   document.querySelectorAll('#filterRows > div').forEach(filter => {
     const fieldSel = filter.querySelector('select[data-role="filter-field"]') || filter.querySelector('select');
     const opSel = filter.querySelector('select[data-role="filter-op"]') || filter.querySelectorAll('select')[1];
     const deviceSel = filter.querySelector('select[data-role="filter-device"], select.device-select');
-    const valueInput = filter.querySelector('input[type="number"], input[type="text"]');
+    const valueInput = filter.querySelector('input[type="number"], input[type="text"]'); // <-- read both
     const boolRadio = filter.querySelector('input[name^="bool-val"]:checked');
     const countryIn = filter.querySelector('input.country-search-input');
 
@@ -2149,123 +2195,163 @@ function updateFilterAndSortClauses() {
     const operator = (opSel?.value || '').trim();
     const logic = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
 
-    let value = null;
     if (!field || !operator) return;
 
+    // resolve input value by field type
+    let value = null;
     if (field.startsWith('Is ') && boolRadio) {
-      value = (boolRadio.value || '').toUpperCase(); // TRUE / FALSE
+      value = (boolRadio.value || '').toUpperCase();            // TRUE/FALSE
     } else if (field === 'Country') {
       value = (countryIn?.dataset?.code || '').trim();
     } else if (field === 'Device' && deviceSel) {
       value = deviceSel.value;
     } else if (valueInput) {
-  value = (valueInput.value || '').trim();
-}
-
+      value = (valueInput.value || '').trim();
+    }
 
     const normalizedField = normalizeFieldName(field);
-    // after: const normalizedField = normalizeFieldName(field);
-const numeric = isNumericField(normalizedField);
+    const isNumericField = ['clicks', 'impressions', 'ctr', 'position'].includes(normalizedField);
+    const isNumericOp = ['EQUALS', 'NOT EQUALS', 'GREATER THAN', 'LESS THAN', 'GREATER EQUAL', 'LESS EQUAL'].includes(operator);
+    const asNumber = Number(value);
 
-// accept NULL operators or non-empty values (including TRUE/FALSE)
-const hasBoolean = value === 'TRUE' || value === 'FALSE';
-if (
-  operator.includes('NULL') ||
-  (typeof value === 'string' && value !== '') ||
-  hasBoolean
-) {
-  let clause = '';
+    // Hard guard: if numeric field + numeric operator, the value must be a number
+    // if (isNumericField && isNumericOp) {
+    //   if (!Number.isFinite(asNumber)) {
+    //     // visual feedback
+    //     if (valueInput) {
+    //       valueInput.classList.add('border-red-500', 'input-error');
+    //       valueInput.setAttribute('title', 'Enter a valid number');
+    //     }
+    //     return; // skip adding this invalid clause
+    //   }
+    //   // clear any previous error
+    //   if (valueInput) {
+    //     valueInput.classList.remove('border-red-500', 'input-error');
+    //     valueInput.removeAttribute('title');
+    //   }
+    // }
+    // find the tip inside this row
+    const numTip = filter.querySelector('.num-tip');
 
-  // small helpers
-  const asNumber = (v) => {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-  };
+    if (isNumericField && isNumericOp) {
+      const raw = valueInput ? valueInput.value : '';
+      const hasChars = raw.trim() !== '';
 
-  switch (operator) {
-    case 'EQUALS':
-      clause = field.startsWith('Is ')
-        ? `${normalizedField} = ${value}` // TRUE/FALSE
-        : `${normalizedField} = ${numeric ? asNumber(value) : sqlString(value)}`;
-      break;
+      let bad = true;
+      if (valueInput) {
+        if (valueInput.type === 'number') {
+          bad = valueInput.validity.badInput || (hasChars && !Number.isFinite(valueInput.valueAsNumber));
+        } else {
+          bad = hasChars && !/^-?\d+(\.\d+)?$/.test(raw);
+        }
+      }
 
-    case 'NOT EQUALS':
-      if (field.startsWith('Is ') && hasBoolean) {
-        clause = `${normalizedField} = ${value === 'FALSE' ? 'TRUE' : 'FALSE'}`;
+      if (bad) {
+        valueInput?.classList.add('border-red-500');
+        valueInput?.setAttribute('title', 'Enter a valid number');
+        numTip && numTip.classList.remove('hidden');     // NEW
+        return; // skip this invalid clause
       } else {
-        clause = `${normalizedField} != ${numeric ? asNumber(value) : sqlString(value)}`;
+        valueInput?.classList.remove('border-red-500');
+        valueInput?.removeAttribute('title');
+        numTip && numTip.classList.add('hidden');        // NEW
       }
-      break;
 
-    case 'CONTAINS':
-      clause = `${normalizedField} LIKE ${sqlString(`%${value}%`)}`;
-      break;
-
-    case 'NOT CONTAINS':
-      clause = `${normalizedField} NOT LIKE ${sqlString(`%${value}%`)}`;
-      break;
-
-    case 'GREATER THAN': {
-      const n = numeric ? asNumber(value) : null;
-      if (n !== null) clause = `${normalizedField} > ${n}`;
-      break;
+      if (!hasChars) {
+        numTip && numTip.classList.add('hidden');        // NEW
+        return;
+      }
     }
 
-    case 'LESS THAN': {
-      const n = numeric ? asNumber(value) : null;
-      if (n !== null) clause = `${normalizedField} < ${n}`;
-      break;
+    // accept NULL operators or non-empty values (including TRUE/FALSE)
+    const hasBoolean = value === 'TRUE' || value === 'FALSE';
+    if (
+      operator.includes('NULL') ||
+      (typeof value === 'string' && value !== '') ||
+      hasBoolean
+    ) {
+      let clause = '';
+
+      switch (operator) {
+        case 'EQUALS':
+          clause = field.startsWith('Is ')
+            ? `${normalizedField} = ${value}`                                  // TRUE/FALSE
+            : (isNumericField ? `${normalizedField} = ${asNumber}`             // number (no quotes)
+              : `${normalizedField} = ${sqlString(value)}`);   // string
+          break;
+
+        case 'NOT EQUALS':
+          if (field.startsWith('Is ') && hasBoolean) {
+            clause = `${normalizedField} = ${value === 'FALSE' ? 'TRUE' : 'FALSE'}`;
+          } else {
+            clause = isNumericField
+              ? `${normalizedField} != ${asNumber}`
+              : `${normalizedField} != ${sqlString(value)}`;
+          }
+          break;
+
+        case 'GREATER THAN':
+          if (isNumericField) clause = `${normalizedField} > ${asNumber}`;
+          break;
+        case 'LESS THAN':
+          if (isNumericField) clause = `${normalizedField} < ${asNumber}`;
+          break;
+        case 'GREATER EQUAL':
+          if (isNumericField) clause = `${normalizedField} >= ${asNumber}`;
+          break;
+        case 'LESS EQUAL':
+          if (isNumericField) clause = `${normalizedField} <= ${asNumber}`;
+          break;
+
+        case 'CONTAINS':
+          clause = `${normalizedField} LIKE ${sqlString(`%${value}%`)}`;
+          break;
+        case 'NOT CONTAINS':
+          clause = `${normalizedField} NOT LIKE ${sqlString(`%${value}%`)}`;
+          break;
+
+        case 'IS NULL':
+          clause = `${normalizedField} IS NULL`;
+          break;
+        case 'IS NOT NULL':
+          clause = `${normalizedField} IS NOT NULL`;
+          break;
+
+        case 'REGEXP CONTAINS':
+          if (['query', 'url'].includes(normalizedField)) {
+            clause = `REGEXP_CONTAINS(${normalizedField}, r${sqlString(value)})`;
+          }
+          break;
+        case 'NOT REGEXP CONTAINS':
+          if (['query', 'url'].includes(normalizedField)) {
+            clause = `NOT REGEXP_CONTAINS(${normalizedField}, r${sqlString(value)})`;
+          }
+          break;
+      }
+
+      if (clause) filters.push({ clause, logic, field: normalizedField });
     }
-
-    case 'IS NULL':
-      clause = `${normalizedField} IS NULL`;
-      break;
-
-    case 'IS NOT NULL':
-      clause = `${normalizedField} IS NOT NULL`;
-      break;
-
-    case 'REGEXP CONTAINS':
-      if (['query', 'url'].includes(normalizedField)) {
-        clause = `REGEXP_CONTAINS(${normalizedField}, r${sqlString(value)})`;
-      }
-      break;
-
-    case 'NOT REGEXP CONTAINS':
-      if (['query', 'url'].includes(normalizedField)) {
-        clause = `NOT REGEXP_CONTAINS(${normalizedField}, r${sqlString(value)})`;
-      }
-      break;
-  }
-
-  if (clause) filters.push({ clause, logic, field: normalizedField });
-}
 
     // store global AND/OR joiner
     const globalLogicInput = document.querySelector('#filterRows input[type="radio"]:checked');
     window._filterLogic = globalLogicInput ? globalLogicInput.value : 'AND';
   });
 
-  // ----- SORTS (custom dropdowns, no native <select>) -----
+  // ----- SORTS -----
   const sorts = [];
   document.querySelectorAll('#sortRows > div').forEach((row) => {
-    // Find the chosen field label from the custom placeholder inside this row
     const ph = row.querySelector('[id^="sortFieldPlaceholder-"]');
     const label = ph?.textContent?.trim();
-
-    // Normalize to SQL column name
     let field = null;
     if (label && label !== 'Select Field') field = normalizeFieldName(label);
-
-    // Direction (ASC/DESC)
     const dir = row.querySelector('input[type="radio"]:checked')?.value || 'ASC';
-
     if (field) sorts.push(`${field} ${dir}`);
   });
 
   window._filterClauses = filters;
   window._sortClauses = sorts;
 }
+
 function showBodyToast(cls) {
   const body = document.body;
   if (!cls || typeof cls !== 'string') {
@@ -2622,6 +2708,15 @@ function setupTooltips() {
     limitIcon.addEventListener('mouseleave', () => tooltipBox.classList.add('hidden'));
   }
 }
+function createNumericTip() {
+  const tip = document.createElement('span');
+  // DaisyUI tooltip bubble, shown when not hidden
+  tip.className = 'num-tip tooltip tooltip-open tooltip-error ml-2 hidden';
+  tip.setAttribute('data-tip', 'Please enter a numeric value');
+  tip.innerHTML = ``;
+  return tip;
+}
+
 
 document.getElementById('generateSQLButton').addEventListener('click', () => {
   const sql = generateSQL();
