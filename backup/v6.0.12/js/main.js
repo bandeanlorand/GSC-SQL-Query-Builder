@@ -1,0 +1,3011 @@
+import { copySQL, setupEnterKeyTrigger, initSlideInPanel, makeCustomSelect, initThemeToggle } from './utils.js';
+import { predefinedCountries } from './components/predefinedCountries.js';
+import { dimensionEntries } from './components/dimensionsData.js';
+import { logQuery } from './components/logQuery.js';
+import { getDateRangeClause } from './components/dateRangeHelper.js';
+import { addSortRow, toggleSortBy, removeSortRow, updateSortFieldOptions } from './components/sortByControls.js';
+
+// Function to toggle the visibility of the filter section
+// and rotate the arrow icon  
+
+
+
+// function getOperatorType(field) {
+//   const f = String(field || '');
+
+//   if (field.startsWith("Is ")) return "boolean";
+//   if (field === "Country") return "country";
+//   if (field === "Search Type") return "searchtype";      // search type
+//   if (f === 'Device')              return 'device';     // NEW device field
+//   if (["Impressions", "Position", "Clicks", "CTR", "Avg Position"].includes(field)) return "numeric";
+//   if (["Query", "URL", "Site URL"].includes(field)) return "regex"; // allow REGEXP for Query & URL only
+//   return "string";
+// }
+function getOperatorType(field) {
+  const f = String(field || '');
+
+  if (f.startsWith('Is '))         return 'boolean';
+  if (f === 'Country')             return 'country';
+  if (f === 'Search Type')         return 'searchtype';
+  if (f === 'Device')              return 'device';     // NEW
+  if (['Impressions','Position','Clicks','CTR'].includes(f)) return 'numeric';
+  if (['Query','URL','Site URL'].includes(f))          return 'regex';
+  return 'string';
+}
+
+
+
+// Fixed values for BigQuery search_type serachtype starts here/
+const SEARCH_TYPES = ['WEB', 'IMAGE', 'VIDEO', 'NEWS', 'DISCOVER', 'GOOGLENEWS'];
+
+const filterOperatorMap = {
+  string: ["EQUALS", "NOT EQUALS", "CONTAINS", "NOT CONTAINS"], /* Query */
+  regex: ["EQUALS", "NOT EQUALS", "CONTAINS", "NOT CONTAINS", "REGEXP CONTAINS", "NOT REGEXP CONTAINS"],
+  numeric: ["EQUALS", "NOT EQUALS", "GREATER THAN", "LESS THAN", "IS NULL", "IS NOT NULL"],
+  boolean: ["EQUALS", "NOT EQUALS"], // limited to true/false via radio buttons
+  country: ["EQUALS", "NOT EQUALS"],
+  searchtype: ["EQUALS", "NOT EQUALS"] // Search Type fixed values
+};
+
+// Fixed values for BigQuery search_type serachtype ends here/
+
+document.querySelectorAll('#customFieldGroups input[type="text"]').forEach(input => {
+  input.addEventListener('input', () => {
+    input.classList.add('user-started');
+  });
+});
+
+// Prevent Metrics and Dimensions dropdowns from closing on selection
+let suppressDropdownClose = false;
+document.addEventListener("DOMContentLoaded", () => {
+  ['metricsDropdown', 'dimensionsDropdown'].forEach(id => {
+    const dropdown = document.getElementById(id);
+    dropdown?.querySelectorAll('div').forEach(item => {
+
+      item.addEventListener('mousedown', (e) => {
+        suppressDropdownClose = true; // block global click listener temporarily
+
+
+        const parentId = item.parentElement.id;
+        const label = item.textContent.trim();
+        if (parentId === 'metricsDropdown') {
+          selectMetric(label);
+
+        } else if (parentId === 'dimensionsDropdown') {
+
+          const span = item.querySelector('span');
+          if (span) {
+
+            selectDimension(span.textContent.trim());
+          }
+        }
+      });
+
+
+    });
+  });
+});
+
+/* metrics multiselect script - starts here */
+window.selectedDimensions = new Set();
+window.selectedMetrics = new Set();
+
+let isDropdownOpen = false;
+
+
+let selectedDateRange = '';
+let isDateRangeDropdownOpen = false;
+
+document.getElementById("selectedDateRange").addEventListener("click", (event) => {
+  event.stopPropagation();
+
+  const dropdown = document.getElementById("dateRangeDropdown");
+  const arrow = document.getElementById("dateRangeArrow");
+  const isOpen = dropdown.getAttribute("data-open") === "true";
+
+  toggleDropdown(dropdown, arrow, !isOpen);
+});
+window.selectDateRange = selectDateRange;
+
+function selectDateRange(range) {
+  selectedDateRange = range;
+  document.getElementById("dateRangeLabel").textContent = range;
+  closeDropdown(document.getElementById("dateRangeDropdown"));
+  isDateRangeDropdownOpen = false;
+  toggleCustomDateInputs(range); // Show/hide custom fields
+}
+// Bind selection for all date range items
+
+document.addEventListener('DOMContentLoaded', () => {
+  // If a preset wasn’t applied via URL or earlier logic, set the default
+  if (!selectedDateRange) {
+    selectDateRange('Last 28 days');
+  }
+});
+
+
+document.querySelectorAll('#dateRangeDropdown [data-range]').forEach(item => {
+  item.addEventListener('click', () => {
+    const range = item.getAttribute('data-range');
+    selectDateRange(range);
+  });
+});
+
+function toggleCustomDateInputs(range) {
+  const customInputs = document.getElementById('customDateInputs');
+  if (range === 'Custom date range') {
+    customInputs.classList.remove('hidden');
+  } else {
+    customInputs.classList.add('hidden');
+  }
+}
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const tooltipBox = document.getElementById("global-tooltip");
+  const metricItems = document.querySelectorAll("#metricsDropdown > div");
+
+  const metricTooltips = {
+    "Impressions": "How often your site appeared in Google Search results — counted every time it's shown on a results page.",
+    "Clicks": "The total number of times users clicked your website link in search results.",
+    "CTR": "Click-through rate — calculated as clicks divided by impressions, showing how often people clicked after seeing your link.",
+    "Position": "The average ranking position of your site when it appeared in search results. Lower numbers mean higher placement."
+  };
+
+  // Tooltip for selected badges in tags container
+  const tagContainer = document.getElementById("metricsTagsContainer");
+
+  if (tagContainer && tooltipBox) {
+    tagContainer.addEventListener("mouseover", (e) => {
+      const span = e.target.closest("span");
+      if (!span) return;
+
+      const text = span.textContent.trim();
+      const tooltipText = metricTooltips[text];
+      if (!tooltipText) return;
+
+      tooltipBox.textContent = tooltipText;
+      tooltipBox.classList.remove("hidden");
+
+      const rect = span.getBoundingClientRect();
+      tooltipBox.style.top = `${rect.top - 8 + window.scrollY}px`;
+      tooltipBox.style.left = `${rect.right + 4 + window.scrollX}px`;
+    });
+
+    tagContainer.addEventListener("mouseout", () => {
+      tooltipBox.classList.add("hidden");
+    });
+  }
+
+
+  metricItems.forEach(item => {
+    const metricName = item.dataset.metric;
+    const tooltipText = metricTooltips[metricName];
+    const icon = item.querySelector("i");
+
+    if (icon && tooltipText) {
+      icon.addEventListener("mouseenter", (e) => {
+        tooltipBox.textContent = tooltipText;
+        tooltipBox.classList.remove("hidden");
+
+        const rect = e.target.getBoundingClientRect();
+        tooltipBox.style.top = `${rect.top - 8 + window.scrollY}px`;
+        tooltipBox.style.left = `${rect.right + 4 + window.scrollX}px`;
+      });
+
+      icon.addEventListener("mouseleave", () => {
+        tooltipBox.classList.add("hidden");
+      });
+    }
+  });
+});
+
+
+// Populate dimensions dropdown
+
+const dimensionsDropdown = document.getElementById("dimensionsDropdown");
+dimensionsDropdown.innerHTML = '<div id="dimensionsScrollArea" class="max-h-[400px] overflow-y-auto pr-2"></div>';
+const scrollArea = document.getElementById("dimensionsScrollArea");
+
+
+const tooltipBox = document.getElementById("global-tooltip");
+
+dimensionEntries.forEach(([name, tooltip]) => {
+  const item = document.createElement("div");
+  item.className = "relative cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2 flex items-center justify-between";
+  item.setAttribute("onclick", `selectDimension('${name}')`);
+
+  const span = document.createElement("span");
+  span.textContent = name;
+
+  // Icon setup
+  const icon = document.createElement("i");
+  icon.className = "far fa-question-circle text-gray-400";
+  icon.style.cursor = "pointer";
+
+  // Tooltip logic
+  icon.addEventListener("mouseenter", (e) => {
+    tooltipBox.textContent = tooltip;
+    tooltipBox.classList.remove("hidden");
+
+    const rect = e.target.getBoundingClientRect();
+    tooltipBox.style.top = `${rect.top - 8 + window.scrollY}px`;
+    tooltipBox.style.left = `${rect.right + 4 + window.scrollX}px`;
+  });
+
+  icon.addEventListener("mouseleave", () => {
+    tooltipBox.classList.add("hidden");
+  });
+
+  item.appendChild(span);
+  item.appendChild(icon);
+  dimensionsDropdown.appendChild(item);
+  updateSortFieldOptions();
+});
+
+
+// dimensions dropdown items end
+function slugify(text) {
+  return text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+}
+
+function selectDimension(dimension) {
+  if (selectedDimensions.has(dimension)) return;
+
+  selectedDimensions.add(dimension);
+
+  const dropdownItems = document.querySelectorAll("#dimensionsDropdown > div");
+  dropdownItems.forEach(item => {
+    const label = item.querySelector("span");
+    if (label && label.textContent === dimension) {
+      item.style.display = "none";
+    }
+  });
+
+  const placeholder = document.getElementById("dimensionsPlaceholder");
+  if (placeholder) placeholder.classList.add("hidden");
+
+  const safeId = slugify(dimension);
+  const tag = document.createElement("div");
+  tag.className = "badge badge-lg badge-primary px-2 flex items-center cursor-default text-sm font-semibold bg-[var(--color-primary-custom)] border-[var(--color-primary-custom)] tag-metric";
+  tag.id = `tag-dimension-${safeId}`;
+  tag.innerHTML = `${dimension} <button onclick="removeDimension('${dimension}')" class="ml-2 mt-[-2px] leading-none text-[1.2rem]  font-bold outline-none border-none p-[2px] font-extralight">&times;</button>`;
+  document.getElementById("dimensionsTagsContainer").appendChild(tag);
+
+  updateClearDimensionsButton();
+
+  const remaining = Array.from(document.querySelectorAll("#dimensionsDropdown > div"))
+    .filter(item => item.style.display !== "none");
+
+  if (remaining.length === 0) {
+    closeDropdown(dimensionsDropdown);
+    document.getElementById("dimensionsArrow").classList.remove("rotate-180");
+  }
+
+  refreshDropdownHeight(dimensionsDropdown);
+  updateSortFieldOptions();
+}
+
+
+function removeDimension(dimension) {
+  selectedDimensions.delete(dimension);
+
+  const safeId = slugify(dimension);
+  const tag = document.getElementById(`tag-dimension-${safeId}`);
+  if (tag) tag.remove();
+
+  const dropdownItems = document.querySelectorAll("#dimensionsDropdown > div");
+  dropdownItems.forEach(item => {
+    const label = item.querySelector("span");
+    if (label && label.textContent === dimension) {
+      item.style.display = "flex";
+    }
+  });
+
+  if (selectedDimensions.size === 0) {
+    const placeholder = document.getElementById("dimensionsPlaceholder");
+    if (placeholder) placeholder.classList.remove("hidden");
+  }
+
+  updateClearDimensionsButton();
+  refreshDropdownHeight(dimensionsDropdown);
+
+  // keep Sort By in sync with the new dimensions
+  if (typeof window.updateSortFieldOptions === 'function') {
+    // use a microtask so DOM changes above are settled
+    queueMicrotask(() => window.updateSortFieldOptions());
+  }
+
+  // refresh filter/sort clauses so the SQL updates immediately
+  if (typeof window.updateFilterAndSortClauses === 'function') {
+    window.updateFilterAndSortClauses();
+  }
+  updateSortFieldOptions();
+}
+window.removeDimension = removeDimension;
+
+function updateClearMetricsButton() {
+  const clearBtn = document.getElementById("clearMetricsBtn");
+  if (selectedMetrics.size >= 2) {
+    clearBtn.classList.remove("hidden");
+  } else {
+    clearBtn.classList.add("hidden");
+  }
+}
+
+function updateMetricsArrowState() {
+  const visibleItems = Array.from(document.querySelectorAll("#metricsDropdown > div"))
+    .filter(item => item.style.display !== "none");
+
+  const arrow = document.getElementById("metricsArrow");
+  if (visibleItems.length === 0) {
+    arrow.classList.add("text-gray-500", "cursor-not-allowed");
+  } else {
+    arrow.classList.remove("text-gray-500", "cursor-not-allowed");
+  }
+}
+
+// Default metrics to keep after Reset
+const DEFAULT_METRICS = ['Clicks', 'Impressions', 'CTR', 'Position'];
+
+// Reset metrics UI & state, then apply defaults
+function resetMetricsToDefault() {
+  // Clear current metrics fully (UI + Set + dropdown items)
+  if (typeof clearAllMetrics === 'function') {
+    clearAllMetrics();
+  } else {
+    // Fallback: best effort clear
+    try { if (window.selectedMetrics) window.selectedMetrics.clear(); } catch { }
+    document.querySelectorAll('#metricsTagsContainer [id^="tag-"]').forEach(n => n.remove());
+    document.querySelectorAll('#metricsDropdown > div').forEach(n => n.style.display = '');
+    const ph = document.getElementById('metricsPlaceholder');
+    if (ph) ph.classList.remove('hidden');
+  }
+
+  // Add defaults (uses your existing selectMetric())
+  DEFAULT_METRICS.forEach(m => { if (typeof selectMetric === 'function') selectMetric(m); });
+
+  // Final polish
+  if (typeof updateClearMetricsButton === 'function') updateClearMetricsButton();
+  if (typeof updateMetricsArrowState === 'function') updateMetricsArrowState();
+  if (typeof updateSortFieldOptions === 'function') updateSortFieldOptions();
+}
+
+// Resets all UI elements to default state, then reapplies presets from URL if any
+function resetToUrlPresets() {
+  // Clear UI but keep query string
+  handleReset({ clearUrl: false });
+
+  if (typeof applyPresetsFromQuery === 'function') {
+    const params = new URLSearchParams(window.location.search);
+    applyPresetsFromQuery(params);
+
+    // ⬇ override whatever the URL had; we want 100 after this reset
+    setLimitDefault();
+  } else {
+    // Fallback: ensure a 100 limit after reload by writing it into the URL
+    const url = new URL(window.location.href);
+    url.searchParams.set('limit', '100');
+    history.replaceState({}, '', url);
+    window.location.reload();
+  }
+  showBodyToast('show-reset-url');
+}
+
+/* metrics dropdown functions - starts here*/
+function selectMetric(metric) {
+  if (selectedMetrics.has(metric)) return;
+
+  const container = document.getElementById("metricsTagsContainer");
+  const placeholder = document.getElementById("metricsPlaceholder");
+
+  selectedMetrics.add(metric);
+
+
+  document.querySelectorAll("#metricsDropdown > div").forEach(item => {
+    const span = item.querySelector("span");
+    if (span && span.textContent === metric) {
+      item.style.display = "none";
+    }
+  });
+
+
+  const tag = document.createElement("div");
+  tag.className = "badge badge-lg badge-primary px-2 flex items-center cursor-default text-sm font-semibold bg-[var(--color-primary-custom)] border-[var(--color-primary-custom)]";
+  tag.id = `tag-${metric}`;
+
+  const label = document.createElement("span");
+  label.textContent = metric;
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "ml-2 mt-[-2px] leading-none text-[1.2rem]  font-bold outline-none border-none p-[2px] font-extralight hover:text-red-900 ";
+  closeBtn.textContent = "×";
+
+  closeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    removeMetric(metric);
+  });
+
+  tag.appendChild(label);
+  tag.appendChild(closeBtn);
+  container.appendChild(tag);
+
+  placeholder.classList.add("hidden");
+
+  updateClearMetricsButton();
+  updateMetricsArrowState();
+
+  // If all selected, hide dropdown
+  const remaining = Array.from(document.querySelectorAll("#metricsDropdown > div"))
+    .filter(item => item.style.display !== "none");
+
+  if (remaining.length === 0) {
+    closeDropdown(metricsDropdown);
+    document.getElementById("metricsArrow").classList.remove("rotate-180");
+  }
+
+  refreshDropdownHeight(metricsDropdown);
+  updateSortFieldOptions();
+}
+
+document.querySelectorAll('#metricsDropdown > div').forEach(div => {
+  div.addEventListener('click', () => {
+    const metric = div.dataset.metric;
+    selectMetric(metric);
+  });
+});
+/* metrics dropdown functions - ends here*/
+// Function to update the "Clear all" button visibility
+function removeMetric(metric) {
+  selectedMetrics.delete(metric);
+  document.getElementById(`tag-${metric}`)?.remove();
+
+
+  document.querySelectorAll("#metricsDropdown > div").forEach(item => {
+    const span = item.querySelector("span");
+    if (span && span.textContent === metric) {
+      item.style.display = "block";
+    }
+  });
+
+
+  if (selectedMetrics.size === 0) {
+    metricsPlaceholder.classList.remove("hidden");
+  }
+
+  // Allow dropdown to be reopened after removal
+  isDropdownOpen = false;
+  toggleDropdown(metricsDropdown, metricsArrow, false);
+  updateClearMetricsButton();
+  updateMetricsArrowState();
+  refreshDropdownHeight(metricsDropdown);
+  updateSortFieldOptions();
+}
+
+function clearAllMetrics() {
+  const tagContainer = document.getElementById("metricsTagsContainer");
+  const placeholder = document.getElementById("metricsPlaceholder");
+  const arrow = document.getElementById("metricsArrow");
+
+  if (!tagContainer || !placeholder) {
+    console.error("clearAllMetrics error: tags container or placeholder is missing");
+    return;
+  }
+
+  tagContainer.querySelectorAll("div").forEach(tag => tag.remove());
+  selectedMetrics.clear();
+  placeholder.classList.remove("hidden");
+
+  document.querySelectorAll("#metricsDropdown > div").forEach(item => {
+    item.style.display = "block";
+  });
+
+  updateClearMetricsButton();
+  updateMetricsArrowState();
+
+  isDropdownOpen = false;
+  toggleDropdown(metricsDropdown, arrow, false);
+  updateSortFieldOptions();
+}
+
+const selectedMetricsEl = document.getElementById("selectedMetrics");
+const metricsDropdown = document.getElementById("metricsDropdown");
+
+
+selectedMetricsEl.addEventListener("click", (event) => {
+  // Prevent dropdown toggle if clicking a tag (e.g., close button)
+  if (event.target.closest(".tag-metric")) return;
+
+  const arrow = document.getElementById("metricsArrow");
+
+  // Block — if arrow is disabled, stop everything
+  if (arrow.classList.contains("cursor-not-allowed")) {
+    return;
+  }
+
+  const visibleItems = Array.from(metricsDropdown.querySelectorAll("div"))
+    .filter(item => item.style.display !== "none");
+
+  const isOpen = metricsDropdown.getAttribute("data-open") === "true";
+
+  if (visibleItems.length === 0) {
+    closeDropdown(metricsDropdown);
+    arrow.classList.remove("rotate-180");
+    return;
+  }
+
+  toggleDropdown(metricsDropdown, arrow, !isOpen);
+  isDropdownOpen = !isOpen;
+  updateSortFieldOptions();
+});
+
+
+/* metrics multiselect script - ends here */
+document.addEventListener("click", (e) => {
+  const dropdowns = [
+    { menu: document.getElementById("metricsDropdown"), trigger: document.getElementById("selectedMetrics"), arrow: document.getElementById("metricsArrow") },
+    { menu: document.getElementById("dimensionsDropdown"), trigger: document.getElementById("selectedDimensions"), arrow: document.getElementById("dimensionsArrow") },
+    { menu: document.getElementById("dateRangeDropdown"), trigger: document.getElementById("selectedDateRange"), arrow: document.getElementById("dateRangeArrow") }
+  ];
+
+  dropdowns.forEach(({ menu, trigger, arrow }) => {
+    if (menu && !menu.contains(e.target) && !trigger.contains(e.target)) {
+      closeDropdown(menu);
+      arrow?.classList.remove("rotate-180");
+    }
+  });
+});
+
+document.querySelectorAll('.dimension-option').forEach(item => {
+  item.addEventListener('click', (e) => {
+    e.stopPropagation(); // prevent closing the dropdown
+    const label = item.getAttribute('data-label');
+    if (label) {
+      selectDimension(label);
+    }
+  });
+});
+
+
+
+function closeDropdown(dropdown) {
+  dropdown.style.userSelect = "none";
+
+  setTimeout(() => {
+    dropdown.style.width = "100%";
+    dropdown.style.opacity = "0";
+  }, 100);
+
+  setTimeout(() => {
+    dropdown.classList.remove("block");
+    dropdown.classList.add("hidden");
+    dropdown.setAttribute("data-open", "false");
+  }, 10);
+}
+
+function openDropdown(dropdown) {
+  dropdown.classList.remove("hidden");
+  dropdown.classList.add("block");
+  dropdown.style.background = "";
+
+  dropdown.style.height = "0px";
+
+  dropdown.style.opacity = "0";
+
+  requestAnimationFrame(() => {
+
+    dropdown.style.opacity = "1";
+
+    setTimeout(() => {
+      dropdown.style.height = dropdown.scrollHeight + "px";
+      dropdown.setAttribute("data-open", "true");
+      dropdown.style.width = "100%";
+    }, 50);
+  });
+}
+function refreshDropdownHeight(dropdown) {
+
+  if (typeof dropdown === "string") {
+    dropdown = document.getElementById(dropdown);
+  }
+
+  if (!dropdown || typeof dropdown.getAttribute !== "function") return;
+
+  if (dropdown.getAttribute("data-open") === "true") {
+    setTimeout(() => {
+      dropdown.style.height = "auto"; // Reset to allow re-calc
+      const newHeight = dropdown.scrollHeight + "px";
+
+      dropdown.style.height = dropdown.offsetHeight + "px"; // Force reflow
+
+      requestAnimationFrame(() => {
+        dropdown.style.height = newHeight;
+      });
+    }, 300); // Delay for animation/DOM sync
+  }
+}
+
+
+function toggleDropdown(dropdown, arrow, open) {
+  const allDropdowns = document.querySelectorAll('[data-open="true"]');
+  const allArrows = document.querySelectorAll('svg.rotate-180');
+
+  // Close any other open dropdowns and reset arrows
+  allDropdowns.forEach(d => {
+    if (d !== dropdown) closeDropdown(d);
+  });
+  allArrows.forEach(a => {
+    if (a !== arrow) a.classList.remove("rotate-180");
+  });
+
+  const visibleItems = Array.from(dropdown.querySelectorAll("div"))
+    .filter(item => item.style.display !== "none");
+
+  const arrowDisabled = arrow?.classList.contains("cursor-not-allowed");
+
+  if (open && visibleItems.length === 0) {
+    closeDropdown(dropdown);
+    arrow?.classList.remove("rotate-180");
+    return;
+  }
+
+  if (open) {
+    openDropdown(dropdown);
+    if (!arrowDisabled) arrow?.classList.add("rotate-180");
+  } else {
+    closeDropdown(dropdown);
+    arrow?.classList.remove("rotate-180");
+  }
+}
+
+// ===== Add All Metrics integration =====
+const METRIC_ITEM_SELECTOR = '#metricsDropdown > div[data-metric]';
+
+function addAllMetrics() {
+  const items = document.querySelectorAll(METRIC_ITEM_SELECTOR);
+  if (!items.length) return;
+
+  let added = 0;
+  items.forEach(el => {
+    const label = el.dataset.metric || el.textContent.trim();
+    if (!selectedMetrics.has(label)) {
+      // Reuse your existing selector logic
+      if (typeof selectMetric === 'function') {
+        selectMetric(label);
+      }
+      added++;
+    }
+  });
+
+  if (added > 0) {
+    document.getElementById('metricsPlaceholder')?.classList.add('hidden');
+    updateSortFieldOptions?.();
+  }
+  updateAddAllMetricsButton();
+}
+
+function updateAddAllMetricsButton() {
+  const total = document.querySelectorAll(METRIC_ITEM_SELECTOR).length;
+  const btn = document.getElementById('addAllMetricsBtn');
+  if (!btn) return;
+  const allSelected = selectedMetrics.size >= total && total > 0;
+  btn.disabled = allSelected;
+  btn.classList.toggle('btn-disabled', allSelected);
+  btn.setAttribute('aria-disabled', allSelected ? 'true' : 'false');
+}
+
+// Attach listeners when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const addAllBtn = document.getElementById('addAllMetricsBtn');
+  if (addAllBtn) {
+    addAllBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      addAllMetrics();
+    });
+    updateAddAllMetricsButton();
+  }
+
+  // Keep button state in sync even if metrics are added/removed elsewhere
+  const tags = document.getElementById('metricsTagsContainer');
+  if (tags) {
+    new MutationObserver(() => updateAddAllMetricsButton())
+      .observe(tags, { childList: true });
+  }
+});
+
+// Make sure Clear All also re-enables the button
+const __origClearAllMetrics = typeof clearAllMetrics === 'function' ? clearAllMetrics : null;
+window.clearAllMetrics = function () {
+  if (__origClearAllMetrics) __origClearAllMetrics();
+  updateAddAllMetricsButton();
+};
+
+
+// toogle filters slide down starts here
+
+function toggleFilters() {
+  const section = document.getElementById('filterSection');
+  const arrow = document.getElementById('filterArrow');
+  section.classList.toggle('hidden');
+  arrow.classList.toggle('rotate-180');
+}
+// toogle filters slide down ends here
+
+
+document.querySelectorAll('[data-toggle="dropdown"]').forEach(toggle => {
+  toggle.addEventListener('click', function (e) {
+    e.stopPropagation();
+
+    const targetSelector = this.getAttribute('data-target');
+    const arrowSelector = this.getAttribute('data-arrow');
+    const dropdown = document.querySelector(targetSelector);
+    const arrow = document.querySelector(arrowSelector);
+    const isOpen = dropdown.getAttribute('data-open') === 'true';
+
+    // Close all dropdowns
+    document.querySelectorAll('[data-toggle="dropdown"]').forEach(el => {
+      const d = document.querySelector(el.getAttribute('data-target'));
+      const a = document.querySelector(el.getAttribute('data-arrow'));
+      if (d) {
+        d.style.height = "0px";
+        d.style.width = "100%";
+        d.style.opacity = "0";
+        d.setAttribute('data-open', 'false');
+      }
+      if (a) a.classList.remove('rotate-180');
+    });
+
+    // Open current if it was closed
+    if (!isOpen) {
+      dropdown.style.height = dropdown.scrollHeight + "px";
+      dropdown.style.width = "100%";
+      dropdown.style.opacity = "1";
+      dropdown.setAttribute('data-open', 'true');
+      arrow?.classList.add('rotate-180');
+    }
+  });
+});
+
+let isDimensionsDropdownOpen = false;
+
+const selectedDimensionsEl = document.getElementById("selectedDimensions");
+const dimensionsArrow = document.getElementById("dimensionsArrow");
+
+selectedDimensionsEl.addEventListener("click", (event) => {
+  if (event.target.closest(".tag-metric")) return;
+
+  const isOpen = dimensionsDropdown.getAttribute("data-open") === "true";
+
+  // Close other dropdowns
+  document.querySelectorAll('[data-open="true"]').forEach(d => {
+    if (d !== dimensionsDropdown) closeDropdown(d);
+  });
+  document.querySelectorAll('svg.rotate-180').forEach(a => {
+    if (a !== dimensionsArrow) a.classList.remove("rotate-180");
+  });
+
+  toggleDropdown(dimensionsDropdown, dimensionsArrow, !isOpen);
+  isDimensionsDropdownOpen = !isOpen;
+});
+
+// Function to handle click on dimensions dropdown items
+
+// Update the "Clear Dimensions" button visibility based on selected dimensions
+function updateClearDimensionsButton() {
+  const btn = document.getElementById("clearDimensionsBtn");
+  if (selectedDimensions.size >= 2) {
+    btn.classList.remove("hidden");
+  } else {
+    btn.classList.add("hidden");
+  }
+}
+
+
+function clearAllDimensions() {
+  selectedDimensions.clear();
+
+  // Remove all tag-metric elements only (not the placeholder)
+  const tagContainer = document.getElementById("dimensionsTagsContainer");
+  // tagContainer.querySelectorAll(".tag-metric").forEach(tag => tag.remove());
+  tagContainer.querySelectorAll('[id^="tag-dimension-"]').forEach(el => el.remove());
+
+  // Show the placeholder again
+  const placeholder = document.getElementById("dimensionsPlaceholder");
+  if (placeholder) placeholder.classList.remove("hidden");
+
+  // Show all dropdown options again
+  document.querySelectorAll("#dimensionsDropdown > div").forEach(item => {
+    item.style.display = "flex";
+  });
+
+  updateClearDimensionsButton();
+
+  // Reset dropdown state
+  isDimensionsDropdownOpen = false;
+  const arrow = document.getElementById("dimensionsArrow");
+  toggleDropdown(dimensionsDropdown, arrow, false);
+  updateSortFieldOptions();
+}
+
+//filter functionality starts here
+
+/* add filter row script starts here */
+
+const filterFieldOptions = [
+  "Query", "URL", "Country", "Page", "Search Type", "Device", "Site URL", "Date", "Month", "Year",
+  "Is Anonymized Query", "Is Anonymized Discover", "Is AMP Top Stories", "Is AMP Blue Link", "Is Job Listing",
+  "Is Job Details", "Is TPF QA", "Is TPF FAQ", "Is TPF HowTo", "Is Weblite", "Is Action", "Is Events Listing",
+  "Is Events Details", "Is Search Appearance Android App", "Is AMP Story", "Is AMP Image Result", "Is Video",
+  "Is Organic Shopping", "Is Review Snippet", "Is Special Announcement", "Is Recipe Feature", "Is Recipe Rich Snippet",
+  "Is Subscribed Content", "Is Page Experience", "Is Practice Problems", "Is Math Solvers", "Is Translated Result",
+  "Is Product Snippets", "Is Merchant Listings", "Impressions"
+];
+
+
+
+
+/* add filter row script starts here */
+function createDeviceSelect() {
+  const sel = document.createElement('select');
+  sel.className = "w-[calc(50%-22px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm device-select hidden";
+  ["MOBILE", "DESKTOP", "TABLET"].forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    sel.appendChild(opt);
+  });
+  return sel;
+}
+
+/* search type starts here */
+function createSearchTypeSelect() {
+  const sel = document.createElement('select');
+  sel.className = "w-full sm:w-[calc(32%-4px)] select input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm searchtype-select hidden";
+  SEARCH_TYPES.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    sel.appendChild(opt);
+  });
+  return sel;
+}
+/* search type ends here */
+
+
+/* ---------- numeric helpers (UI only) ---------- */
+const NUMERIC_INT_FIELDS = new Set(['clicks', 'impressions']); // INT64
+const NUMERIC_DEC_FIELDS = new Set(['ctr', 'position']);       // decimals (SAFE_DIVIDE etc.)
+const NUMERIC_OPS = new Set(['EQUALS', 'NOT EQUALS', 'GREATER THAN', 'LESS THAN', 'GREATER EQUAL', 'LESS EQUAL']);
+
+function normalizeLabelToKey(label) {
+  const l = String(label || '');
+  const map = { 'Impressions': 'impressions', 'Clicks': 'clicks', 'CTR': 'ctr', 'Position': 'position' };
+  return map[l] || map[l.toLowerCase()] || l.toLowerCase();
+}
+function isNumericFieldLabel(label) {
+  const k = normalizeLabelToKey(label);
+  return NUMERIC_INT_FIELDS.has(k) || NUMERIC_DEC_FIELDS.has(k);
+}
+function isDecimalFieldLabel(label) {
+  return NUMERIC_DEC_FIELDS.has(normalizeLabelToKey(label));
+}
+function setValueInputTypeForField(inputEl, fieldLabel) {
+  if (!inputEl) return;
+  if (isNumericFieldLabel(fieldLabel)) {
+    inputEl.type = 'number';
+    inputEl.inputMode = 'decimal';
+    inputEl.step = isDecimalFieldLabel(fieldLabel) ? 'any' : '1';
+    if (!isDecimalFieldLabel(fieldLabel)) inputEl.min = '0'; else inputEl.removeAttribute('min');
+    inputEl.placeholder = 'Enter number';
+  } else {
+    inputEl.type = 'text';
+    inputEl.removeAttribute('inputMode');
+    inputEl.removeAttribute('step');
+    inputEl.removeAttribute('min');
+    inputEl.placeholder = 'Type value';
+  }
+  inputEl.classList.remove('border-red-5date00');
+  inputEl.removeAttribute('title');
+}
+
+// function validateNumericIfNeeded(fieldLabel, operatorValue, inputEl) {
+//   if (!inputEl) return true;
+//   if (!isNumericFieldLabel(fieldLabel) || !NUMERIC_OPS.has(String(operatorValue))) {
+//     inputEl.classList.remove('border-red-500'); inputEl.removeAttribute('title');
+//     return true;
+//   }
+
+//   const raw = inputEl.value;
+//   const hasChars = raw.trim() !== '';
+
+//   let bad = false;
+//   if (inputEl.type === 'number') {
+//     // For number inputs: letters → value=='' but badInput===true; decimals use valueAsNumber
+//     bad = inputEl.validity.badInput || (hasChars && !Number.isFinite(inputEl.valueAsNumber));
+//   } else {
+//     // For text inputs (fallback)
+//     bad = hasChars && !/^-?\d+(\.\d+)?$/.test(raw);
+//   }
+
+//   if (bad) {
+//     inputEl.classList.add('border-red-500');
+//     inputEl.setAttribute('title', 'Enter a valid number');
+//     return false;
+//   }
+//   inputEl.classList.remove('border-red-500');
+//   inputEl.removeAttribute('title');
+//   return true;
+// }
+
+function validateNumericIfNeeded(fieldLabel, operatorValue, inputEl) {
+  if (!inputEl) return true;
+
+  // Non-numeric context → clear any error and treat as valid
+  if (!isNumericFieldLabel(fieldLabel) || !NUMERIC_OPS.has(String(operatorValue))) {
+    inputEl.classList.remove('border-red-500');
+    inputEl.removeAttribute('title');
+    return true;
+  }
+
+  const raw = String(inputEl.value ?? '').trim();
+
+  //  NEW: empty value is invalid for numeric operators
+  if (raw === '') {
+    inputEl.classList.add('border-red-500');
+    inputEl.setAttribute('title', 'Please enter a numeric value');
+    return false;
+  }
+
+  let bad = false;
+  if (inputEl.type === 'number') {
+    // letters -> badInput || NaN via valueAsNumber
+    bad = inputEl.validity.badInput || !Number.isFinite(inputEl.valueAsNumber);
+  } else {
+    bad = !/^-?\d+(\.\d+)?$/.test(raw);
+  }
+
+  if (bad) {
+    inputEl.classList.add('border-red-500');
+    inputEl.setAttribute('title', 'Please enter a numeric value');
+    return false;
+  }
+
+  inputEl.classList.remove('border-red-500');
+  inputEl.removeAttribute('title');
+  return true;
+}
+
+
+function addFilterRow() {
+  const container = document.getElementById('filterRows');
+  const isFirst = container.children.length === 0;
+  const NULL_OPS = new Set(['IS NULL', 'IS NOT NULL']);
+
+
+  const wrapper = document.createElement('div');
+  wrapper.className = "space-y-2 w-full transition-all duration-300 ease-in-out";
+
+  let topRow = null;
+  if (!isFirst) {
+    topRow = document.createElement('div');
+    topRow.className = "flex justify-between items-center py-4 md:py-2";
+    wrapper.appendChild(topRow);
+  }
+
+  const bottomRow = document.createElement('div');
+  bottomRow.className =
+    "flex flex-wrap md:flex-nowrap items-center gap-2 filter-row overflow-visible " +
+    "[&>.stackable]:basis-full sm:[&>.stackable]:basis-auto relative";
+
+  // FIELD select (native)
+  const fieldSelect = document.createElement('select');
+  fieldSelect.dataset.role = 'filter-field';
+  fieldSelect.className =
+    "w-full sm:w-[calc(33%-25px)] md:w-[calc(33%-25px)] select input-lg " +
+    "relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm";
+  fieldSelect.required = true;
+  fieldSelect.innerHTML =
+    `<option value="" disabled selected hidden>Select Field</option>` +
+    filterFieldOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+  // OPERATOR select (native)
+  const operatorSelect = document.createElement('select');
+  operatorSelect.dataset.role = 'filter-op';
+  operatorSelect.className =
+    "w-full sm:w-[calc(25%-22px)] select input-lg relative items-center justify-between " +
+    "cursor-pointer focus:outline-none h-auto p-[9px] text-sm disabled";
+
+  // DEVICE select (native, hidden by default)
+  const deviceSelect = createDeviceSelect();
+  deviceSelect.dataset.role = 'filter-device';
+
+  // SEARCH TYPE select (hidden by default)
+  const searchTypeSelect = createSearchTypeSelect();
+  searchTypeSelect.dataset.role = 'filter-searchtype';
+  //serach type ends here
+
+  // ▼ VALUE input (will switch to number for numeric fields)
+  const textInput = document.createElement('input');
+  const numTip = createNumericTip();
+  textInput.type = "text";
+  textInput.placeholder = "Type value";
+  textInput.className =
+    "input w-full sm:w-[calc(32%-4px)] leading-7 input-lg relative items-center " +
+    "justify-between cursor-pointer focus:outline-none h-auto p-[9px] text-sm";
+
+  // BOOLEAN radios
+  const radioWrapper = document.createElement('div');
+  radioWrapper.className =
+    "bool-radio-wrapper hidden w-full sm:w-auto flex items-center justify-center gap-6 m-auto " +
+    "py-4 md:py-2 border-b sm:border-b-0 border-[color:var(--border,#3f3f46)]";
+  radioWrapper.innerHTML = `
+    <label class="inline-flex items-center gap-1 m-0 font-semibold">
+      <input type="radio" name="bool-val-filter-${Date.now()}" value="TRUE" class="radio radio-sm" />
+      TRUE
+    </label>
+    <label class="inline-flex items-center gap-1 m-0 font-semibold">
+      <input type="radio" name="bool-val-filter-${Date.now()}" value="FALSE" class="radio radio-sm" />
+      FALSE
+    </label>
+  `;
+
+  function applyOperatorState() {
+    const op = operatorSelect.value || '';
+    const isNullOp = NULL_OPS.has(op);
+
+    if (isNullOp) {
+      // nothing to type for NULL operators
+      textInput.value = '';
+      textInput.setAttribute('disabled', '');
+      textInput.classList.add('input-disabled', 'opacity-50', 'pointer-events-none');
+      numTip.classList.add('hidden');
+      setValueInputTypeForField(textInput, '');
+    } else {
+      // allow typing again
+      textInput.removeAttribute('disabled');
+      textInput.classList.remove('input-disabled', 'opacity-50', 'pointer-events-none');
+
+      // keep your numeric validation + tip visibility
+      const ok = validateNumericIfNeeded(fieldSelect.value, op, textInput);
+      numTip.classList.toggle('hidden', ok);
+    }
+  }
+
+
+  function hideAllValueControls() {
+    deviceUI?.wrap.classList.add('hidden');
+    searchTypeUI?.wrap.classList.add('hidden'); // search type
+    textInput.classList.add('hidden');
+    radioWrapper.classList.add('hidden');
+    bottomRow.querySelector('.country-search-wrapper')?.remove();
+    numTip.classList.add('hidden');
+  }
+
+  // Assemble row
+  bottomRow.appendChild(fieldSelect);
+  bottomRow.appendChild(operatorSelect);
+  bottomRow.appendChild(deviceSelect);
+  bottomRow.appendChild(searchTypeSelect);
+  bottomRow.appendChild(textInput);
+  bottomRow.appendChild(numTip);
+  bottomRow.appendChild(radioWrapper);
+
+  wrapper.appendChild(bottomRow);
+  container.appendChild(wrapper);
+
+  // Skin the selects
+  const fieldUI = makeCustomSelect(fieldSelect, { placeholder: 'Select Field' });
+  const operatorUI = makeCustomSelect(operatorSelect, { placeholder: 'Operator' });
+  const deviceUI = makeCustomSelect(deviceSelect, { placeholder: 'Device' });
+  const searchTypeUI = makeCustomSelect(searchTypeSelect, { placeholder: 'Search type' }); // search type
+
+  fieldUI.wrap.classList.add('stackable', 'w-full', 'sm:w-[calc(33%-25px)]', 'md:w-[calc(33%-25px)]');
+  operatorUI.wrap.classList.add('stackable', 'w-full', 'sm:w-[calc(25%-22px)]');
+  if (deviceUI) deviceUI.wrap.classList.add('stackable', 'w-full', 'sm:w-[calc(50%-22px)]', 'hidden');
+  if (searchTypeUI) searchTypeUI.wrap.classList.add('stackable', 'w-full', 'sm:w-[calc(32%-4px)]', 'hidden'); // serach type
+
+  textInput.classList.add('stackable');
+  radioWrapper.classList.add('stackable');
+
+  // ▼ Field change → show proper value control + set input type + validate
+  fieldSelect.addEventListener('change', () => {
+    // const field = fieldSelect.value;
+    // const type = getOperatorType(field);
+
+    // const operators = filterOperatorMap[type] || [];
+    // const defaultOperator = 'EQUALS';
+    // operatorSelect.innerHTML = operators.map(opt =>
+    //   `<option value="${opt}" ${opt === defaultOperator ? 'selected' : ''}>${opt}</option>`
+    // ).join('');
+
+    // hideAllValueControls();
+
+    // if ((field || '').toLowerCase() === 'device') {
+    //   deviceUI?.wrap.classList.remove('hidden');
+    // } else if (type === 'boolean') {
+    //   radioWrapper.classList.remove('hidden');
+    //   radioWrapper.querySelector('input[value="TRUE"]').checked = true;
+    // } else if (type === 'country') {
+    //   const cWrap = document.createElement('div');
+    //   cWrap.className = 'relative country-search-wrapper stackable w-full sm:w-[calc(32%-4px)] shrink-0 min-w-0';
+    //   const countryInput = enableCountrySearchStyled('filter-country', window.predefinedCountries, cWrap);
+    //   countryInput.classList.add('input', 'input-lg', 'w-full', 'box-border', 'p-[9px]', 'text-sm', 'h-auto');
+    //   bottomRow.appendChild(cWrap);
+    // } else {
+    //   textInput.classList.remove('hidden');
+    //   setValueInputTypeForField(textInput, field);            // switch to number for numeric fields
+    //   const ok = validateNumericIfNeeded(field, operatorSelect.value, textInput);
+    //   numTip.classList.toggle('hidden', ok);
+    //   applyOperatorState();
+    // }
+
+    const field = fieldSelect.value;
+    const type = getOperatorType(field);
+
+    // operators: for searchtype we *label* them IS / IS NOT but keep values EQUALS / NOT EQUALS
+    if (type === 'searchtype') {
+      operatorSelect.innerHTML = `<option value="EQUALS" selected>IS</option>
+                              <option value="NOT EQUALS">IS NOT</option>`;
+    } else {
+      const ops = filterOperatorMap[type] || [];
+      operatorSelect.innerHTML = ops.map(o => `<option value="${o}" ${o === 'EQUALS' ? 'selected' : ''}>${o}</option>`).join('');
+    }
+
+    hideAllValueControls();
+
+    if ((field || '').toLowerCase() === 'device') {
+      deviceUI?.wrap.classList.remove('hidden');
+    } else if (type === 'searchtype') {
+      searchTypeUI?.wrap.classList.remove('hidden');             // ← show the Search Type dropdown
+    } else if (type === 'boolean') {
+      radioWrapper.classList.remove('hidden');
+      radioWrapper.querySelector('input[value="TRUE"]').checked = true;
+    } else if (type === 'country') {
+      const cWrap = document.createElement('div');
+      cWrap.className = 'relative country-search-wrapper stackable w-full sm:w-[calc(32%-4px)] shrink-0 min-w-0';
+      const countryInput = enableCountrySearchStyled('filter-country', window.predefinedCountries, cWrap);
+      countryInput.classList.add('input', 'input-lg', 'w-full', 'box-border', 'p-[9px]', 'text-sm', 'h-auto');
+      bottomRow.appendChild(cWrap);
+    } else {
+      textInput.classList.remove('hidden');
+      setValueInputTypeForField(textInput, field);
+      const ok = validateNumericIfNeeded(field, operatorSelect.value, textInput);
+      numTip.classList.toggle('hidden', ok);
+      applyOperatorState?.();
+    }
+
+  });
+
+  // Operator change → (re)validate if numeric
+  operatorSelect.addEventListener('change', () => {
+    const ok = validateNumericIfNeeded(fieldSelect.value, operatorSelect.value, textInput); //
+    numTip.classList.toggle('hidden', ok);
+    applyOperatorState();
+  });
+
+  // Typing live validation for numeric fields
+  textInput.addEventListener('input', () => {
+    const ok = validateNumericIfNeeded(fieldSelect.value, operatorSelect.value, textInput);
+    numTip.classList.toggle('hidden', ok);
+  });
+
+  // Initial input mode (when row first appears)
+  setValueInputTypeForField(textInput, fieldSelect.value || '');
+
+  // CLEAR button
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.title = 'Clear this filter';
+  clearBtn.className = 'btn btn-ghost btn-xs px-2 text-xs';
+  clearBtn.textContent = 'Clear';
+  clearBtn.addEventListener('click', () => clearFilterRow(wrapper));
+
+  // REMOVE for non-first rows
+  let removeBtn = null;
+  if (!isFirst) {
+    removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.setAttribute('aria-label', 'Remove filter');
+    removeBtn.title = 'Remove filter';
+    removeBtn.className =
+      'btn btn-ghost btn-xs h-6 min-h-[24px] px-2 leading-none inline-flex items-center justify-center text-base';
+    removeBtn.innerHTML = '<span class="block leading-none text-xs mt-[-1px] mr-[-1px]">&#10005;</span>';
+    removeBtn.onclick = () => {
+      wrapper.style.opacity = '0';
+      wrapper.style.maxHeight = `${wrapper.scrollHeight}px`;
+      requestAnimationFrame(() => {
+        wrapper.style.transition = 'max-height 300ms ease, opacity 300ms ease';
+        wrapper.style.maxHeight = '0px';
+      });
+      setTimeout(() => { wrapper.remove(); updateFilterRemoveButton(); }, 320);
+    };
+  }
+
+  if (isFirst) {
+    const firstTop = document.createElement('div');
+    firstTop.className = "flex justify-end items-center -mt-1";
+    firstTop.appendChild(clearBtn);
+    wrapper.insertBefore(firstTop, bottomRow);
+  } else {
+    const left = document.createElement('div');
+    left.className = "flex items-center gap-4 text-sm";
+    left.innerHTML = `
+      <label class="inline-flex items-center gap-1 m-0 font-semibold">
+        <input type="radio" name="logicGroup-${container.children.length - 1}" value="AND" class="radio radio-sm" checked />
+        AND
+      </label>
+      <label class="inline-flex items-center gap-1 m-0 font-semibold">
+        <input type="radio" name="logicGroup-${container.children.length - 1}" value="OR" class="radio radio-sm" />
+        OR
+      </label>
+    `;
+    const right = document.createElement('div');
+    right.className = "flex items-center gap-1 shrink-0";
+    right.appendChild(clearBtn);
+    right.appendChild(removeBtn);
+    topRow.appendChild(left);
+    topRow.appendChild(right);
+  }
+
+  updateFilterRemoveButton();
+}
+
+
+function removeFilterRow() {
+  const container = document.getElementById('filterRows');
+  if (container.children.length > 1) {
+    container.lastElementChild.remove();
+    updateFilterRemoveButton();
+  }
+}
+function clearFilterRow(wrapper) {
+  const row = wrapper.querySelector('.filter-row');
+  if (!row) return;
+
+  const tip = row.querySelector('.num-tip');
+  if (tip) tip.classList.add('hidden');
+
+
+
+  const fieldSelect = row.querySelector('select[data-role="filter-field"]');
+  const operatorSelect = row.querySelector('select[data-role="filter-op"]');
+  const deviceSelect = row.querySelector('select[data-role="filter-device"]');
+  const textInput = row.querySelector('input[type="text"], input[type="number"]'); // ▲ accept both
+  const radioWrapper = row.querySelector('.bool-radio-wrapper') || row.querySelector('div');
+
+  if (fieldSelect) { fieldSelect.selectedIndex = 0; }
+  if (operatorSelect) { operatorSelect.innerHTML = ''; }
+  if (deviceSelect) { deviceSelect.selectedIndex = 0; }
+  if (textInput) {
+    textInput.value = '';
+    textInput.classList.remove('border-red-500');
+    textInput.removeAttribute('title');
+    setValueInputTypeForField(textInput, '');
+  }
+
+  if (radioWrapper) {
+    radioWrapper.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+  }
+
+  row.querySelectorAll('.country-search-wrapper').forEach(el => el.remove());
+
+  row.querySelectorAll('.device-select, .country-search-wrapper').forEach(el => el.classList.add('hidden'));
+  const textEl = row.querySelector('input[type="text"], input[type="number"]');
+  if (textEl) textEl.classList.add('hidden');
+  const boolWrap = row.querySelector('.bool-radio-wrapper');
+  if (boolWrap) boolWrap.classList.add('hidden');
+
+  try { fieldSelect && fieldSelect.dispatchEvent(new Event('change', { bubbles: true })); } catch (_) { }
+}
+
+
+function updateFilterRemoveButton() {
+  const container = document.getElementById('filterRows');
+  const removeBtn = document.getElementById('removeFilterRowBtn');
+  updateSortFieldOptions();
+  if (!removeBtn) return;
+
+  if (container.children.length <= 1) {
+    removeBtn.classList.add("hidden");
+  } else {
+    removeBtn.classList.remove("hidden");
+  }
+}
+/* add filter row script ends here */
+
+
+function enableCountrySearchStyled(idPrefix, countries, parentElement) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'flex-1 country-search-wrapper relative';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Type to search country...';
+  input.className = 'input input-lg relative items-center justify-between cursor-pointer focus:outline-none h-auto p-[9px] w-[calc(100%-0px)] text-sm leading-7';
+  input.autocomplete = 'off';
+
+  input.classList.add('country-search-input'); // Adding class to the serach-dropdown-input 
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'bg-[var(--bg-dropdown)] border border-gray-600 p-1 rounded absolute z-50 mt-2 w-full max-h-64 overflow-auto hidden';
+  dropdown.style.maxHeight = '200px';
+
+  let currentSelection = null;
+
+  function renderOptions(filtered) {
+    dropdown.innerHTML = '';
+    filtered.forEach(country => {
+      const option = document.createElement('div');
+      option.className = 'cursor-pointer p-1 hover:bg-[var(--bg-dropdown-hover)] hover:text-[var(--color-dropdown-hover)] rounded-[3px] px-2';
+      option.textContent = country.name;
+      option.dataset.code = country.code;
+
+      option.addEventListener('click', () => {
+        input.value = country.name;
+        input.dataset.code = country.code;
+        currentSelection = country;
+        dropdown.classList.add('hidden');
+      });
+
+      dropdown.appendChild(option);
+    });
+
+    if (filtered.length > 0) {
+      dropdown.classList.remove('hidden');
+    } else {
+      dropdown.classList.add('hidden');
+    }
+  }
+
+  input.addEventListener('input', () => {
+    const term = input.value.trim().toLowerCase();
+    const filtered = countries.filter(c =>
+      c.name.toLowerCase().startsWith(term)
+    );
+    renderOptions(filtered);
+  });
+
+  input.addEventListener('focus', () => {
+    const term = input.value.trim().toLowerCase();
+    const filtered = countries.filter(c =>
+      c.name.toLowerCase().startsWith(term)
+    );
+    renderOptions(filtered);
+  });
+
+  // Optional: hide on click outside
+  document.addEventListener('click', (e) => {
+    if (!wrapper.contains(e.target)) {
+      dropdown.classList.add('hidden');
+    }
+  });
+
+  wrapper.appendChild(input);
+  wrapper.appendChild(dropdown);
+
+  parentElement.appendChild(wrapper);
+
+  return input; // So you can still access input.dataset.code
+}
+/* scripts for creating custom Fields filters - starts here */
+
+
+function toggleCustomFields() {
+  const section = document.getElementById('customFieldsSection');
+  const arrow = document.getElementById('customFilterArrow');
+  section.classList.toggle('hidden');
+  arrow.classList.toggle('rotate-180');
+}
+
+
+function createConditionRow(hasRemove = true, addButtons = true, groupContainer = null, defaultField = '', defaultOperator = 'EQUALS') {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'card-body gap-4 bg-[var(--condition-card-bg)] card-border border-gray-700';
+
+  // stack on mobile, wrap, and only go row on md+
+  const inputRow = document.createElement('div');
+  inputRow.className = 'flex flex-col md:flex-row flex-wrap md:flex-nowrap items-stretch md:items-center gap-2 justify-start w-full';
+
+  const whenLabel = document.createElement('label');
+  // full width label on mobile, fixed on md+
+  whenLabel.className = 'text-sm whitespace-nowrap mt-0 w-full md:w-[48px] font-semibold shrink-0';
+  whenLabel.textContent = 'When';
+  inputRow.appendChild(whenLabel);
+
+  const { wrapper: fieldSelectUI, select: fieldSelect } =
+    buildCustomFieldSelect({ options: fieldOptionsCustomField, placeholder: 'Select Field' });
+
+  const { wrapper: operatorSelectUI, select: operatorSelect } =
+    buildCustomSingleSelect({
+      options: ['EQUALS'],
+      placeholder: null,
+      // hidden <select> width is irrelevant; wrapper gets our width classes below
+      widthClass: ''
+    });
+
+  const valueInput = document.createElement('input');
+  valueInput.type = 'text';
+  valueInput.placeholder = 'My Website Name';
+  // ✅ let it fill on mobile, flex on md+
+  valueInput.className = 'input input-lg w-full md:flex-1 min-w-0 focus:outline-none h-auto p-[9px] text-sm leading-7';
+
+  const valueSelectWrapper = document.createElement('div');
+  // shown only for Country; still needs widths
+  valueSelectWrapper.className = 'hidden w-full md:flex-1 min-w-0';
+
+  const uniqueRadioName = `bool-val-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const radioWrapper = document.createElement('div');
+  radioWrapper.className = 'hidden flex w-full md:flex-1 justify-center items-center gap-6 md:gap-4 mt-2 md:mt-0';
+  radioWrapper.innerHTML = `
+    <label class="inline-flex items-center gap-1 m-0 font-semibold">
+      <input type="radio" name="${uniqueRadioName}" value="TRUE" class="radio radio-sm" />
+      TRUE
+    </label>
+    <label class="inline-flex items-center gap-1 m-0 font-semibold">
+      <input type="radio" name="${uniqueRadioName}" value="FALSE" class="radio radio-sm" />
+      FALSE
+    </label>
+  `;
+
+  function updateValueInputType(field) {
+    const type = getOperatorType(field);
+    const operators = filterOperatorMap[type] || [];
+    const defaultOp = 'EQUALS';
+
+    operatorSelect.innerHTML = operators.map(opt =>
+      `<option value="${opt}" ${opt === defaultOp ? 'selected' : ''}>${opt}</option>`
+    ).join('');
+
+    valueInput.classList.add('hidden');
+    radioWrapper.classList.add('hidden');
+    valueSelectWrapper.classList.add('hidden');
+    valueSelectWrapper.innerHTML = '';
+
+    if (type === 'boolean') {
+      radioWrapper.classList.remove('hidden');
+      const trueRadio = radioWrapper.querySelector('input[value="TRUE"]');
+      if (trueRadio) trueRadio.checked = true;
+    } else if (type === 'country') {
+      valueSelectWrapper.classList.remove('hidden');
+      enableCountrySearchStyled(`customfield-country-${Date.now()}`, window.predefinedCountries, valueSelectWrapper);
+    } else {
+      valueInput.classList.remove('hidden');
+    }
+  }
+
+  fieldSelect.addEventListener('change', () => updateValueInputType(fieldSelect.value));
+
+  // ✅ make the custom-select wrappers responsive and shrinkable
+  fieldSelectUI.classList.add('w-full', 'md:w-[34%]', 'min-w-0');
+  operatorSelectUI.classList.add('w-full', 'md:w-[23%]', 'min-w-0');
+
+  inputRow.appendChild(fieldSelectUI);
+  inputRow.appendChild(operatorSelectUI);
+  inputRow.appendChild(valueInput);
+  inputRow.appendChild(valueSelectWrapper);
+  inputRow.appendChild(radioWrapper);
+  wrapper.appendChild(inputRow);
+
+  // ===== THEN row =====
+  const thenRow = document.createElement('div');
+  // ✅ wrap on small so the buttons drop below nicely
+  thenRow.className = 'flex flex-wrap md:flex-nowrap items-stretch md:items-center gap-2 justify-start';
+
+  const thenLabel = document.createElement('label');
+  thenLabel.className = 'text-sm whitespace-nowrap mt-0 w-full md:w-[51px] font-semibold shrink-0';
+  thenLabel.textContent = 'Then';
+
+  const thenInput = document.createElement('input');
+  thenInput.type = 'text';
+  thenInput.placeholder = 'Brand';
+  // special rule you wanted: not 100% on mobile
+  thenInput.className = 'input input-lg w-full sm:w-[70%] md:w-[57%] min-w-[220px] max-w-full focus:outline-none h-auto p-[9px] text-sm leading-7';
+
+  thenRow.appendChild(thenLabel);
+  thenRow.appendChild(thenInput);
+
+  if (addButtons) {
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '−';
+    removeBtn.className = 'btn btn-ghost btn-md h-12 min-h-12 w-auto';
+    removeBtn.onclick = () => { wrapper.remove(); updateConditionButtonsVisibility(groupContainer); };
+
+    const addConditionBtn = document.createElement('button');
+    addConditionBtn.textContent = '+ Condition';
+    // full width on mobile if needed, shrink on md+
+    addConditionBtn.className = 'btn btn-ghost btn-md h-12 min-h-12 grow md:grow-0';
+    addConditionBtn.onclick = () => {
+      if (!groupContainer) return;
+      const newGroup = createConditionRow(true, true, groupContainer, '', 'EQUALS');
+      newGroup.classList.add('added-custom-condition-group');
+
+      const elseRow = Array.from(groupContainer.children).find(child => {
+        const label = child.querySelector('label');
+        return label && label.textContent.trim().toLowerCase() === 'else';
+      });
+      if (elseRow) groupContainer.insertBefore(newGroup, elseRow);
+      else groupContainer.appendChild(newGroup);
+
+      updateConditionButtonsVisibility(groupContainer);
+    };
+
+    thenRow.appendChild(removeBtn);
+    thenRow.appendChild(addConditionBtn);
+  }
+
+  wrapper.appendChild(thenRow);
+
+  // init after attach
+  setTimeout(() => {
+    const first = fieldSelect.querySelector('option:not([disabled])');
+    if (first && !defaultField) fieldSelect.value = first.value;
+    fieldSelect.dispatchEvent(new Event('change', { bubbles: true }));
+  }, 0);
+
+  return wrapper;
+}
+
+
+function createConditionGroupWrapper(groupContainer) {
+  // Defaults: no preselected field, but operator is 'EQUALS'
+  const newGroup = createConditionRow(true, true, groupContainer, '', 'EQUALS');
+  newGroup.classList.add('added-custom-condition-group');
+  return newGroup;
+}
+
+// Pre-select "Query" and "CONTAINS" for the first custom field group
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    const firstGroup = document.querySelector('#customFieldGroups > div');
+    if (!firstGroup) return;
+
+    const fieldSelect = firstGroup.querySelector('select:nth-of-type(1)');
+    const operatorSelect = firstGroup.querySelector('select:nth-of-type(2)');
+
+    if (fieldSelect) fieldSelect.value = 'Query';
+    if (operatorSelect) operatorSelect.value = 'CONTAINS';
+  }, 100); // slight delay to ensure DOM is updated
+});
+
+
+
+function addCustomFieldGroup() {
+  const groupContainer = document.createElement('div');
+  groupContainer.className = 'relative card bg-base-100 card-border border-base-300 card-sm gap-4 p-4 pt-6 custom-field-card';
+
+  const isFirstGroup = document.querySelectorAll('#customFieldGroups > div').length > 0;
+
+  if (isFirstGroup) {
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.className = 'absolute top-1 right-1 text-lg w-5 h-5 font-bold hover:text-red-500 font-extralight rounded-[5px] leading-[100%]';
+    closeBtn.onclick = () => groupContainer.remove();
+    groupContainer.appendChild(closeBtn);
+  }
+
+  const conditionsWrapper = document.createElement('div');
+  conditionsWrapper.className = 'space-y-4 custom-condition-group when-row';
+
+  const conditionRow = document.createElement('div');
+  conditionRow.className = 'space-y-2';
+
+  // ✅ stack on mobile, row on md+
+  const inputRow = document.createElement('div');
+  inputRow.className = 'when-row flex flex-col md:flex-row items-stretch md:items-center w-full gap-2';
+
+  const whenLabel = document.createElement('label');
+  // full width label on mobile so it sits above; fixed width on md+
+  whenLabel.className = 'text-sm whitespace-nowrap mt-0 w-full md:w-[51px] font-semibold shrink-0';
+  whenLabel.textContent = 'When';
+
+  const { wrapper: fieldSelectUI, select: fieldSelect } =
+    buildCustomFieldSelect({ options: fieldOptionsCustomField, placeholder: 'Select Field' });
+
+  let operatorSelectUI, operatorSelect;
+  ({ wrapper: operatorSelectUI, select: operatorSelect } =
+    buildCustomSingleSelect({
+      options: ['EQUALS'],
+      placeholder: null,
+      // full width on mobile, snap to your old width on md+
+      widthClass: 'w-full md:w-[23%]'
+    })
+  );
+
+  const valueInput = document.createElement('input');
+  valueInput.type = 'text';
+  valueInput.placeholder = 'My Website Name';
+  // full width on mobile, flex on md+
+  valueInput.className = 'input input-lg w-full md:flex-1 focus:outline-none h-auto p-[9px] text-sm leading-7';
+
+  const valueSelect = document.createElement('select');
+  valueSelect.className = 'hidden w-full md:flex-1 h-10 px-3 rounded-[8px] border border-gray-600 bg-gray-700';
+  valueSelect.innerHTML = `<option value="" disabled selected hidden>Select Country</option>` +
+    predefinedCountries.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
+
+  const uniqueRadioName = `bool-val-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const radioWrapper = document.createElement('div');
+  // full width on mobile, left align; center on md+
+  radioWrapper.className = 'hidden flex w-full md:flex-1 justify-center items-center gap-6 md:gap-4 mt-2 md:mt-0';
+  radioWrapper.innerHTML = `
+    <label class="inline-flex items-center gap-1 m-0 font-semibold">
+      <input type="radio" name="${uniqueRadioName}" value="TRUE" class="radio radio-sm" checked />
+      TRUE
+    </label>
+    <label class="inline-flex items-center gap-1 m-0 font-semibold">
+      <input type="radio" name="${uniqueRadioName}" value="FALSE" class="radio radio-sm" />
+      FALSE
+    </label>
+  `;
+
+  fieldSelect.addEventListener('change', () => {
+    const isBooleanField = fieldSelect.value.startsWith('Is ');
+    const isCountryField = fieldSelect.value === 'Country';
+
+    const oldCountryWrapper = inputRow.querySelector('.country-search-wrapper');
+    if (oldCountryWrapper) oldCountryWrapper.remove();
+
+    if (isBooleanField) {
+      operatorSelect.innerHTML = `<option value="EQUALS" selected>EQUALS</option><option value="NOT EQUALS">NOT EQUALS</option>`;
+      valueInput.classList.add('hidden');
+      valueSelect.classList.add('hidden');
+      radioWrapper.classList.remove('hidden');
+
+      const trueRadio = radioWrapper.querySelector(`input[value="TRUE"]`);
+      if (trueRadio) trueRadio.checked = true;
+
+    } else if (isCountryField) {
+      operatorSelect.innerHTML = `
+        <option value="EQUALS" selected>EQUALS</option>
+        <option value="NOT EQUALS">NOT EQUALS</option>
+      `;
+      valueInput.classList.add('hidden');
+      radioWrapper.classList.add('hidden');
+
+      const countryWrapper = document.createElement('div');
+      // ✅ full width on mobile, flex on md+
+      countryWrapper.className = 'country-search-wrapper w-full md:flex-1';
+
+      enableCountrySearchStyled('custom-country', window.predefinedCountries, countryWrapper);
+      inputRow.appendChild(countryWrapper);
+
+    } else {
+      operatorSelect.innerHTML = operatorOptionsCustomFields
+        .map(opt => `<option value="${opt}" ${opt === 'EQUALS' ? 'selected' : ''}>${opt}</option>`)
+        .join('');
+      valueInput.classList.remove('hidden');
+      valueSelect.classList.add('hidden');
+      radioWrapper.classList.add('hidden');
+    }
+  });
+
+  // assemble WHEN row
+  inputRow.appendChild(whenLabel);
+
+  // ✅ make custom-select wrappers full width on mobile, snap on md+
+  fieldSelectUI.classList.add('w-full', 'md:w-[34%]');
+  operatorSelectUI.classList.add('w-full', 'md:w-[23%]');
+
+  inputRow.appendChild(fieldSelectUI);
+  inputRow.appendChild(operatorSelectUI);
+  inputRow.appendChild(valueInput);
+  inputRow.appendChild(valueSelect);
+  inputRow.appendChild(radioWrapper);
+
+  // initialize default
+  setTimeout(() => {
+    fieldSelect.value = 'Query';
+    fieldSelect.dispatchEvent(new Event('change'));
+  }, 0);
+
+  conditionRow.appendChild(inputRow);
+  conditionsWrapper.appendChild(conditionRow);
+
+  // ===== THEN row (Brand) =====
+  const thenRow = document.createElement('div');
+  // keep row even on mobile; don’t force full-width for the input
+  thenRow.className = 'flex items-center gap-2 flex-wrap';
+
+  const thenLabel = document.createElement('label');
+  thenLabel.className = 'text-sm whitespace-nowrap mt-0 w-full md:w-[51px] font-semibold shrink-0';
+
+  thenLabel.textContent = 'Then';
+
+  const thenInput = document.createElement('input');
+  thenInput.type = 'text';
+  thenInput.placeholder = 'Brand';
+  // stays ~70–75% on small, then your old ~57% on md+
+  thenInput.className = 'input input-lg w-full sm:w-[70%] md:w-[57%] min-w-[220px] focus:outline-none h-auto p-[9px] text-sm leading-7';
+
+  const addConditionBtn = document.createElement('button');
+  addConditionBtn.textContent = '+ Condition';
+  addConditionBtn.className = 'btn btn-md btn-ghost h-12 min-h-12 flex-1 md:flex-none';
+  addConditionBtn.onclick = () => {
+    const newGroup = createConditionGroupWrapper(groupContainer);
+    const elseRowEl = Array.from(groupContainer.children).find(child => {
+      const label = child.querySelector('label');
+      return label && label.textContent.trim().toLowerCase() === 'else';
+    });
+    if (elseRowEl) {
+      groupContainer.insertBefore(newGroup, elseRowEl);
+    } else {
+      groupContainer.appendChild(newGroup);
+    }
+    updateConditionButtonsVisibility(groupContainer);
+  };
+
+  thenRow.appendChild(thenLabel);
+  thenRow.appendChild(thenInput);
+  thenRow.appendChild(addConditionBtn);
+
+  // ===== ELSE row =====
+  const elseRow = document.createElement('div');
+  elseRow.className = 'flex flex-col md:flex-row items-stretch md:items-center gap-2';
+
+  const elseLabel = document.createElement('label');
+  elseLabel.className = 'text-sm whitespace-nowrap mt-0 w-full md:w-[51px] font-semibold shrink-0';
+  elseLabel.textContent = 'Else';
+
+  const elseInput = document.createElement('input');
+  elseInput.type = 'text';
+  elseInput.placeholder = 'Non-Brand';
+  elseInput.className = 'input input-lg w-full md:flex-1 focus:outline-none h-auto p-[9px] text-sm leading-7';
+
+  elseRow.appendChild(elseLabel);
+  elseRow.appendChild(elseInput);
+
+  groupContainer.appendChild(conditionsWrapper);
+  groupContainer.appendChild(thenRow);
+  groupContainer.appendChild(elseRow);
+
+  document.getElementById('customFieldGroups').appendChild(groupContainer);
+}
+
+/* ----- custom-select builders: make wrappers responsive ----- */
+
+function buildCustomFieldSelect({ options, placeholder = 'Select Field' }) {
+  const select = document.createElement('select');
+  select.className = 'hidden';
+  select.innerHTML =
+    `<option value="" disabled selected hidden>${placeholder}</option>` +
+    options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'custom-select-wrapper w-full md:w-[34%]'; // ✅ responsive width
+  wrapper.appendChild(select);
+
+  const ui = makeCustomSelect(select, { single: true, placeholder, showArrow: true });
+  if (ui && ui.addEventListener) {
+    ui.addEventListener('change', () => {
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+  return { wrapper, select, ui };
+}
+
+function buildCustomSingleSelect({ options, placeholder, widthClass }) {
+  const select = document.createElement('select');
+  select.className = `${widthClass} hidden`; // widthClass already has responsive classes
+  select.innerHTML =
+    (placeholder ? `<option value="" disabled selected hidden>${placeholder}</option>` : '') +
+    options.map(o => `<option value="${o}">${o}</option>`).join('');
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'relative custom-select-wrap custom-select-wrapper w-full'; // ✅ full width baseline
+  wrapper.appendChild(select);
+
+  const ui = makeCustomSelect(select, { single: true, placeholder, showArrow: true });
+
+  wrapper.addEventListener('custom-select:change', (e) => {
+    if (e.detail && 'value' in e.detail && select.value !== e.detail.value) {
+      select.value = e.detail.value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+  wrapper.addEventListener('click', (ev) => {
+    const opt = ev.target.closest('[data-value]');
+    if (!opt) return;
+    const val = opt.getAttribute('data-value');
+    if (select.value !== val) {
+      select.value = val;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+
+  return { wrapper, select, ui };
+}
+
+function updateConditionButtonsVisibility(groupContainer) {
+  const addedGroups = Array.from(groupContainer.querySelectorAll('.added-custom-condition-group'));
+
+  // Hide all + Condition buttons in this group
+  addedGroups.forEach(group => {
+    const plusBtn = [...group.querySelectorAll('button')].find(btn => btn.textContent.trim() === '+ Condition');
+    if (plusBtn) {
+      plusBtn.classList.add('hidden');
+    }
+  });
+
+  // Show + Condition only in the last added group (within this container)
+  if (addedGroups.length > 0) {
+    const lastGroup = addedGroups[addedGroups.length - 1];
+    const lastPlusBtn = [...lastGroup.querySelectorAll('button')].find(btn => btn.textContent.trim() === '+ Condition');
+    if (lastPlusBtn) {
+      lastPlusBtn.classList.remove('hidden');
+    }
+  }
+
+  // Handle the initial (non-added) group in this container
+
+
+  const conditionsWrapper = groupContainer.querySelector('.custom-condition-group');
+  const initialGroup = conditionsWrapper?.querySelector(':scope > div:not(.added-custom-condition-group)');
+
+
+  if (initialGroup) {
+
+    const initialPlusBtn = groupContainer.querySelector('.initial-add-btn');
+    // const initialMinusBtn = groupContainer.querySelector('.initial-remove-btn');
+
+    if (initialPlusBtn) {
+
+      if (addedGroups.length === 0) {
+        initialPlusBtn.classList.remove('hidden');
+        // initialMinusBtn.classList.add('hidden');
+      } else {
+        initialPlusBtn.classList.add('hidden');
+        // initialMinusBtn.classList.remove('hidden');
+      }
+    }
+  }
+}
+
+
+// Shared dropdown values for custom fields
+const fieldOptionsCustomField = [
+  "Query", "URL", "Country", "Search Type", "Device", "Site URL", "Date", "Month", "Year",
+  "Is Anonymized Query", "Is Anonymized Discover", "Is AMP Top Stories", "Is AMP Blue Link",
+  "Is Job Listing", "Is Job Details", "Is TPF QA", "Is TPF FAQ", "Is TPF HowTo", "Is Weblite",
+  "Is Action", "Is Events Listing", "Is Events Details", "Is Search Appearance Android App",
+  "Is AMP Story", "Is AMP Image Result", "Is Video", "Is Organic Shopping", "Is Review Snippet",
+  "Is Special Announcement", "Is Recipe Feature", "Is Recipe Rich Snippet", "Is Subscribed Content",
+  "Is Page Experience", "Is Practice Problems", "Is Math Solvers", "Is Translated Result",
+  "Is Product Snippets", "Is Merchant Listings"
+];
+
+const operatorOptionsCustomFields = [
+  "EQUALS", "NOT EQUALS", "CONTAINS", "NOT CONTAINS", "REGEX CONTAINS", "REGEX NOT CONTAINS"
+];
+
+/* scripts for creating custom Fields filters - ends here */
+
+
+document.addEventListener("click", (e) => {
+  const dropdowns = [
+    {
+      menu: document.getElementById("metricsDropdown"),
+      trigger: document.getElementById("selectedMetrics"),
+      arrow: document.getElementById("metricsArrow")
+    },
+    {
+      menu: document.getElementById("dimensionsDropdown"),
+      trigger: document.getElementById("selectedDimensions"),
+      arrow: document.getElementById("dimensionsArrow")
+    },
+    {
+      menu: document.getElementById("dateRangeDropdown"),
+      trigger: document.getElementById("selectedDateRange"),
+      arrow: document.getElementById("dateRangeArrow")
+    }
+  ];
+
+  dropdowns.forEach(({ menu, trigger, arrow }) => {
+    if (
+      menu?.getAttribute("data-open") === "true" &&
+      !menu.contains(e.target) &&
+      !trigger.contains(e.target)
+    ) {
+      // Close dropdown
+      menu.classList.add("hidden");
+      menu.classList.remove("block");
+      menu.setAttribute("data-open", "false");
+
+      // Reset arrow rotation
+      arrow?.classList.remove("rotate-180");
+    }
+  });
+});
+
+
+//filter functionality ends here
+// Pre-select default metrics on page load
+['Clicks', 'Impressions', 'CTR', 'Position'].forEach(metric => selectMetric(metric));
+// Inject the first filter row on page load
+addFilterRow();
+// Inject the first sort row on page load
+addSortRow();
+// Inject the first custom field group is present on page load
+addCustomFieldGroup();
+
+
+function normalizeFieldName(fieldLabel) {
+  const trimmed = fieldLabel.trim();
+  if (trimmed === 'Year') return 'YEAR';
+  if (trimmed === 'Month') return 'MONTH';
+  if (trimmed === 'Date') return 'DATE';
+  return trimmed
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, '')
+    .replace(/\s+/g, '_');
+}
+
+
+
+function highlightSQL(sqlText) {
+  return sqlText
+    .replace(/\b(SELECT|FROM|WHERE|AND|OR|GROUP BY|ORDER BY|CASE|WHEN|THEN|ELSE|END|AS|BETWEEN|IS NOT NULL|IS NULL|NOT|IN|ON|JOIN|INNER|LEFT|OUTER|DISTINCT)\b/gi,
+      match => `<span class="sql-keyword">${match.toUpperCase()}</span>`)
+    .replace(/\b(SUM|SAFE_DIVIDE|REGEXP_CONTAINS|AVG|COUNT|MAX|MIN)\b(?=\s*\()/gi,
+      match => `<span class="sql-function">${match}</span>`)
+
+    .replace(/\b(CURRENT_DATE|CURRENT_TIMESTAMP|NOW)\b/gi,
+      match => `<span class="sql-function">${match.toUpperCase()}</span>`)
+    .replace(/\bAS\s+(\w+)/gi, (match, p1) => {
+      const upper = p1.toUpperCase();
+      const specialAlias = ['YEAR', 'MONTH', 'DATE'];
+      if (specialAlias.includes(upper)) {
+        return `AS <span class="sql-alias-special">${upper}</span>`;
+      }
+      return `AS <span class="sql-alias">${p1}</span>`;
+    })
+    .replace(/'(%Y(?:-%m)?)'/g, (match, pattern) => {
+      return `<span class="sql-date-format">'${pattern}'</span>`;
+    })
+    .replace(/\b(TRUE|FALSE)\b/gi,
+      match => `<span class="sql-boolean">${match.toUpperCase()}</span>`)
+    .replace(/(?<![\w])(\d+(\.\d+)?)(?![\w])/g,
+      match => `<span class="sql-expression">${match}</span>`)
+    .replace(/\b(\w+)\s+(ASC|DESC)\b/gi,
+      (match, col, dir) =>
+        `<span class="sql-column">${col}</span> <span class="sql-keyword">${dir.toUpperCase()}</span>`)
+    .replace(/\b(YEAR|MONTH|DATE)\b/g,
+      match => `<span class="sql-alias-special">${match}</span>`);
+}
+
+
+
+function isDerivedDimension(dim) {
+  return dim === 'Year';
+}
+
+function getDimensionSelectLine(dim) {
+  const normalized = normalizeFieldName(dim);
+
+  if (dim === 'Year') {
+    return {
+      html: `<span class="sql-function">FORMAT_TIMESTAMP('%Y', data_date)</span> AS <span class="sql-alias">year</span>`,
+      text: `    FORMAT_TIMESTAMP('%Y', data_date) AS year`,
+      alias: 'year'
+    };
+  } else if (dim === 'Month') {
+    return {
+      html: `<span class="sql-function">FORMAT_TIMESTAMP('%Y-%m', data_date)</span> AS <span class="sql-alias">month</span>`,
+      text: `    FORMAT_TIMESTAMP('%Y-%m', data_date) AS month`,
+      alias: 'month'
+    };
+  } else if (dim === 'Date') {
+    return {
+      html: `<span class="sql-column">data_date</span> AS <span class="sql-alias">date</span>`,
+      text: `    data_date AS date`,
+      alias: 'date'
+    };
+  }
+
+  return {
+    html: `<span class="sql-column">${normalized}</span>`,
+    text: `    ${normalized}`,
+    alias: normalized
+  };
+}
+
+// ---- numeric field config + helpers ----
+const NUMERIC_FIELDS = new Set([
+  'clicks', 'impressions', 'ctr', 'position' // extend if you allow more
+]);
+
+function isNumericField(field) {
+  return NUMERIC_FIELDS.has(String(field).toLowerCase());
+}
+
+function sqlString(v) {
+  return `'${String(v).replace(/'/g, "''")}'`;
+}
+
+
+
+export function generateSQL() {
+  updateFilterAndSortClauses();
+  const dateClause = getDateRangeClause(selectedDateRange);
+  const metrics = Array.from(selectedMetrics);
+  const dimensions = Array.from(selectedDimensions);
+
+
+  // PATCH: decide early if URL is used (dimension OR filter) ---
+  const _filters = window._filterClauses || [];
+  const usesURL =
+    // URL selected as a dimension?
+    dimensions.some(d => String(d).toLowerCase() === 'url') ||
+    // …or any filter targets URL?
+    _filters.some(f =>
+      (f.field && f.field.toLowerCase() === 'url') ||      // preferred: from updateFilterAndSortClauses
+      /\burl\b/i.test(f.clause)                            // fallback: scan clause text
+    );
+  // ---------------------------------------------------------------
+
+
+  const indent = '<span style="display:inline-block; width:1em"></span>';
+  const selectLines = [];
+  const plainSelectLines = [];
+  const customFieldsToGroup = [];
+  const groupAliases = [];
+
+  dimensions.forEach(dim => {
+    const { html, text, alias } = getDimensionSelectLine(dim);
+
+    // Force lowercase alias if it's DATE (or always)
+    const aliasLower = alias.toLowerCase();
+    const textLower = text.replace(new RegExp(` AS ${alias}`, 'i'), ` AS ${aliasLower}`);
+
+    selectLines.push(`${indent}${html.replace(new RegExp(` AS ${alias}`, 'i'), ` AS ${aliasLower}`)}`);
+    plainSelectLines.push(textLower);
+    groupAliases.push(aliasLower);
+  });
+
+
+  if (metrics.includes('Clicks')) {
+    selectLines.push(`${indent}<span class="sql-function">SUM(clicks)</span> AS <span class="sql-alias">clicks</span>`);
+    plainSelectLines.push(`    SUM(clicks) AS clicks`);
+  }
+  if (metrics.includes('Impressions')) {
+    selectLines.push(`${indent}<span class="sql-function">SUM(impressions)</span> AS <span class="sql-alias">impressions</span>`);
+    plainSelectLines.push(`    SUM(impressions) AS impressions`);
+  }
+  if (metrics.includes('CTR')) {
+    selectLines.push(`${indent}<span class="sql-function">SAFE_DIVIDE</span>(<span class="sql-function">SUM(clicks)</span>, <span class="sql-function">SUM(impressions)</span>) AS <span class="sql-alias">ctr</span>`);
+    plainSelectLines.push(`    SAFE_DIVIDE(SUM(clicks), SUM(impressions)) AS ctr`);
+  }
+
+  //adding + 1.0 as avg position script commented if needed - starts here
+  console.log('Dimensions:', dimensions);
+
+
+  if (metrics.includes('Position')) {
+    const positionField = usesURL ? 'sum_position' : 'sum_top_position';
+
+    selectLines.push(
+      `${indent}<span class="sql-function">SAFE_DIVIDE</span>(<span class="sql-function">SUM(${positionField})</span>, <span class="sql-function">SUM(impressions)</span>) AS <span class="sql-alias">avg_position</span>`
+    );
+
+    plainSelectLines.push(
+      `    SAFE_DIVIDE(SUM(${positionField}), SUM(impressions)) AS avg_position`
+    );
+  }
+  const customFieldGroups = document.querySelectorAll('#customFieldGroups > div');
+  let customFieldIndex = 1;
+
+  customFieldGroups.forEach((group) => {
+    const conditionBlocks = group.querySelectorAll('.custom-condition-group > div, .added-custom-condition-group');
+    const elseRow = group.querySelector('input[placeholder="Non-Brand"], input[placeholder="Non-Brand2"], input[placeholder="Else"]');
+    const elseValue = elseRow ? elseRow.value.trim() : '';
+    const cases = [];
+
+    conditionBlocks.forEach((block) => {
+      const selects = block.querySelectorAll('select');
+      const field = selects[0]?.value;
+      const normalizedField = normalizeFieldName(field);
+      const operator = selects[1]?.value;
+
+      const valueInput = block.querySelector('input[type="text"]');
+
+      const countryInputStyled = block.querySelector('input.country-search-input');
+      const valueSelect = countryInputStyled?.dataset.code;
+
+      const radioInput = block.querySelector('input[name^="bool-val"]:checked');
+
+      let value;
+      if (field === 'Country') {
+        value = valueSelect?.trim();
+      } else if (field?.startsWith('Is ')) {
+        value = radioInput?.value;
+      } else {
+        value = valueInput?.value?.trim();
+      }
+
+      let thenInput;
+      if (block.classList.contains('added-custom-condition-group')) {
+        thenInput = block.querySelector('input[placeholder="Brand"]');
+      } else {
+        const thenRow = group.querySelectorAll('div.flex.items-center.gap-2')[1];
+        thenInput = thenRow?.querySelector('input[type="text"]');
+      }
+      const thenValue = thenInput?.value.trim();
+
+      if (!field || !operator || !value || !thenValue) return;
+
+      let condition = '';
+      switch (operator) {
+        case 'EQUALS':
+          condition = field.startsWith('Is ') ? `${normalizedField} = ${value.toUpperCase()}` : `${normalizedField} = '${value}'`;
+          break;
+        case 'NOT EQUALS':
+          if (field.startsWith('Is ') && (value.toUpperCase() === 'FALSE' || value.toUpperCase() === 'TRUE')) {
+            const correctedValue = value.toUpperCase() === 'FALSE' ? 'TRUE' : 'FALSE';
+            condition = `${normalizedField} = ${correctedValue}`;
+            console.log(`[Custom Field Adjusted] ${normalizedField} != ${value.toUpperCase()} ➜ ${normalizedField} = ${correctedValue}`);
+          } else {
+            condition = `${normalizedField} != '${value}'`;
+          }
+          break;
+        case 'CONTAINS':
+          condition = `${normalizedField} LIKE '%${value}%'`;
+          break;
+        case 'NOT CONTAINS':
+          condition = `${normalizedField} NOT LIKE '%${value}%'`;
+          break;
+        case 'REGEX CONTAINS':
+          condition = `REGEXP_CONTAINS(${normalizedField}, '${value}')`;
+          break;
+        case 'REGEX NOT CONTAINS':
+          condition = `NOT REGEXP_CONTAINS(${normalizedField}, '${value}')`;
+          break;
+      }
+
+      cases.push(`WHEN ${condition} THEN '${thenValue}'`);
+    });
+
+    if (cases.length > 0 || elseValue) {
+      const alias = `custom_field_${customFieldIndex++}`;
+      const caseSQL = `CASE\n    ${cases.join('\n    ')}\n    ELSE '${elseValue}'\nEND AS ${alias}`;
+      let visualCaseSQL = caseSQL
+        .replace(/\n/g, '<br>' + indent)
+        .replace(/=\s*(TRUE|FALSE)/gi, '<span class="sql-boolean">= $1</span>');
+
+      selectLines.push(`${indent}${visualCaseSQL}`);
+      plainSelectLines.push(`    ${caseSQL}`);
+
+      // GROUP BY clause with the full CASE expressions instead of using aliases
+      const fullCaseExpr = `CASE\n    ${cases.join('\n    ')}\n    ELSE '${elseValue}'\nEND`;
+      customFieldsToGroup.push(fullCaseExpr);
+    }
+  });
+
+  const selectClause = `<span class="sql-keyword">SELECT</span><br>${selectLines.join(',<br>')}`;
+  const plainSelectClause = `SELECT\n${plainSelectLines.join(',\n')}`;
+
+  const fromTable = usesURL
+    ? '`searchconsole.searchdata_url_impression`'
+    : '`searchconsole.searchdata_site_impression`';
+
+
+
+
+  const fromClause = `<br><span class="sql-keyword">FROM</span><br>${indent}<span class="sql-table">${fromTable}</span>`;
+  const plainFromClause = `FROM\n    ${fromTable}`;
+
+  const baseWhereClause = `<br><span class="sql-keyword">WHERE</span><br>${indent}<span class="sql-column">data_date</span> <span class="sql-keyword">BETWEEN</span> ${dateClause}`;
+  const basePlainWhereClause = `WHERE\n    data_date BETWEEN ${dateClause}`;
+
+  // const rawFilterClauses = window._filterClauses || [];
+  let rawFilterClauses = window._filterClauses || [];
+if (!rawFilterClauses.some(f => (f.field || '').toLowerCase() === 'search_type')) {
+  rawFilterClauses = rawFilterClauses.concat([{ clause: `search_type = 'WEB'`, logic: 'AND', field: 'search_type', auto: true }]);
+}
+
+  /* fix for unwanted TRUE clause / highlight TRUE and FALSE */
+  const highlightedFilterClauses = rawFilterClauses.map(f => {
+    let clause = f.clause;
+    clause = clause.replace(/=\s*(TRUE|FALSE)/gi, '<span class="sql-boolean">= $1</span>');
+    return { ...f, clause };
+  });
+
+  // const sortClauses = window._sortClauses || [];
+
+  let sortClauses = window._sortClauses || [];
+  if (sortClauses.length && typeof sortClauses[0] === 'object') {
+    // convert {field, order} -> "field ORDER"
+    sortClauses = sortClauses
+      .filter(o => o && o.field)
+      .map(o => `${normalizeFieldName(o.field)} ${o.order || 'ASC'}`);
+  }
+
+
+
+  const extraWhereText = (() => {
+    if (!rawFilterClauses.length) return '';
+    const logic = window._filterLogic || 'AND';
+    const clauses = rawFilterClauses.map(f => f.clause);
+    return clauses.length === 1 ? clauses[0] : `(${clauses.join(` ${logic} `)})`;
+  })();
+
+
+  const extraWhereHTML = (() => {
+    if (!highlightedFilterClauses.length) return '';
+    const logic = window._filterLogic || 'AND';
+    const keyword = `<span class="sql-keyword">${logic}</span>`;
+    const clauses = highlightedFilterClauses.map(f => f.clause);
+    return clauses.length === 1 ? clauses[0] : `(${clauses.join(` ${keyword} `)})`;
+  })();
+
+
+  const whereHTML = extraWhereHTML ? `<br>${indent}<span class="sql-keyword">AND</span> ${extraWhereHTML}` : '';
+  const whereText = extraWhereText ? `\n    AND ${extraWhereText}` : '';
+
+  const groupItems = [...groupAliases, ...customFieldsToGroup];
+  const groupByClause = groupItems.length
+    ? `<br><span class="sql-keyword">GROUP BY</span><br>${groupItems.map(d => `${indent}<span class="sql-column">${d}</span>`).join(',<br>')}`
+    : '';
+
+
+  const plainGroupByClause = groupItems.length
+    ? `GROUP BY\n    ${groupItems.map(item => item.trim()).join(',\n    ')}`
+    : '';
+
+  const orderHTML = sortClauses.length
+    ? `<br><span class="sql-keyword">ORDER BY</span><br>${indent}${sortClauses.map(cl => `<span class="sql-column">${cl}</span>`).join(', ')}`
+    : '';
+  const orderText = sortClauses.length
+    ? `\nORDER BY\n    ${sortClauses.join(', ')}`
+    : '';
+
+  let limitValue = '';
+  let limitClause = '';
+
+
+
+  const limitInput = document.getElementById('limitInput');
+  const limitEnabled = document.getElementById('limitEnabled');
+
+  if (limitInput && limitEnabled && limitEnabled.checked) {
+    // use typed value, or fallback to placeholder if empty
+    let raw = limitInput.value.trim();
+    if (raw === '') raw = limitInput.getAttribute('placeholder') || '';
+
+    if (raw !== '') {
+      let n = parseInt(raw, 10);
+      if (Number.isFinite(n)) {
+        // honor min if present
+        const minAttr = parseInt(limitInput.getAttribute('min') || '1', 10);
+        if (Number.isFinite(minAttr)) n = Math.max(n, minAttr);
+
+        limitClause = `\nLIMIT ${n}`;
+      }
+    }
+  }
+
+
+
+
+  const sql = `${selectClause}${fromClause}${baseWhereClause}${whereHTML}${groupByClause}${orderHTML}${limitClause}`;
+  const plainSQL = `${plainSelectClause}\n${plainFromClause}\n${basePlainWhereClause}${whereText}${plainGroupByClause ? `\n${plainGroupByClause}` : ''}${orderText}${limitClause}`;
+
+
+  document.getElementById('sqlOutput').innerHTML = highlightSQL(plainSQL);
+  document.getElementById('sqlOutputFormated').textContent = plainSQL;
+
+  document.querySelectorAll('#customFieldGroups input[type="text"]').forEach(input => {
+    input.addEventListener('input', () => {
+      if (input.value.trim() !== '') {
+        input.classList.add('user-started');
+      } else {
+        input.classList.remove('user-started');
+      }
+    });
+  });
+
+
+  const hasErrors = document.querySelectorAll('#customFieldGroups .border-red-500').length > 0;
+  const userTouchedInputs = document.querySelectorAll('#customFieldGroups input.user-started').length > 0;
+
+  const toastClass = (userTouchedInputs && hasErrors)
+    ? 'show-generated-incomplete'
+    : 'show-generated';
+
+  showBodyToast(toastClass);   // always pass a valid string
+
+  return plainSQL;
+}
+// function updateFilterAndSortClauses() {
+//   const filters = [];
+
+//   // local helper for safe SQL strings
+//   const sqlString = (v) => `'${String(v).replace(/'/g, "''")}'`;
+
+//   // ----- FILTERS -----
+//   document.querySelectorAll('#filterRows > div').forEach(filter => {
+//     const fieldSel = filter.querySelector('select[data-role="filter-field"]') || filter.querySelector('select');
+//     const opSel = filter.querySelector('select[data-role="filter-op"]') || filter.querySelectorAll('select')[1];
+//     const deviceSel = filter.querySelector('select[data-role="filter-device"], select.device-select');
+//     const valueInput = filter.querySelector('input[type="number"], input[type="text"]'); // read both
+//     const boolRadio = filter.querySelector('input[name^="bool-val"]:checked');
+//     const countryIn = filter.querySelector('input.country-search-input');
+//     const searchTypeSel = filter.querySelector('select[data-role="filter-searchtype"], select.searchtype-select'); // search type
+
+
+//     const field = (fieldSel?.value || '').trim();
+//     const operator = (opSel?.value || '').trim();
+//     const logic = filter.querySelector('input[type="radio"]:checked')?.value || 'AND';
+
+//     if (!field || !operator) return;
+
+//     // resolve input value by field type
+//     // let value = null;
+//     // if (field.startsWith('Is ') && boolRadio) {
+//     //   value = (boolRadio.value || '').toUpperCase();            // TRUE/FALSE
+//     // } else if (field === 'Country') {
+//     //   value = (countryIn?.dataset?.code || '').trim();
+//     // } else if (field === 'Device' && deviceSel) {
+//     //   value = deviceSel.value;
+//     // } else if (valueInput) {
+//     //   value = (valueInput.value || '').trim();
+//     // }
+
+//     // where you resolve "value"
+
+//     let value = null;
+//     if (field.startsWith('Is ') && boolRadio) {
+//       value = (boolRadio.value || '').toUpperCase();
+//     } else if (field === 'Country') {
+//       value = (countryIn?.dataset?.code || '').trim();
+//     } else if (field === 'Device' && deviceSel) {
+//       value = deviceSel.value;
+//     } else if (field === 'Search Type' && searchTypeSel) {      // NEW
+//       value = (searchTypeSel.value || '').trim();
+//     } else if (valueInput) {
+//       value = (valueInput.value || '').trim();
+//     }
+
+
+//     const normalizedField = normalizeFieldName(field);
+//     const isNumericField = ['clicks', 'impressions', 'ctr', 'position'].includes(normalizedField);
+//     const isNumericOp = ['EQUALS', 'NOT EQUALS', 'GREATER THAN', 'LESS THAN', 'GREATER EQUAL', 'LESS EQUAL'].includes(operator);
+//     const asNumber = Number(value);
+
+//     // Hard guard: if numeric field + numeric operator, the value must be a number
+//     // if (isNumericField && isNumericOp) {
+//     //   if (!Number.isFinite(asNumber)) {
+//     //     // visual feedback
+//     //     if (valueInput) {
+//     //       valueInput.classList.add('border-red-500', 'input-error');
+//     //       valueInput.setAttribute('title', 'Enter a valid number');
+//     //     }
+//     //     return; // skip adding this invalid clause
+//     //   }
+//     //   // clear any previous error
+//     //   if (valueInput) {
+//     //     valueInput.classList.remove('border-red-500', 'input-error');
+//     //     valueInput.removeAttribute('title');
+//     //   }
+//     // }
+//     // find the tip inside this row
+//     const numTip = filter.querySelector('.num-tip');
+
+//     if (isNumericField && isNumericOp) {
+//       const raw = valueInput ? valueInput.value : '';
+//       const hasChars = raw.trim() !== '';
+
+//       let bad = true;
+//       if (valueInput) {
+//         if (valueInput.type === 'number') {
+//           bad = valueInput.validity.badInput || (hasChars && !Number.isFinite(valueInput.valueAsNumber));
+//         } else {
+//           bad = hasChars && !/^-?\d+(\.\d+)?$/.test(raw);
+//         }
+//       }
+
+//       if (bad) {
+//         valueInput?.classList.add('border-red-500');
+//         valueInput?.setAttribute('title', 'Enter a valid number');
+//         numTip && numTip.classList.remove('hidden');     // NEW
+//         return; // skip this invalid clause
+//       } else {
+//         valueInput?.classList.remove('border-red-500');
+//         valueInput?.removeAttribute('title');
+//         numTip && numTip.classList.add('hidden');        // NEW
+//       }
+
+//       if (!hasChars) {
+//         numTip && numTip.classList.add('hidden');        // NEW
+//         return;
+//       }
+//     }
+
+//     // accept NULL operators or non-empty values (including TRUE/FALSE)
+//     const hasBoolean = value === 'TRUE' || value === 'FALSE';
+//     if (
+//       operator.includes('NULL') ||
+//       (typeof value === 'string' && value !== '') ||
+//       hasBoolean
+//     ) {
+//       let clause = '';
+
+//       switch (operator) {
+//         case 'EQUALS':
+//           clause = field.startsWith('Is ')
+//             ? `${normalizedField} = ${value}`                                  // TRUE/FALSE
+//             : (isNumericField ? `${normalizedField} = ${asNumber}`             // number (no quotes)
+//               : `${normalizedField} = ${sqlString(value)}`);   // string
+//           break;
+
+//         case 'NOT EQUALS':
+//           if (field.startsWith('Is ') && hasBoolean) {
+//             clause = `${normalizedField} = ${value === 'FALSE' ? 'TRUE' : 'FALSE'}`;
+//           } else {
+//             clause = isNumericField
+//               ? `${normalizedField} != ${asNumber}`
+//               : `${normalizedField} != ${sqlString(value)}`;
+//           }
+//           break;
+
+//         case 'GREATER THAN':
+//           if (isNumericField) clause = `${normalizedField} > ${asNumber}`;
+//           break;
+//         case 'LESS THAN':
+//           if (isNumericField) clause = `${normalizedField} < ${asNumber}`;
+//           break;
+//         case 'GREATER EQUAL':
+//           if (isNumericField) clause = `${normalizedField} >= ${asNumber}`;
+//           break;
+//         case 'LESS EQUAL':
+//           if (isNumericField) clause = `${normalizedField} <= ${asNumber}`;
+//           break;
+
+//         case 'CONTAINS':
+//           clause = `${normalizedField} LIKE ${sqlString(`%${value}%`)}`;
+//           break;
+//         case 'NOT CONTAINS':
+//           clause = `${normalizedField} NOT LIKE ${sqlString(`%${value}%`)}`;
+//           break;
+
+//         case 'IS NULL':
+//           clause = `${normalizedField} IS NULL`;
+//           break;
+//         case 'IS NOT NULL':
+//           clause = `${normalizedField} IS NOT NULL`;
+//           break;
+
+//         case 'REGEXP CONTAINS':
+//           if (['query', 'url'].includes(normalizedField)) {
+//             clause = `REGEXP_CONTAINS(${normalizedField}, r${sqlString(value)})`;
+//           }
+//           break;
+//         case 'NOT REGEXP CONTAINS':
+//           if (['query', 'url'].includes(normalizedField)) {
+//             clause = `NOT REGEXP_CONTAINS(${normalizedField}, r${sqlString(value)})`;
+//           }
+//           break;
+//       }
+
+//       if (clause) filters.push({ clause, logic, field: normalizedField });
+//     }
+
+//     /* serach type starts here */
+//     // Add implicit search_type = 'WEB' if none was provided
+//     if (!filters.some(f => (f.field || '').toLowerCase() === 'search_type')) {
+//       filters.push({ clause: `search_type = 'WEB'`, logic: 'AND', field: 'search_type', auto: true });
+//     }
+//     window._filterClauses = filters;
+//     window._sortClauses = sorts;
+//     /* serach type ends here */
+
+//     // store global AND/OR joiner
+//     const globalLogicInput = document.querySelector('#filterRows input[type="radio"]:checked');
+//     window._filterLogic = globalLogicInput ? globalLogicInput.value : 'AND';
+//   });
+
+//   // ----- SORTS -----
+//   const sorts = [];
+//   document.querySelectorAll('#sortRows > div').forEach((row) => {
+//     const ph = row.querySelector('[id^="sortFieldPlaceholder-"]');
+//     const label = ph?.textContent?.trim();
+//     let field = null;
+//     if (label && label !== 'Select Field') field = normalizeFieldName(label);
+//     const dir = row.querySelector('input[type="radio"]:checked')?.value || 'ASC';
+//     if (field) sorts.push(`${field} ${dir}`);
+//   });
+
+//   window._filterClauses = filters;
+//   window._sortClauses = sorts;
+// }
+function updateFilterAndSortClauses() {
+  const filters = [];
+  let sorts = [];                            // ✅ declare BEFORE any use
+  window._filterLogic = 'AND';               // optional: default logic
+
+  // helper to escape single quotes in LIKE/regex values
+  const sqlString = v => `${String(v).replace(/'/g, "''")}`;
+
+  // ----- FILTERS -----
+  document.querySelectorAll('#filterRows > div').forEach(filter => {
+    const fieldSel = filter.querySelector('select[data-role="filter-field"]') || filter.querySelector('select');
+    const opSel    = filter.querySelector('select[data-role="filter-op"]')     || filter.querySelectorAll('select')[1];
+
+    // dedicated value controls (may be hidden depending on field)
+    const deviceSel     = filter.querySelector('select[data-role="filter-device"], select.device-select');
+    const searchTypeSel = filter.querySelector('select[data-role="filter-searchtype"], select.searchtype-select');
+
+    const valueInput    = filter.querySelector('input[type="text"]');
+    const countryInput  = filter.querySelector('input.country-search-input');
+    const boolRadio     = filter.querySelector('input[name^="bool-val"]:checked');
+
+    const field    = (fieldSel?.value || '').trim();
+    const operator = (opSel?.value    || '').trim();
+    const type     = getOperatorType(field);
+    const norm     = normalizeFieldName(field);
+
+    let value = null;                        // ✅ declare BEFORE setting it
+
+    if (type === 'searchtype') {
+      value = (searchTypeSel?.value || '').trim();
+    } else if (type === 'device') {
+      value = (deviceSel?.value || '').trim();
+    } else if (type === 'country') {
+      value = (countryInput?.dataset.code || '').trim();
+    } else if (type === 'boolean') {
+      value = (boolRadio?.value || '').toUpperCase();
+    } else {
+      value = (valueInput?.value || '').trim();
+    }
+
+    // skip incomplete rows (allow NULL ops with empty value)
+    if (!field || !operator || (!value && !/NULL/.test(operator))) return;
+
+    let clause = '';
+    switch (type) {
+      case 'numeric': {
+        if (operator === 'IS NULL' || operator === 'IS NOT NULL') {
+          clause = `${norm} ${operator}`;
+        } else {
+          const n = Number(value);
+          if (!Number.isFinite(n)) return;
+          const map = {
+            'EQUALS':'=', 'NOT EQUALS':'!=',
+            'GREATER THAN':'>', 'LESS THAN':'<',
+            'GREATER EQUAL':'>=', 'LESS EQUAL':'<='
+          };
+          clause = `${norm} ${map[operator] || '='} ${n}`;
+        }
+        break;
+      }
+
+      case 'regex': {
+        if (operator === 'REGEX CONTAINS')       clause = `REGEXP_CONTAINS(${norm}, '${sqlString(value)}')`;
+        else if (operator === 'NOT REGEXP CONTAINS') clause = `NOT REGEXP_CONTAINS(${norm}, '${sqlString(value)}')`;
+        else if (operator === 'CONTAINS')            clause = `${norm} LIKE '%${sqlString(value)}%'`;
+        else if (operator === 'NOT CONTAINS')        clause = `${norm} NOT LIKE '%${sqlString(value)}%'`;
+        else if (operator === 'EQUALS')              clause = `${norm} = '${sqlString(value)}'`;
+        else if (operator === 'NOT EQUALS')          clause = `${norm} != '${sqlString(value)}'`;
+        break;
+      }
+
+      case 'searchtype':
+      case 'device':
+      case 'country':
+      case 'string': {
+        if (operator === 'EQUALS')         clause = `${norm} = '${sqlString(value)}'`;
+        else if (operator === 'NOT EQUALS') clause = `${norm} != '${sqlString(value)}'`;
+        else if (operator === 'CONTAINS')   clause = `${norm} LIKE '%${sqlString(value)}%'`;
+        else if (operator === 'NOT CONTAINS') clause = `${norm} NOT LIKE '%${sqlString(value)}%'`;
+        break;
+      }
+
+      case 'boolean': {
+        clause = `${norm} = ${value === 'FALSE' ? 'FALSE' : 'TRUE'}`;
+        break;
+      }
+    }
+
+    if (clause) filters.push({ clause, field: norm, logic: 'AND' });
+  });
+
+  // ----- SORTS -----
+  document.querySelectorAll('#sortRows > div').forEach(row => {
+    const fieldSel = row.querySelector('select[data-role="sort-field"]');
+    const orderSel = row.querySelector('select[data-role="sort-order"]');
+    const field = fieldSel?.value?.trim();
+    const order = (orderSel?.value || 'ASC').trim();
+    if (field) sorts.push({ field, order });
+  });
+
+  window._filterClauses = filters;
+  window._sortClauses   = sorts;
+}
+
+
+function showBodyToast(cls) {
+  const body = document.body;
+  if (!cls || typeof cls !== 'string') {
+    body.classList.remove('undefined');
+    return;
+  }
+  body.classList.remove('show-generated', 'show-generated-incomplete', 'show-reset', 'show-reset-url', 'undefined');
+  void body.offsetHeight;    // restart animation
+  body.classList.add(cls);
+  setTimeout(() => body.classList.remove(cls), 3000);
+}
+function initLimitToggle() {
+  const cb = document.getElementById('limitEnabled');
+  const input = document.getElementById('limitInput');
+  if (!cb || !input) return;
+
+  cb.checked = false;
+
+  // Auto-enable when typing
+  input.addEventListener('input', () => {
+    cb.checked = input.value.trim() !== '';
+  });
+
+  // If user checks the box without typing, seed value from placeholder (or 100)
+  cb.addEventListener('change', () => {
+    if (cb.checked && input.value.trim() === '') {
+      const fallback = input.getAttribute('placeholder') || '100';
+      input.value = fallback;
+      // optional: trigger input listeners if you rely on them
+      // input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+}
+
+// LIMIT toggle logic - ends here
+
+
+function initSqlPlaceholder() {
+  const ph = document.getElementById('sqlPlaceholder');
+  const out = document.getElementById('sqlOutput');
+  const outFmt = document.getElementById('sqlOutputFormated');
+  const copyBtn = document.getElementById('copySQLButton');
+  if (!ph) return;
+
+  const hasText = el => el && el.textContent.trim().length > 0;
+
+  const check = () => {
+    const isEmpty = !(hasText(out) || hasText(outFmt));
+
+    // Placeholder visibility
+    ph.classList[isEmpty ? 'remove' : 'add']('hidden');
+
+    // Copy button: visible, but disabled until we have SQL
+    if (copyBtn) {
+      copyBtn.disabled = isEmpty;
+      copyBtn.title = isEmpty ? 'Generate SQL to enable' : 'Copy SQL';
+      // Optional: if you want extra visual feedback besides DaisyUI defaults:
+      copyBtn.classList.toggle('opacity-50', isEmpty);
+      copyBtn.classList.toggle('cursor-not-allowed', isEmpty);
+    }
+  };
+
+  const cfg = { childList: true, characterData: true, subtree: true };
+  if (out) new MutationObserver(check).observe(out, cfg);
+  if (outFmt) new MutationObserver(check).observe(outFmt, cfg);
+
+  // initial state
+  check();
+}
+
+
+
+function hasUrlPresets() {
+  // Anything in the query string?
+  const qs = new URLSearchParams(window.location.search);
+  if ([...qs.keys()].length > 0) return true;
+
+  // Or in the hash (supports both k=v and compact token styles)
+  const h = (window.location.hash || '').replace(/^#/, '').trim();
+  if (!h) return false;
+  if (h.includes('=')) return true; // #m=Clicks&dim=URL...
+  const tokens = ['m', 'dim', 'st', 'sd', 'ed', 'nm', 'dv', 'f', 'limit', 'metrics', 'breakdown', 'search_type', 'device', 'page'];
+  const lc = h.toLowerCase();
+  return tokens.some(t => lc.startsWith(t) || lc.includes(`${t}=`) || lc.includes(`${t}:`) || lc.includes(`${t},`));
+}
+function setLimitDefault() {
+  const input = document.getElementById('limitInput');
+  const cb = document.getElementById('limitEnabled');
+  if (input) {
+    const fallback = input.getAttribute('placeholder') || '100';
+    input.value = fallback;            // show 100 in the box again
+  }
+  if (cb) cb.checked = false;          // not applied until user checks the box
+}
+
+function updateResetToUrlVisibility() {
+  const btn = document.getElementById('resetToUrlButton');
+  if (!btn) return;
+  btn.classList.toggle('hidden', !hasUrlPresets());
+}
+
+// Call on page load to set initial state, and also whenever the URL changes
+function initResetToUrlVisibilityWatcher() {
+  updateResetToUrlVisibility();
+
+  // Update on browser back/forward
+  window.addEventListener('popstate', updateResetToUrlVisibility);
+
+  // Update after programmatic URL changes
+  ['pushState', 'replaceState'].forEach(fn => {
+    const orig = history[fn];
+    history[fn] = function (...args) {
+      const ret = orig.apply(this, args);
+      updateResetToUrlVisibility();
+      return ret;
+    };
+  });
+}
+
+
+// Resets all UI elements to default state
+// Pass { clearUrl: true } to also strip URL params (for preset integrations)
+function handleReset({ clearUrl = false } = {}) {
+  // 1) Clear SQL outputs
+  const out = document.getElementById('sqlOutput');
+  const outFmt = document.getElementById('sqlOutputFormated');
+  if (out) out.textContent = '';
+  if (outFmt) outFmt.textContent = '';
+
+  // 2) Metrics & Dimensions
+  try { window.selectedMetrics?.clear(); } catch { }
+  typeof clearAllMetrics === 'function' && clearAllMetrics();
+  // resetMetricsToDefault(); // keep the 4 defaults
+
+  try { window.selectedDimensions?.clear(); } catch { }
+  typeof clearAllDimensions === 'function' && clearAllDimensions();
+
+  // 3) Date range (fix for “Custom date range” sticking)
+  resetDateRange(); // <— this is the important bit
+
+  // 4) Filters
+  const filterRows = document.getElementById('filterRows');
+  if (filterRows) {
+    filterRows.innerHTML = '';
+    typeof addFilterRow === 'function' && addFilterRow();
+  }
+
+  // 5) Sort
+  const sortRows = document.getElementById('sortRows');
+  if (sortRows) sortRows.innerHTML = '';
+  document.getElementById('sortSection')?.classList.add('hidden');
+
+  // 6) Custom Fields
+  const customGroups = document.getElementById('customFieldGroups');
+  if (customGroups) {
+    customGroups.innerHTML = '';
+    typeof addCustomFieldGroup === 'function' && addCustomFieldGroup();
+  }
+  document.getElementById('customFieldsSection')?.classList.add('hidden');
+
+  // 7) Limit
+  setLimitDefault();
+
+  // 8) Optionally strip URL params
+  if (clearUrl) history.replaceState({}, '', window.location.pathname);
+
+  // 9) Notify & toast
+  document.dispatchEvent(new Event('gscql:reset'));
+  showBodyToast('show-reset');
+}
+// --- Date range reset helper ----------------------------------------------
+function resetDateRange(placeholder = 'Select date range') {
+  // clear globals your SQL builder might read
+  if (window.selectedDateRange && typeof window.selectedDateRange === 'object') {
+    Object.assign(window.selectedDateRange, {
+      preset: null, range: null, start: null, end: null
+    });
+  } else {
+    window.selectedDateRange = null;   // safest fallback
+  }
+  window._dateRangePreset && (window._dateRangePreset = null);
+
+  // clear the two inputs
+  const start = document.getElementById('startDate');
+  const end = document.getElementById('endDate');
+  if (start) start.value = '';
+  if (end) end.value = '';
+
+  // reset the visible label / placeholder
+  const label = document.getElementById('dateRangeLabel');
+  if (label) {
+    label.textContent = placeholder;
+    label.classList.add('text-gray-400');
+  }
+
+  // close dropdown + remove any “active/selected” styles
+  const dd = document.getElementById('dateRangeDropdown');
+  if (dd) {
+    dd.dataset.open = 'false';
+    dd.classList.add('hidden');
+    dd.style.height = '0px';
+    dd.style.opacity = '0';
+    dd.querySelectorAll('[data-range]').forEach(el =>
+      el.classList.remove('active', 'bg-gray-700')
+    );
+  }
+  const arrow = document.getElementById('dateRangeArrow');
+  if (arrow) arrow.classList.remove('rotate-180');
+
+  selectDateRange('Last 28 days');
+
+  setTimeout(() => {
+    toggleCustomDateInputs();
+  }, 300);
+
+}
+// --------------------------------------------------------------------------
+
+//ends here
+
+
+// FAQ slide-in panel
+let faqAPI; // holds { open, close }
+
+document.addEventListener('DOMContentLoaded', () => {
+  // init slide-in, but don't bind buttons here
+  faqAPI = initSlideInPanel({ panelId: 'faqPanel', overlayId: 'faqOverlay' });
+
+  setupEventListeners();
+  setupTooltips(); // moved your tooltip DOMContentLoaded code into a function below
+
+  // expose if integration.js needs them
+  window.openFAQ = window.openFAQ || (() => faqAPI.open());
+  window.closeFAQ = window.closeFAQ || (() => faqAPI.close());
+  initSqlPlaceholder();
+  initResetToUrlVisibilityWatcher();
+  initLimitToggle();
+  initThemeToggle();
+
+  (function initLimitToggle() {
+    const limitInput = document.getElementById('limitInput');
+    const limitEnabled = document.getElementById('limitEnabled');
+    if (!limitInput || !limitEnabled) return;
+
+    const setState = (on) => {
+      limitEnabled.checked = on;
+      limitInput.readOnly = !on;                 // not disabled → allows "type to enable"
+      limitInput.setAttribute('aria-readonly', String(!on));
+      limitInput.classList.toggle('opacity-50', !on);
+      limitInput.classList.toggle('cursor-not-allowed', !on);
+    };
+
+    // Initial state (unchecked ⇒ readOnly)
+    setState(!!limitEnabled.checked);
+
+    // Checkbox toggles editability
+    limitEnabled.addEventListener('change', () => setState(limitEnabled.checked));
+
+    // If the user starts typing/clicks/pastes, auto-enable & check the box
+    const autoEnable = () => {
+      if (!limitEnabled.checked) setState(true);
+    };
+    limitInput.addEventListener('keydown', autoEnable);
+    limitInput.addEventListener('input', autoEnable);   // catches paste, scroll step on some UAs
+    limitInput.addEventListener('pointerdown', autoEnable);
+
+    // Block mouse wheel changing the number while readOnly
+    limitInput.addEventListener('wheel', (e) => {
+      if (limitInput.readOnly) e.preventDefault();
+    }, { passive: false });
+  })();
+
+});
+
+function setupEventListeners() {
+  const listeners = [
+    ['copySQLButton', 'click', copySQL],
+    ['generateSQLButton', 'click', generateSQL],
+    ['clearMetricsBtn', 'click', clearAllMetrics],
+    ['clearDimensionsBtn', 'click', clearAllDimensions],
+    ['toggleFiltersHeader', 'click', toggleFilters],
+    ['addFilterRowBtn', 'click', addFilterRow],
+    ['removeFilterRowBtn', 'click', removeFilterRow],
+    ['toggleSortByHeader', 'click', toggleSortBy],
+    ['addSortRowBtn', 'click', addSortRow],
+    ['removeSortRowBtn', 'click', removeSortRow],
+    ['toggleCustomFieldsHeader', 'click', toggleCustomFields],
+    ['addCustomFieldGroupBtn', 'click', addCustomFieldGroup],
+
+    // FAQ slide-in hooks (same pattern)
+    // ['openFaqBtn', 'click', () => faqAPI.open()],
+    ['closeFaqBtn', 'click', () => faqAPI.close()],
+    ['faqOverlay', 'click', () => faqAPI.close()],
+    ['resetButton', 'click', (e) => handleReset({ clearUrl: e.shiftKey })],
+    ['resetToUrlButton', 'click', resetToUrlPresets],
+  ];
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-open="openFaqBtn"]');
+    if (!btn) return;
+    faqAPI.open();
+  });
+  const legacy = document.getElementById('openFaqBtn');
+  if (legacy && !legacy.dataset.bound) {
+    legacy.addEventListener('click', () => faqAPI.open());
+    legacy.dataset.bound = '1';
+  }
+
+  listeners.forEach(([id, event, handler]) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener(event, handler);
+  });
+
+  // Fallbacks for legacy inline handlers
+  const fallbackCopyBtn = document.querySelector('button[onclick="copySQL()"]');
+  if (fallbackCopyBtn) fallbackCopyBtn.addEventListener('click', copySQL);
+  const fallbackGenBtn = document.querySelector('button[onclick="generateSQL()"]');
+  if (fallbackGenBtn) fallbackGenBtn.addEventListener('click', generateSQL);
+
+  setupEnterKeyTrigger(generateSQL);
+}
+document.querySelectorAll('[data-open="openFaqBtn"]').forEach(btn => {
+  if (btn.dataset.bound) return;
+  btn.addEventListener('click', () => faqAPI.open());
+  btn.dataset.bound = '1';
+});
+// tooltip code extracted into a function
+function setupTooltips() {
+  const tooltipBox = document.getElementById('global-tooltip');
+
+  const customIcon = document.getElementById('custom-fields-tooltip-icon');
+  if (customIcon && tooltipBox) {
+    const txt = `Create your own fields. For example, group branded vs non-branded keywords. When query contains your brand name, the field will show "Brand", else "Non-Brand".`;
+    customIcon.addEventListener('mouseenter', (e) => {
+      tooltipBox.textContent = txt;
+      tooltipBox.classList.remove('hidden');
+      const r = e.target.getBoundingClientRect();
+      tooltipBox.style.top = `${r.top - 8 + window.scrollY}px`;
+      tooltipBox.style.left = `${r.right + 4 + window.scrollX}px`;
+    });
+    customIcon.addEventListener('mouseleave', () => tooltipBox.classList.add('hidden'));
+  }
+
+  const limitIcon = document.getElementById('limit-tooltip-icon');
+  if (limitIcon && tooltipBox) {
+    const txt = 'Limits the number of rows returned in the SQL query. If left empty, all results will be returned.';
+    limitIcon.addEventListener('mouseenter', (e) => {
+      tooltipBox.textContent = txt;
+      tooltipBox.classList.remove('hidden');
+      const r = e.target.getBoundingClientRect();
+      tooltipBox.style.top = `${r.top - 8 + window.scrollY}px`;
+      tooltipBox.style.left = `${r.right + 4 + window.scrollX}px`;
+    });
+    limitIcon.addEventListener('mouseleave', () => tooltipBox.classList.add('hidden'));
+  }
+}
+function createNumericTip() {
+  const tip = document.createElement('span');
+  // DaisyUI tooltip bubble, shown when not hidden
+  tip.className = 'num-tip tooltip tooltip-open tooltip-neutral ml-2 hidden absolute right-[116px] bottom-[47px]';
+  tip.setAttribute('data-tip', 'Please enter a numeric value');
+  tip.innerHTML = `
+    `;
+  return tip;
+}
+
+document.getElementById('generateSQLButton').addEventListener('click', () => {
+  const sql = generateSQL();
+  logQuery({ query: sql, source_page: window.location.pathname });
+});
+
+
+
+// Make the UI API accessible to integration.js
+window.selectMetric = window.selectMetric || selectMetric;
+window.clearAllMetrics = window.clearAllMetrics || clearAllMetrics;
+
+window.selectDimension = window.selectDimension || selectDimension;
+window.clearAllDimensions = window.clearAllDimensions || clearAllDimensions;
+
+window.addFilterRow = window.addFilterRow || addFilterRow;
+window.addSortRow = window.addSortRow || addSortRow;
+window.addCustomFieldGroup = window.addCustomFieldGroup || addCustomFieldGroup;
+
+window.generateSQL = window.generateSQL || generateSQL;
+
+
+document.dispatchEvent(new Event('gscql:ui-ready'));
+
+
