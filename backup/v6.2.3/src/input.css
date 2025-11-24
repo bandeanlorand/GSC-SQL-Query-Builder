@@ -1,0 +1,17 @@
+/* ───────── Tailwind entry ───────── */
+@import "tailwindcss";
+
+/* Tell Tailwind where to scan (v4 style) */
+@source "./index.html";
+@source "./view-sqls.html";
+@source "./js/**/*.js";
+
+/* DaisyUI (v4 style) */
+@plugin "daisyui" {
+  themes: light --default, dark, bumblebee, garden, corporate, emerald, forest, gsc;
+}
+
+/* extra CSS after Tailwind/DaisyUI builds */
+@import "../css/custom.css";
+
+
